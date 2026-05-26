@@ -1,0 +1,21 @@
+# Build output
+dist/
+src-tauri/target/
+src-tauri/Cargo.lock
+node_modules/
+
+# Bundled binaries (downloaded by setup script or CI)
+bundle/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Env
+.env
+.env.local

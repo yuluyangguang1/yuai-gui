@@ -1,0 +1,45 @@
+{
+  "productName": "Yuai",
+  "version": "0.1.0",
+  "identifier": "cn.yuai-r.gui",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Yuai · 与 AI · 同在",
+        "width": 1100,
+        "height": 720,
+        "minWidth": 800,
+        "minHeight": 560,
+        "decorations": true,
+        "transparent": false,
+        "resizable": true,
+        "center": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis", "msi", "app", "dmg", "deb", "appimage"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": [],
+    "category": "DeveloperTool",
+    "shortDescription": "yu.ai 统一启动器",
+    "longDescription": "便携 AI 工具集统一入口 · openclaw · hermes · claude · codex"
+  }
+}
