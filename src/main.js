@@ -264,24 +264,92 @@ window.showAgentTerminal = function(agentId) {
 
 // ═══ Config Panel ═══
 function renderConfigPanel() {
+  const agentSections = agents.filter(a => a.enabled).map(a => {
+    const appType = a.id === 'claude' ? 'claude' : a.id === 'codex' ? 'codex' : a.id;
+    return `
+      <div class="config-agent" data-app-type="${appType}" data-agent-id="${a.id}">
+        <div class="config-agent-header">
+          <span style="color:${a.color};font-family:var(--brush);font-size:1.4rem">${a.glyph}</span>
+          <span style="font-family:var(--serif);font-weight:700">${a.name}</span>
+          <span style="opacity:.4;font-size:.75rem;margin-left:auto">${a.config_type}</span>
+        </div>
+        <div class="config-fields">
+          <label>Base URL</label>
+          <input type="text" class="cfg-url" placeholder="https://api.example.com/v1" data-agent="${a.id}">
+          <label>API Key</label>
+          <input type="password" class="cfg-key" placeholder="sk-..." data-agent="${a.id}">
+          <label>模型</label>
+          <input type="text" class="cfg-model" placeholder="claude-sonnet-4 / gpt-5.4" data-agent="${a.id}">
+          <button class="cfg-save" onclick="saveAgentConfig('${a.id}', '${appType}')">保存</button>
+          <span class="cfg-status" id="cfg-status-${a.id}"></span>
+        </div>
+      </div>
+    `;
+  }).join('');
+
   mainPanel.innerHTML = `
     <div class="config-panel">
-      <h2 style="font-family:var(--serif);margin-bottom:16px">配置</h2>
-      <p style="opacity:.6">Phase 3 将实现 Provider 管理面板</p>
-      <h3 style="font-family:var(--serif);margin-top:24px">已注册 Agent</h3>
-      <div class="agent-list-config">
-        ${agents.map(a => `
-          <div class="agent-config-item">
-            <span style="color:${a.color};font-family:var(--brush);font-size:1.4rem">${a.glyph}</span>
-            <span>${a.name} · ${a.chinese_name}</span>
-            <span style="opacity:.5;font-size:.8rem">${a.specialty}</span>
-            <span style="opacity:.4;font-size:.7rem">${a.enabled ? '✓ 启用' : '○ 禁用'}</span>
-          </div>
-        `).join('')}
+      <div class="config-header">
+        <h2 style="font-family:var(--serif)">API 配置</h2>
+        <p style="opacity:.5;font-size:.82rem;margin-top:4px">每个 Agent 可独立配置，也可共用同一个中转站 Key</p>
+      </div>
+      <div class="config-agents">
+        ${agentSections}
       </div>
     </div>
   `;
+
+  // Load existing configs
+  agents.filter(a => a.enabled).forEach(a => loadAgentConfig(a.id));
 }
+
+async function loadAgentConfig(agentId) {
+  const appType = agentId === 'claude' ? 'claude' : agentId === 'codex' ? 'codex' : agentId;
+  try {
+    const provider = await invoke('get_active_provider', { appType });
+    if (provider) {
+      const urlInput = document.querySelector(`.cfg-url[data-agent="${agentId}"]`);
+      const keyInput = document.querySelector(`.cfg-key[data-agent="${agentId}"]`);
+      const modelInput = document.querySelector(`.cfg-model[data-agent="${agentId}"]`);
+      if (urlInput) urlInput.value = provider.base_url || '';
+      if (keyInput) keyInput.value = provider.api_key || '';
+      if (modelInput) modelInput.value = provider.model || '';
+    }
+  } catch (e) {
+    console.log(`No config for ${agentId}:`, e);
+  }
+}
+
+window.saveAgentConfig = async function(agentId, appType) {
+  const urlInput = document.querySelector(`.cfg-url[data-agent="${agentId}"]`);
+  const keyInput = document.querySelector(`.cfg-key[data-agent="${agentId}"]`);
+  const modelInput = document.querySelector(`.cfg-model[data-agent="${agentId}"]`);
+  const status = document.getElementById(`cfg-status-${agentId}`);
+
+  const provider = {
+    id: `${agentId}-default`,
+    app_type: appType,
+    name: `${agentId} provider`,
+    base_url: urlInput?.value || '',
+    api_key: keyInput?.value || '',
+    model: modelInput?.value || '',
+    is_current: true,
+  };
+
+  try {
+    await invoke('save_provider', { provider });
+    if (status) {
+      status.textContent = '✓ 已保存';
+      status.style.color = 'var(--accent)';
+      setTimeout(() => { status.textContent = ''; }, 2000);
+    }
+  } catch (e) {
+    if (status) {
+      status.textContent = '✗ ' + e;
+      status.style.color = '#ff6464';
+    }
+  }
+};
 
 // ═══ Utilities ═══
 function getDefaultShell() {

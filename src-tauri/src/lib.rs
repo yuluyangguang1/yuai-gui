@@ -169,6 +169,27 @@ fn get_bundle_root(app: tauri::AppHandle) -> Result<String, String> {
     Ok(root.to_string_lossy().to_string())
 }
 
+/// List providers for a given agent/app_type.
+#[tauri::command]
+fn get_providers(app: tauri::AppHandle, app_type: String) -> Result<Vec<config::ProviderConfig>, String> {
+    let root = agents::bundle_root(&app);
+    config::list_providers(&root, &app_type)
+}
+
+/// Save a provider configuration.
+#[tauri::command]
+fn save_provider(app: tauri::AppHandle, provider: config::ProviderConfig) -> Result<(), String> {
+    let root = agents::bundle_root(&app);
+    config::save_provider(&root, &provider)
+}
+
+/// Get the active provider for an agent.
+#[tauri::command]
+fn get_active_provider(app: tauri::AppHandle, app_type: String) -> Result<Option<config::ProviderConfig>, String> {
+    let root = agents::bundle_root(&app);
+    config::get_active_provider(&root, &app_type)
+}
+
 // ═══════════════════════════════════════════
 // App Entry
 // ═══════════════════════════════════════════
@@ -188,6 +209,9 @@ pub fn run() {
             pty_kill,
             list_agents,
             get_bundle_root,
+            get_providers,
+            save_provider,
+            get_active_provider,
         ])
         .run(tauri::generate_context!())
         .expect("error while running yuai-gui");
