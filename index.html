@@ -2,50 +2,27 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Yuai · 与 AI · 同在</title>
 <link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai:wght@400;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/src/styles.css">
 </head>
 <body>
-<div class="bg-noise"></div>
-
-<header class="topbar">
-  <div class="brand">
-    <span class="brand-glyph">余</span>
-    <span class="brand-text">yu.ai</span>
-    <span class="brand-tag">与 AI · 同在</span>
+<div class="app">
+  <div class="titlebar">
+    <span class="brand">yu.ai</span>
+    <span class="title-text">与 AI · 同在</span>
+    <span id="status-bar" class="status-text">加载中...</span>
   </div>
-  <div class="top-actions">
-    <button id="open-cc-switch" class="btn btn-ghost" title="打开 CC Switch 配置中心">
-      <span class="btn-icon">⚙</span> 配置中心
-    </button>
-    <button id="open-data-dir" class="btn btn-ghost" title="打开数据目录">
-      <span class="btn-icon">📂</span> 数据
-    </button>
+  <div class="layout">
+    <div class="sidebar" id="sidebar">
+      <!-- Dynamic: rendered by JS -->
+    </div>
+    <div class="main-panel" id="main-panel">
+      <!-- Dynamic: rendered by JS -->
+    </div>
   </div>
-</header>
-
-<main class="hero-area">
-  <div class="hero">
-    <div class="hero-glyph">器</div>
-    <h1 class="hero-title">四 器 各 司 其 用</h1>
-    <p class="hero-sub">openclaw · hermes · claude · codex</p>
-  </div>
-
-  <div id="tool-grid" class="tool-grid">
-    <div class="loading">加载中…</div>
-  </div>
-
-  <footer class="footnote">
-    <span>插上即用 · 数据随身 · 拔走无痕</span>
-    <span class="dot">·</span>
-    <span>MIT</span>
-  </footer>
-</main>
-
-<div id="toast" class="toast hidden"></div>
-
+</div>
 <script type="module" src="/src/main.js"></script>
 </body>
 </html>

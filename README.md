@@ -15,7 +15,7 @@ A Tauri-based unified launcher for the yu.ai portable AI toolkit (openclaw / her
 - **状态可视化** — 每个工具卡片显示「未安装 / 待配置 / 就绪」
 - **一键启动** — 点击启动按钮，自动开终端运行对应工具
 - **数据隔离** — 所有数据在 `data/` 目录，便携友好
-- **跨平台** — Windows · macOS (arm64+x64) · Linux
+- **Windows · macOS** — Windows x64 / macOS arm64 + x64
 
 ---
 
@@ -58,7 +58,6 @@ yuai-gui/
 - Node.js 20+
 - Rust 1.77+
 - Windows: Microsoft C++ Build Tools
-- Linux: `libwebkit2gtk-4.1-dev` 等（见 CI 配置）
 - macOS: Xcode Command Line Tools
 
 ### 启动开发模式

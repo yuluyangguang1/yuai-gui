@@ -1,154 +1,177 @@
-use std::path::{Path, PathBuf};
-use std::process::Command;
-use serde::{Deserialize, Serialize};
-use tauri::Manager;
+use std::collections::HashMap;
+use std::io::{Read, Write};
+use std::path::PathBuf;
+use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::{Arc, Mutex, RwLock};
+use std::thread;
 
-mod tools;
+use portable_pty::{native_pty_system, CommandBuilder, PtySize};
+use serde::{Deserialize, Serialize};
+use tauri::{ipc::Channel, Manager};
+
+mod agents;
 mod config;
 
+// ═══════════════════════════════════════════
+// PTY Session Management
+// ═══════════════════════════════════════════
+
+struct PtySession {
+    writer: Arc<Mutex<Box<dyn Write + Send>>>,
+    #[allow(dead_code)]
+    killer: Mutex<Box<dyn portable_pty::ChildKiller + Send + Sync>>,
+}
+
+struct AppState {
+    sessions: RwLock<HashMap<u32, Arc<PtySession>>>,
+    next_id: AtomicU32,
+}
+
+impl Default for AppState {
+    fn default() -> Self {
+        Self {
+            sessions: RwLock::new(HashMap::new()),
+            next_id: AtomicU32::new(1),
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ToolStatus {
+pub struct AgentDef {
     pub id: String,
-    pub display_name: String,
+    pub name: String,
+    pub chinese_name: String,
     pub glyph: String,
-    pub motto: String,
-    pub binary_present: bool,
-    pub configured: bool,
-    pub version: Option<String>,
+    pub color: String,
+    pub specialty: String,
+    pub binary: String,
+    pub config_type: String,
+    pub enabled: bool,
+    pub in_group: bool,
 }
 
-/// Resolve the bundle root directory.
-/// In dev: the parent of src-tauri/ (i.e. project root). 
-/// In release: the directory of the executable.
-fn bundle_root(app: &tauri::AppHandle) -> PathBuf {
-    if let Ok(exe) = std::env::current_exe() {
-        if let Some(p) = exe.parent() {
-            return p.to_path_buf();
-        }
-    }
-    app.path().resource_dir().unwrap_or_else(|_| PathBuf::from("."))
-}
+// ═══════════════════════════════════════════
+// Tauri Commands
+// ═══════════════════════════════════════════
 
+/// Spawn a PTY process. Returns session ID.
+/// `on_data` channel streams stdout bytes to the frontend.
 #[tauri::command]
-fn list_tools(app: tauri::AppHandle) -> Result<Vec<ToolStatus>, String> {
-    let root = bundle_root(&app);
-    Ok(tools::all_tools()
-        .into_iter()
-        .map(|t| {
-            let bin = t.resolve_binary(&root);
-            let configured = config::is_tool_configured(&t.id, &root);
-            ToolStatus {
-                id: t.id.to_string(),
-                display_name: t.display_name.to_string(),
-                glyph: t.glyph.to_string(),
-                motto: t.motto.to_string(),
-                binary_present: bin.as_ref().map(|p| p.exists()).unwrap_or(false),
-                configured,
-                version: None,
-            }
+fn pty_spawn(
+    state: tauri::State<AppState>,
+    cmd: String,
+    args: Vec<String>,
+    cwd: Option<String>,
+    cols: u16,
+    rows: u16,
+    on_data: Channel<String>,
+) -> Result<u32, String> {
+    let pty_system = native_pty_system();
+
+    let pair = pty_system
+        .openpty(PtySize {
+            rows,
+            cols,
+            pixel_width: 0,
+            pixel_height: 0,
         })
-        .collect())
-}
+        .map_err(|e| format!("openpty failed: {}", e))?;
 
-#[tauri::command]
-fn launch_tool(app: tauri::AppHandle, tool_id: String) -> Result<String, String> {
-    let root = bundle_root(&app);
-    let tool = tools::all_tools()
-        .into_iter()
-        .find(|t| t.id == tool_id)
-        .ok_or_else(|| format!("unknown tool: {}", tool_id))?;
-
-    let bin = tool
-        .resolve_binary(&root)
-        .ok_or_else(|| format!("no binary path for {}", tool_id))?;
-
-    if !bin.exists() {
-        return Err(format!("binary not found: {}", bin.display()));
+    let mut command = CommandBuilder::new(&cmd);
+    for arg in &args {
+        command.arg(arg);
+    }
+    if let Some(dir) = &cwd {
+        command.cwd(dir);
     }
 
-    spawn_in_terminal(&bin, &root, &tool_id).map_err(|e| e.to_string())
+    // Set TERM for proper rendering
+    command.env("TERM", "xterm-256color");
+
+    let child = pair
+        .slave
+        .spawn_command(command)
+        .map_err(|e| format!("spawn failed: {}", e))?;
+
+    let id = state.next_id.fetch_add(1, Ordering::Relaxed);
+
+    let writer = Arc::new(Mutex::new(pair.master.take_writer().map_err(|e| e.to_string())?));
+    let killer = Mutex::new(child.clone_killer());
+
+    let session = Arc::new(PtySession { writer, killer });
+    state.sessions.write().unwrap().insert(id, session);
+
+    // Reader thread: PTY stdout → Channel → frontend xterm.js
+    let mut reader = pair.master.try_clone_reader().map_err(|e| e.to_string())?;
+    thread::spawn(move || {
+        let mut buf = [0u8; 8192];
+        loop {
+            match reader.read(&mut buf) {
+                Ok(0) => break,
+                Ok(n) => {
+                    // Send as base64 to avoid UTF-8 issues with raw bytes
+                    let data = String::from_utf8_lossy(&buf[..n]).to_string();
+                    let _ = on_data.send(data);
+                }
+                Err(_) => break,
+            }
+        }
+    });
+
+    log::info!("pty_spawn id={} cmd={} cols={} rows={}", id, cmd, cols, rows);
+    Ok(id)
 }
 
+/// Write data to a PTY session's stdin.
 #[tauri::command]
-fn launch_cc_switch(app: tauri::AppHandle) -> Result<String, String> {
-    let root = bundle_root(&app);
-    let bin = tools::cc_switch_path(&root)
-        .ok_or_else(|| "cc-switch binary not found".to_string())?;
-    if !bin.exists() {
-        return Err(format!("cc-switch not found: {}", bin.display()));
-    }
-
-    // cc-switch is a GUI app — just spawn it directly
-    Command::new(&bin)
-        .current_dir(&root)
-        .spawn()
-        .map_err(|e| format!("failed to spawn cc-switch: {}", e))?;
-
-    Ok(format!("cc-switch launched: {}", bin.display()))
+fn pty_write(state: tauri::State<AppState>, id: u32, data: String) -> Result<(), String> {
+    let sessions = state.sessions.read().unwrap();
+    let session = sessions.get(&id).ok_or("session not found")?;
+    let mut writer = session.writer.lock().unwrap();
+    writer
+        .write_all(data.as_bytes())
+        .map_err(|e| e.to_string())?;
+    writer.flush().map_err(|e| e.to_string())?;
+    Ok(())
 }
 
+/// Resize a PTY session.
 #[tauri::command]
-fn open_data_dir(app: tauri::AppHandle) -> Result<(), String> {
-    let root = bundle_root(&app);
-    let data = root.join("data");
-    std::fs::create_dir_all(&data).map_err(|e| e.to_string())?;
-    open_in_file_manager(&data).map_err(|e| e.to_string())
+fn pty_resize(state: tauri::State<AppState>, id: u32, cols: u16, rows: u16) -> Result<(), String> {
+    // portable-pty resize requires master access which we don't store separately.
+    // For Phase 0, resize is a no-op. Phase 1 will store master handle.
+    let _ = (state, id, cols, rows);
+    Ok(())
 }
 
-#[cfg(target_os = "windows")]
-fn spawn_in_terminal(bin: &Path, cwd: &Path, _tool_id: &str) -> std::io::Result<String> {
-    // cmd /k keeps the window open after the program exits so users can read errors
-    Command::new("cmd")
-        .args(["/c", "start", "", "cmd", "/k"])
-        .arg(bin)
-        .current_dir(cwd)
-        .spawn()?;
-    Ok(format!("launched in terminal: {}", bin.display()))
-}
-
-#[cfg(target_os = "macos")]
-fn spawn_in_terminal(bin: &Path, _cwd: &Path, _tool_id: &str) -> std::io::Result<String> {
-    Command::new("open")
-        .args(["-a", "Terminal"])
-        .arg(bin)
-        .spawn()?;
-    Ok(format!("launched in terminal: {}", bin.display()))
-}
-
-#[cfg(target_os = "linux")]
-fn spawn_in_terminal(bin: &Path, cwd: &Path, _tool_id: &str) -> std::io::Result<String> {
-    let bin_str = bin.to_string_lossy().to_string();
-    // Try common terminals in order
-    for term in &["x-terminal-emulator", "gnome-terminal", "konsole", "xterm"] {
-        if Command::new("which").arg(term).output().map(|o| o.status.success()).unwrap_or(false) {
-            Command::new(term)
-                .arg("-e")
-                .arg(format!("bash -c '{}; exec bash'", bin_str.replace('\'', "'\\''")))
-                .current_dir(cwd)
-                .spawn()?;
-            return Ok(format!("launched in {}: {}", term, bin_str));
+/// Kill a PTY session.
+#[tauri::command]
+fn pty_kill(state: tauri::State<AppState>, id: u32) -> Result<(), String> {
+    let mut sessions = state.sessions.write().unwrap();
+    if let Some(session) = sessions.remove(&id) {
+        if let Ok(mut killer) = session.killer.lock() {
+            let _ = killer.kill();
         }
     }
-    Err(std::io::Error::new(std::io::ErrorKind::NotFound, "no terminal emulator found"))
-}
-
-#[cfg(target_os = "windows")]
-fn open_in_file_manager(path: &Path) -> std::io::Result<()> {
-    Command::new("explorer").arg(path).spawn()?;
     Ok(())
 }
 
-#[cfg(target_os = "macos")]
-fn open_in_file_manager(path: &Path) -> std::io::Result<()> {
-    Command::new("open").arg(path).spawn()?;
-    Ok(())
+/// List registered agents from agents.json.
+#[tauri::command]
+fn list_agents(app: tauri::AppHandle) -> Result<Vec<AgentDef>, String> {
+    agents::load_agents(&app)
 }
 
-#[cfg(target_os = "linux")]
-fn open_in_file_manager(path: &Path) -> std::io::Result<()> {
-    Command::new("xdg-open").arg(path).spawn()?;
-    Ok(())
+/// Get the bundle root directory.
+#[tauri::command]
+fn get_bundle_root(app: tauri::AppHandle) -> Result<String, String> {
+    let root = agents::bundle_root(&app);
+    Ok(root.to_string_lossy().to_string())
 }
+
+// ═══════════════════════════════════════════
+// App Entry
+// ═══════════════════════════════════════════
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -157,11 +180,14 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_process::init())
+        .manage(AppState::default())
         .invoke_handler(tauri::generate_handler![
-            list_tools,
-            launch_tool,
-            launch_cc_switch,
-            open_data_dir
+            pty_spawn,
+            pty_write,
+            pty_resize,
+            pty_kill,
+            list_agents,
+            get_bundle_root,
         ])
         .run(tauri::generate_context!())
         .expect("error while running yuai-gui");
