@@ -1,12 +1,14 @@
 import { invoke, Channel } from '@tauri-apps/api/core';
+import { open } from '@tauri-apps/plugin-dialog';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
 
 // ═══ State ═══
 let agents = [];
-let activePanel = 'group'; // 'group' | agent id
-let sessions = {}; // agentId → { ptyId, terminal, fitAddon }
+let activePanel = 'group'; // 'group' | agent id | 'config'
+let sessions = {}; // agentId → { ptyId, terminal, fitAddon, container }
+let workspace = null; // current workspace path
 
 // ═══ DOM refs ═══
 const sidebar = document.getElementById('sidebar');
@@ -17,9 +19,15 @@ const statusBar = document.getElementById('status-bar');
 async function init() {
   try {
     agents = await invoke('list_agents');
+    // Try to load saved workspace
+    workspace = localStorage.getItem('yuai_workspace') || null;
     renderSidebar();
-    renderGroupPanel();
-    updateStatus('就绪');
+    if (!workspace) {
+      renderWorkspaceSelector();
+    } else {
+      renderGroupPanel();
+    }
+    updateStatus(workspace ? `工作区: ${shortenPath(workspace)}` : '请选择工作区');
   } catch (e) {
     console.error('init failed:', e);
     mainPanel.innerHTML = `<div class="error">初始化失败: ${e}</div>`;
@@ -54,7 +62,63 @@ function renderSidebar() {
   });
 }
 
-// ═══ Panel Switching ═══
+// ═══ Workspace Selector ═══
+function renderWorkspaceSelector() {
+  mainPanel.innerHTML = `
+    <div class="workspace-selector">
+      <div style="font-family:var(--brush);font-size:3rem;color:var(--accent);opacity:.6;margin-bottom:16px">合</div>
+      <h2 style="font-family:var(--serif);margin-bottom:8px">选择工作区</h2>
+      <p style="opacity:.5;font-size:.85rem;margin-bottom:24px">所有 Agent 将在同一个目录中协作</p>
+      <button class="workspace-btn" onclick="selectWorkspace()">📂 选择项目目录</button>
+      ${getRecentWorkspaces().length > 0 ? `
+        <div class="recent-workspaces">
+          <span style="font-family:var(--mono);font-size:.65rem;opacity:.4;margin-bottom:8px;display:block">最近使用</span>
+          ${getRecentWorkspaces().map(w => `
+            <button class="recent-ws-btn" onclick="setWorkspace('${w.replace(/\\/g, '\\\\')}')">${shortenPath(w)}</button>
+          `).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+window.selectWorkspace = async function() {
+  try {
+    const selected = await open({ directory: true, multiple: false, title: '选择工作区目录' });
+    if (selected) {
+      setWorkspace(selected);
+    }
+  } catch (e) {
+    console.error('select workspace:', e);
+  }
+};
+
+window.setWorkspace = function(path) {
+  workspace = path;
+  localStorage.setItem('yuai_workspace', path);
+  // Save to recent list
+  let recent = getRecentWorkspaces();
+  recent = [path, ...recent.filter(w => w !== path)].slice(0, 5);
+  localStorage.setItem('yuai_recent_workspaces', JSON.stringify(recent));
+  updateStatus(`工作区: ${shortenPath(path)}`);
+  renderGroupPanel();
+};
+
+function getRecentWorkspaces() {
+  try {
+    return JSON.parse(localStorage.getItem('yuai_recent_workspaces') || '[]');
+  } catch { return []; }
+}
+
+function shortenPath(p) {
+  if (!p) return '';
+  const parts = p.replace(/\\/g, '/').split('/');
+  if (parts.length <= 3) return p;
+  return '.../' + parts.slice(-2).join('/');
+}
+
+// ═══ Panel Switching (improved: preserves terminal sessions) ═══
+// ═══ Panel Switching (improved: preserves terminal sessions) ═══
 function switchPanel(panelId) {
   activePanel = panelId;
 
@@ -62,6 +126,13 @@ function switchPanel(panelId) {
   sidebar.querySelectorAll('.agent-btn, .nav-btn').forEach(b => b.classList.remove('active'));
   const activeBtn = sidebar.querySelector(`[data-id="${panelId}"], [data-panel="${panelId}"]`);
   if (activeBtn) activeBtn.classList.add('active');
+
+  // Detach any currently visible terminal (don't destroy it)
+  Object.values(sessions).forEach(s => {
+    if (s.terminal && s.terminal.element) {
+      s.terminal.element.style.display = 'none';
+    }
+  });
 
   if (panelId === 'group') {
     renderGroupPanel();
@@ -137,30 +208,44 @@ function renderAgentPanel(agentId) {
   });
 }
 
-// ═══ Terminal Management ═══
+// ═══ Terminal Management (session persistence) ═══
 async function initTerminal(agentId) {
   const container = document.getElementById(`term-${agentId}`);
   if (!container) return;
 
-  // If session already exists, just reattach
-  if (sessions[agentId]) {
+  // If session already exists, reattach terminal to new container
+  if (sessions[agentId] && sessions[agentId].terminal) {
+    const { terminal, fitAddon } = sessions[agentId];
     container.innerHTML = '';
-    sessions[agentId].terminal.open(container);
-    sessions[agentId].fitAddon.fit();
+    // xterm.js requires re-opening in new container
+    terminal.open(container);
+    terminal.element.style.display = '';
+    setTimeout(() => fitAddon.fit(), 50);
     return;
   }
 
-  // Create new terminal
+  // Create new terminal instance
+  const agent = agents.find(a => a.id === agentId);
   const terminal = new Terminal({
     theme: {
       background: '#0a1a1a',
       foreground: '#ffe6cb',
       cursor: '#00ffc8',
+      cursorAccent: '#041c1c',
       selectionBackground: '#00ffc840',
+      black: '#0a1a1a',
+      brightBlack: '#7a9a90',
+      green: '#00ffc8',
+      brightGreen: '#50c878',
+      red: '#ff6464',
+      yellow: '#ffc857',
+      blue: '#4285f4',
+      magenta: '#a064ff',
     },
-    fontFamily: "'Courier New', 'Menlo', monospace",
+    fontFamily: "'Courier New', 'Menlo', 'Consolas', monospace",
     fontSize: 13,
     cursorBlink: true,
+    scrollback: 5000,
   });
 
   const fitAddon = new FitAddon();
@@ -169,11 +254,9 @@ async function initTerminal(agentId) {
 
   container.innerHTML = '';
   terminal.open(container);
-  fitAddon.fit();
+  setTimeout(() => fitAddon.fit(), 50);
 
-  // Spawn Agent PTY (uses spawn_agent which resolves binary + injects config)
-  const agent = agents.find(a => a.id === agentId);
-
+  // Spawn Agent PTY
   const onData = new Channel();
   onData.onmessage = (data) => {
     terminal.write(data);
@@ -182,7 +265,7 @@ async function initTerminal(agentId) {
   try {
     const ptyId = await invoke('spawn_agent', {
       agentId,
-      cwd: null,
+      cwd: workspace,
       cols: terminal.cols,
       rows: terminal.rows,
       onData,
@@ -195,24 +278,29 @@ async function initTerminal(agentId) {
       invoke('pty_write', { id: ptyId, data });
     });
 
-    // Update status dot
-    const dot = sidebar.querySelector(`[data-id="${agentId}"] .status-dot`);
-    if (dot) {
-      dot.classList.remove('off');
-      dot.classList.add('ready');
-    }
-
-    updateStatus(`${agent.name} 已启动`);
+    // Update sidebar status dot
+    updateAgentStatus(agentId, 'ready');
+    updateStatus(`${agent.name} 已启动 · ${shortenPath(workspace)}`);
   } catch (e) {
     terminal.write(`\r\n\x1b[31m启动失败: ${e}\x1b[0m\r\n`);
+    terminal.write(`\r\n\x1b[33m提示: 请确认已在配置面板填写 API Key，且 bundle/ 中有对应二进制\x1b[0m\r\n`);
+    sessions[agentId] = { ptyId: null, terminal, fitAddon };
+    updateAgentStatus(agentId, 'error');
     updateStatus(`${agent.name} 启动失败`);
   }
 
   // Handle resize
   const resizeObserver = new ResizeObserver(() => {
-    fitAddon.fit();
+    if (fitAddon) fitAddon.fit();
   });
   resizeObserver.observe(container);
+}
+
+function updateAgentStatus(agentId, status) {
+  const dot = sidebar.querySelector(`[data-id="${agentId}"] .status-dot`);
+  if (!dot) return;
+  dot.classList.remove('off', 'ready', 'busy');
+  dot.classList.add(status === 'ready' ? 'ready' : status === 'busy' ? 'busy' : 'off');
 }
 
 // ═══ Message Sending ═══
