@@ -116,3 +116,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--mid)}
 /* Execution output */
 .exec-output{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-family:var(--mono);font-size:.72rem;line-height:1.6;color:var(--mid);opacity:.8;white-space:pre-wrap;word-break:break-all;max-height:200px;overflow-y:auto;margin-top:8px}
 .exec-hint{font-family:var(--mono);font-size:.6rem;opacity:.35;margin-top:6px}
+
+/* Templates */
+.template-grid{display:flex;flex-wrap:wrap;gap:8px}
+.template-btn{font-family:var(--mono);font-size:.7rem;padding:6px 12px;border:1px solid var(--border);background:transparent;color:var(--mid);border-radius:5px;cursor:pointer;opacity:.7;transition:all .15s}
+.template-btn:hover{opacity:1;border-color:var(--accent);color:var(--accent)}
+.shared-key-section,.add-agent-section{margin-top:20px}
+.shared-key-section h3,.add-agent-section h3,.template-section h3{border-bottom:1px solid var(--border);padding-bottom:8px}

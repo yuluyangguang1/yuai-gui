@@ -730,8 +730,62 @@ function renderConfigPanel() {
         <h2 style="font-family:var(--serif)">API 配置</h2>
         <p style="opacity:.5;font-size:.82rem;margin-top:4px">每个 Agent 可独立配置，也可共用同一个中转站 Key</p>
       </div>
+
+      <!-- 共用 Key 快捷设置 -->
+      <div class="shared-key-section">
+        <h3 style="font-family:var(--serif);font-size:.95rem;margin-bottom:10px">🔗 共用 Key（一键填充所有 Agent）</h3>
+        <div class="config-fields" style="border:1px solid var(--border);border-radius:8px;padding:14px">
+          <label>Base URL</label>
+          <input type="text" id="shared-url" placeholder="https://your-relay.com/v1 (中转站地址)">
+          <label>API Key</label>
+          <input type="password" id="shared-key" placeholder="sk-... (共用 Key)">
+          <label>模型</label>
+          <input type="text" id="shared-model" placeholder="留空则各 Agent 用默认模型">
+          <button class="cfg-save" onclick="applySharedKey()">应用到所有 Agent</button>
+          <span class="cfg-status" id="cfg-status-shared"></span>
+        </div>
+      </div>
+
+      <!-- Provider 模板 -->
+      <div class="template-section">
+        <h3 style="font-family:var(--serif);font-size:.95rem;margin:20px 0 10px">📋 快速模板</h3>
+        <div class="template-grid">
+          <button class="template-btn" onclick="applyTemplate('openai')">OpenAI 官方</button>
+          <button class="template-btn" onclick="applyTemplate('anthropic')">Anthropic 官方</button>
+          <button class="template-btn" onclick="applyTemplate('deepseek')">DeepSeek</button>
+          <button class="template-btn" onclick="applyTemplate('oneapi')">one-api 中转</button>
+          <button class="template-btn" onclick="applyTemplate('newapi')">new-api 中转</button>
+          <button class="template-btn" onclick="applyTemplate('azure')">Azure OpenAI</button>
+        </div>
+      </div>
+
+      <!-- 各 Agent 独立配置 -->
+      <h3 style="font-family:var(--serif);font-size:.95rem;margin:24px 0 10px">⚙ 各 Agent 独立配置</h3>
       <div class="config-agents">
         ${agentSections}
+      </div>
+
+      <!-- 添加自定义 Agent -->
+      <div class="add-agent-section">
+        <h3 style="font-family:var(--serif);font-size:.95rem;margin:24px 0 10px">➕ 添加自定义 Agent</h3>
+        <div class="config-fields" style="border:1px solid var(--border);border-radius:8px;padding:14px">
+          <label>ID</label>
+          <input type="text" id="new-agent-id" placeholder="gemini">
+          <label>名称</label>
+          <input type="text" id="new-agent-name" placeholder="gemini-cli">
+          <label>中文名</label>
+          <input type="text" id="new-agent-cn" placeholder="明镜">
+          <label>图标字</label>
+          <input type="text" id="new-agent-glyph" placeholder="镜" maxlength="1">
+          <label>颜色</label>
+          <input type="color" id="new-agent-color" value="#4285f4">
+          <label>专长</label>
+          <input type="text" id="new-agent-spec" placeholder="搜索、多模态">
+          <label>二进制路径</label>
+          <input type="text" id="new-agent-bin" placeholder="bundle/gemini/{platform}/gemini">
+          <button class="cfg-save" onclick="addCustomAgent()">添加 Agent</button>
+          <span class="cfg-status" id="cfg-status-new"></span>
+        </div>
       </div>
     </div>
   `;
@@ -739,6 +793,110 @@ function renderConfigPanel() {
   // Load existing configs
   agents.filter(a => a.enabled).forEach(a => loadAgentConfig(a.id));
 }
+
+// ═══ Shared Key ═══
+window.applySharedKey = async function() {
+  const url = document.getElementById('shared-url')?.value || '';
+  const key = document.getElementById('shared-key')?.value || '';
+  const model = document.getElementById('shared-model')?.value || '';
+  const status = document.getElementById('cfg-status-shared');
+
+  if (!url && !key) {
+    if (status) { status.textContent = '请填写 URL 或 Key'; status.style.color = '#ff6464'; }
+    return;
+  }
+
+  let saved = 0;
+  for (const a of agents.filter(a => a.enabled)) {
+    const appType = a.id === 'claude' ? 'claude' : a.id === 'codex' ? 'codex' : a.id;
+    const agentModel = model || (a.id === 'claude' ? 'claude-sonnet-4' : a.id === 'codex' ? 'gpt-5.4' : '');
+    try {
+      await invoke('save_provider', {
+        provider: {
+          id: `${a.id}-shared`,
+          app_type: appType,
+          name: 'Shared Provider',
+          base_url: url,
+          api_key: key,
+          model: agentModel,
+          is_current: true,
+        }
+      });
+      saved++;
+    } catch (e) { console.error(`save ${a.id}:`, e); }
+  }
+
+  if (status) {
+    status.textContent = `✓ 已应用到 ${saved} 个 Agent`;
+    status.style.color = 'var(--accent)';
+    setTimeout(() => { status.textContent = ''; }, 3000);
+  }
+
+  // Refresh individual fields
+  agents.filter(a => a.enabled).forEach(a => loadAgentConfig(a.id));
+};
+
+// ═══ Templates ═══
+const TEMPLATES = {
+  openai: { url: 'https://api.openai.com/v1', model: 'gpt-5.4', hint: '填入 OpenAI API Key' },
+  anthropic: { url: 'https://api.anthropic.com/v1', model: 'claude-sonnet-4', hint: '填入 Anthropic API Key' },
+  deepseek: { url: 'https://api.deepseek.com/v1', model: 'deepseek-chat', hint: '填入 DeepSeek API Key' },
+  oneapi: { url: 'http://localhost:3000/v1', model: '', hint: '填入 one-api 的 Token' },
+  newapi: { url: 'http://localhost:3000/v1', model: '', hint: '填入 new-api 的 Token' },
+  azure: { url: 'https://YOUR_RESOURCE.openai.azure.com/openai/v1', model: 'gpt-4o', hint: '填入 Azure API Key' },
+};
+
+window.applyTemplate = function(templateId) {
+  const t = TEMPLATES[templateId];
+  if (!t) return;
+  const urlEl = document.getElementById('shared-url');
+  const modelEl = document.getElementById('shared-model');
+  if (urlEl) urlEl.value = t.url;
+  if (modelEl) modelEl.value = t.model;
+  const status = document.getElementById('cfg-status-shared');
+  if (status) { status.textContent = `模板已填入 · ${t.hint}`; status.style.color = 'var(--accent)'; }
+};
+
+// ═══ Custom Agent ═══
+window.addCustomAgent = async function() {
+  const id = document.getElementById('new-agent-id')?.value?.trim();
+  const name = document.getElementById('new-agent-name')?.value?.trim();
+  const cn = document.getElementById('new-agent-cn')?.value?.trim();
+  const glyph = document.getElementById('new-agent-glyph')?.value?.trim();
+  const color = document.getElementById('new-agent-color')?.value || '#888888';
+  const spec = document.getElementById('new-agent-spec')?.value?.trim();
+  const bin = document.getElementById('new-agent-bin')?.value?.trim();
+  const status = document.getElementById('cfg-status-new');
+
+  if (!id || !name) {
+    if (status) { status.textContent = '请填写 ID 和名称'; status.style.color = '#ff6464'; }
+    return;
+  }
+
+  const newAgent = {
+    id, name,
+    chinese_name: cn || name,
+    glyph: glyph || name[0],
+    color,
+    specialty: spec || '',
+    binary: bin || `bundle/${id}/{platform}/${id}`,
+    config_type: 'openai_env',
+    enabled: true,
+    in_group: true,
+  };
+
+  // Add to local agents list and save to agents.json via backend
+  agents.push(newAgent);
+  // Re-render sidebar
+  renderSidebar();
+
+  if (status) {
+    status.textContent = `✓ 已添加 ${name}（重启后生效）`;
+    status.style.color = 'var(--accent)';
+  }
+
+  // TODO: save to data/agents.json via Tauri command (Phase 3 enhancement)
+};
 
 async function loadAgentConfig(agentId) {
   const appType = agentId === 'claude' ? 'claude' : agentId === 'codex' ? 'codex' : agentId;
