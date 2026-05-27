@@ -144,16 +144,22 @@ function switchPanel(panelId) {
 }
 
 // ═══ Group Chat Panel ═══
+let groupMessagesHtml = ''; // Persist across panel switches
+
 function renderGroupPanel() {
+  if (!groupMessagesHtml) {
+    groupMessagesHtml = `
+      <div class="system-msg">
+        <div style="font-family:var(--brush);font-size:2rem;color:var(--accent);opacity:.6;margin-bottom:8px">合</div>
+        群聊模式 · 四器协作<br>
+        <span style="opacity:.5;font-size:.8rem">输入需求，所有已启用的 Agent 将参与讨论${workspace ? '<br>工作区: ' + shortenPath(workspace) : ''}</span>
+      </div>
+    `;
+  }
+
   mainPanel.innerHTML = `
     <div class="chat-panel">
-      <div class="chat-messages" id="group-messages">
-        <div class="system-msg">
-          <div style="font-family:var(--brush);font-size:2rem;color:var(--accent);opacity:.6;margin-bottom:8px">合</div>
-          群聊模式 · 四器协作<br>
-          <span style="opacity:.5;font-size:.8rem">输入需求，所有已启用的 Agent 将参与讨论</span>
-        </div>
-      </div>
+      <div class="chat-messages" id="group-messages">${groupMessagesHtml}</div>
       <div class="chat-input">
         <span class="mode-tag">群聊</span>
         <input type="text" id="group-input" placeholder="描述你的需求... (所有 Agent 参与讨论)">
@@ -169,7 +175,22 @@ function renderGroupPanel() {
       sendGroupMessage();
     }
   });
+
+  // Scroll to bottom
+  const msgs = document.getElementById('group-messages');
+  if (msgs) msgs.scrollTop = msgs.scrollHeight;
 }
+
+// Override innerHTML updates to also save to groupMessagesHtml
+const _origAddSystemMessage = function(html) {
+  const messages = document.getElementById('group-messages');
+  if (messages) {
+    messages.innerHTML += `<div class="system-msg">${html}</div>`;
+    messages.scrollTop = messages.scrollHeight;
+    groupMessagesHtml = messages.innerHTML;
+  }
+};
+
 
 // ═══ Single Agent Panel (with embedded terminal) ═══
 function renderAgentPanel(agentId) {
@@ -421,10 +442,19 @@ async function runDiscussion() {
 
     updateAgentStatus(speaker.agent_id, 'ready');
     messages.scrollTop = messages.scrollHeight;
+    groupMessagesHtml = messages.innerHTML; // Persist
   }
 }
 
 async function spawnAgentForGroup(agentId) {
+  // If agent already has a PTY session (from single-chat), reuse it
+  if (sessions[agentId] && sessions[agentId].ptyId) {
+    // Just ensure the buffer callback is set up
+    if (!window._agentBuffers) window._agentBuffers = {};
+    if (!(agentId in window._agentBuffers)) window._agentBuffers[agentId] = '';
+    return;
+  }
+
   const onData = new Channel();
   // Buffer stdout for group chat capture
   if (!window._agentBuffers) window._agentBuffers = {};
@@ -448,6 +478,10 @@ async function spawnAgentForGroup(agentId) {
     if (!sessions[agentId]) sessions[agentId] = {};
     sessions[agentId].ptyId = ptyId;
     updateAgentStatus(agentId, 'ready');
+
+    // Wait for startup banner to finish (2s) before using in group chat
+    await sleep(2000);
+    window._agentBuffers[agentId] = ''; // Clear startup output
   } catch (e) {
     console.error(`spawn ${agentId} for group:`, e);
   }
@@ -641,6 +675,7 @@ function addSystemMessage(html) {
   if (messages) {
     messages.innerHTML += `<div class="system-msg">${html}</div>`;
     messages.scrollTop = messages.scrollHeight;
+    groupMessagesHtml = messages.innerHTML;
   }
 }
 
