@@ -723,7 +723,6 @@ window.sendToAgent = function(agentId) {
       sessions[agentId].terminal.write('\r\n\x1b[31mAgent 未启动，请先在配置面板设置 API Key\x1b[0m\r\n');
     }
   }
-  }
 };
 
 window.showAgentChat = function(agentId) {
