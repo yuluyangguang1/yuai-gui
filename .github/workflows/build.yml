@@ -40,11 +40,6 @@ jobs:
       - name: Install npm deps
         run: npm install
 
-      - name: Generate icons from SVG
-        run: |
-          cd src-tauri/icons
-          npx -y @tauri-apps/cli icon icon.svg || echo "icon generation skipped (already present)"
-
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
