@@ -139,7 +139,7 @@ fn parse_settings(app_type: &str, json_str: &str) -> (String, String, String) {
                     .unwrap_or("https://api.openai.com/v1")
                     .to_string();
                 let model = config_str.lines()
-                    .find(|l| l.starts_with("model ") || l.starts_with("model="))
+                    .find(|l| l.trim().starts_with("model") && !l.contains("model_provider") && !l.contains("model_providers"))
                     .and_then(|l| l.split('"').nth(1))
                     .unwrap_or("gpt-5.4")
                     .to_string();
