@@ -34,6 +34,34 @@ pub fn load_agents(app: &tauri::AppHandle) -> Result<Vec<AgentDef>, String> {
     }
 }
 
+/// Resolve the actual binary path from the template in agents.json.
+/// Replaces {platform} with the current platform directory name.
+pub fn resolve_binary_path(root: &std::path::Path, binary_template: &str) -> PathBuf {
+    let platform = current_platform();
+    let resolved = binary_template.replace("{platform}", platform);
+
+    // Add .exe on Windows
+    let resolved = if cfg!(windows) && !resolved.ends_with(".exe") {
+        format!("{}.exe", resolved)
+    } else {
+        resolved
+    };
+
+    root.join(resolved)
+}
+
+fn current_platform() -> &'static str {
+    if cfg!(all(target_os = "windows", target_arch = "x86_64")) {
+        "windows-x64"
+    } else if cfg!(all(target_os = "macos", target_arch = "aarch64")) {
+        "macos-arm64"
+    } else if cfg!(all(target_os = "macos", target_arch = "x86_64")) {
+        "macos-x64"
+    } else {
+        "unknown"
+    }
+}
+
 fn default_agents() -> Vec<AgentDef> {
     vec![
         AgentDef {

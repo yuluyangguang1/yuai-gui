@@ -171,9 +171,8 @@ async function initTerminal(agentId) {
   terminal.open(container);
   fitAddon.fit();
 
-  // Spawn PTY
+  // Spawn Agent PTY (uses spawn_agent which resolves binary + injects config)
   const agent = agents.find(a => a.id === agentId);
-  const shell = getDefaultShell();
 
   const onData = new Channel();
   onData.onmessage = (data) => {
@@ -181,9 +180,8 @@ async function initTerminal(agentId) {
   };
 
   try {
-    const ptyId = await invoke('pty_spawn', {
-      cmd: shell,
-      args: [],
+    const ptyId = await invoke('spawn_agent', {
+      agentId,
       cwd: null,
       cols: terminal.cols,
       rows: terminal.rows,

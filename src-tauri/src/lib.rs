@@ -156,6 +156,114 @@ fn pty_kill(state: tauri::State<AppState>, id: u32) -> Result<(), String> {
     Ok(())
 }
 
+/// Spawn an Agent by ID — resolves binary, injects config, starts PTY.
+#[tauri::command]
+fn spawn_agent(
+    app: tauri::AppHandle,
+    state: tauri::State<AppState>,
+    agent_id: String,
+    cwd: Option<String>,
+    cols: u16,
+    rows: u16,
+    on_data: Channel<String>,
+) -> Result<u32, String> {
+    let root = agents::bundle_root(&app);
+    let all_agents = agents::load_agents(&app)?;
+    let agent = all_agents.into_iter().find(|a| a.id == agent_id)
+        .ok_or_else(|| format!("agent not found: {}", agent_id))?;
+
+    // Resolve binary path
+    let binary_path = agents::resolve_binary_path(&root, &agent.binary);
+    if !binary_path.exists() {
+        return Err(format!("binary not found: {} (looked at {})", agent_id, binary_path.display()));
+    }
+
+    // Get active provider config
+    let app_type = match agent_id.as_str() {
+        "claude" => "claude",
+        "codex" => "codex",
+        _ => &agent_id,
+    };
+    let provider = config::get_active_provider(&root, app_type)?;
+
+    // Build PTY
+    let pty_system = native_pty_system();
+    let pair = pty_system
+        .openpty(PtySize { rows, cols, pixel_width: 0, pixel_height: 0 })
+        .map_err(|e| format!("openpty: {}", e))?;
+
+    let mut command = CommandBuilder::new(&binary_path);
+    if let Some(dir) = &cwd {
+        command.cwd(dir);
+    }
+    command.env("TERM", "xterm-256color");
+
+    // Inject config based on agent type
+    if let Some(ref p) = provider {
+        match agent.config_type.as_str() {
+            "anthropic_env" => {
+                command.env("ANTHROPIC_BASE_URL", &p.base_url);
+                command.env("ANTHROPIC_API_KEY", &p.api_key);
+                if !p.model.is_empty() {
+                    command.env("ANTHROPIC_MODEL", &p.model);
+                }
+            }
+            "codex_toml" => {
+                // Write auth.json for codex
+                let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+                let codex_dir = home.join(".codex");
+                let _ = std::fs::create_dir_all(&codex_dir);
+                let auth = serde_json::json!({"OPENAI_API_KEY": p.api_key});
+                let _ = std::fs::write(codex_dir.join("auth.json"), auth.to_string());
+                if !p.base_url.is_empty() {
+                    let model = if p.model.is_empty() { "gpt-5.4" } else { &p.model };
+                    let toml = format!(
+                        "model_provider = \"custom\"\nmodel = \"{}\"\n\n[model_providers.custom]\nname = \"Custom\"\nbase_url = \"{}\"\nwire_api = \"responses\"\nenv_key = \"OPENAI_API_KEY\"",
+                        model, p.base_url
+                    );
+                    let _ = std::fs::write(codex_dir.join("config.toml"), toml);
+                }
+            }
+            "openai_env" | "custom_env" | _ => {
+                if !p.base_url.is_empty() {
+                    command.env("OPENAI_BASE_URL", &p.base_url);
+                }
+                if !p.api_key.is_empty() {
+                    command.env("OPENAI_API_KEY", &p.api_key);
+                }
+            }
+        }
+    }
+
+    let child = pair.slave.spawn_command(command)
+        .map_err(|e| format!("spawn agent {}: {}", agent_id, e))?;
+
+    let id = state.next_id.fetch_add(1, Ordering::Relaxed);
+    let writer = Arc::new(Mutex::new(pair.master.take_writer().map_err(|e| e.to_string())?));
+    let killer = Mutex::new(child.clone_killer());
+    let session = Arc::new(PtySession { writer, killer });
+    state.sessions.write().unwrap().insert(id, session);
+
+    // Reader thread
+    let mut reader = pair.master.try_clone_reader().map_err(|e| e.to_string())?;
+    thread::spawn(move || {
+        let mut buf = [0u8; 8192];
+        loop {
+            match reader.read(&mut buf) {
+                Ok(0) => break,
+                Ok(n) => {
+                    let data = String::from_utf8_lossy(&buf[..n]).to_string();
+                    let _ = on_data.send(data);
+                }
+                Err(_) => break,
+            }
+        }
+    });
+
+    log::info!("spawn_agent id={} agent={} binary={}", id, agent_id, binary_path.display());
+    Ok(id)
+}
+
 /// List registered agents from agents.json.
 #[tauri::command]
 fn list_agents(app: tauri::AppHandle) -> Result<Vec<AgentDef>, String> {
@@ -207,6 +315,7 @@ pub fn run() {
             pty_write,
             pty_resize,
             pty_kill,
+            spawn_agent,
             list_agents,
             get_bundle_root,
             get_providers,
