@@ -112,3 +112,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--mid)}
 .system-msg .actions button:hover{border-color:var(--accent);color:var(--accent)}
 .system-msg .actions button.primary{border-color:var(--accent);color:var(--accent);background:rgba(0,255,200,.06)}
 .system-msg .actions button.primary:hover{background:var(--accent);color:var(--bg)}
+
+/* Execution output */
+.exec-output{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-family:var(--mono);font-size:.72rem;line-height:1.6;color:var(--mid);opacity:.8;white-space:pre-wrap;word-break:break-all;max-height:200px;overflow-y:auto;margin-top:8px}
+.exec-hint{font-family:var(--mono);font-size:.6rem;opacity:.35;margin-top:6px}

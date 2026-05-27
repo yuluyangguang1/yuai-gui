@@ -499,13 +499,110 @@ function cleanAnsi(str) {
 window.confirmExecution = async function() {
   try {
     await invoke('group_confirm_exec', { order: null });
-    addSystemMessage('开始执行...');
+    addSystemMessage('🚀 开始执行 · 按分工顺序串行');
     updateStatus('执行中');
-    // TODO Phase 2 continued: run execution queue
+
+    // Run execution queue
+    await runExecution();
   } catch (e) {
     addSystemMessage(`错误: ${e}`);
   }
 };
+
+async function runExecution() {
+  const messages = document.getElementById('group-messages');
+
+  while (true) {
+    const agentId = await invoke('group_next_executor');
+    if (!agentId) {
+      addSystemMessage('✅ 所有任务执行完毕');
+      updateStatus('完成');
+      break;
+    }
+
+    const agent = agents.find(a => a.id === agentId);
+    if (!agent) continue;
+
+    // Show execution start
+    updateAgentStatus(agentId, 'busy');
+    const execId = `exec-${agentId}-${Date.now()}`;
+    messages.innerHTML += `
+      <div class="msg" id="${execId}">
+        <div class="avatar" style="background:${agent.color}20;color:${agent.color};border-color:${agent.color}40">${agent.glyph}</div>
+        <div class="bubble">
+          <div class="name" style="color:${agent.color}">${agent.name} · 执行中</div>
+          <span class="thinking">正在执行任务...</span>
+          <div class="exec-hint">点击侧栏「${agent.glyph}」查看实时终端输出</div>
+        </div>
+      </div>
+    `;
+    messages.scrollTop = messages.scrollHeight;
+
+    // Ensure agent is spawned
+    if (!sessions[agentId] || !sessions[agentId].ptyId) {
+      await spawnAgentForGroup(agentId);
+    }
+
+    if (sessions[agentId] && sessions[agentId].ptyId) {
+      // Build execution prompt from bus
+      const chatMessages = await invoke('group_get_messages');
+      const agentMessages = chatMessages.filter(m => m.from === agentId && m.msg_type === 'chat');
+      const task = agentMessages.length > 0
+        ? agentMessages[agentMessages.length - 1].content
+        : '执行你在讨论中承诺的任务';
+
+      const execPrompt = `请开始执行你在讨论中承诺的任务。直接操作文件和代码。\n你的任务摘要：${task}\n`;
+
+      // Clear buffer and inject execution prompt
+      window._agentBuffers[agentId] = '';
+      const startTime = Date.now();
+      await invoke('pty_write', { id: sessions[agentId].ptyId, data: execPrompt + '\n' });
+
+      // Wait for execution to complete (longer timeout: 60s)
+      const result = await captureAgentResponse(agentId, 60000);
+      const duration = Date.now() - startTime;
+
+      // Update UI
+      const execEl = document.getElementById(execId);
+      if (execEl) {
+        const preview = result.length > 300 ? result.substring(0, 300) + '...' : result;
+        execEl.innerHTML = `
+          <div class="avatar" style="background:${agent.color}20;color:${agent.color};border-color:${agent.color}40">${agent.glyph}</div>
+          <div class="bubble">
+            <div class="name" style="color:${agent.color}">${agent.name} · 执行完成 ✓</div>
+            <pre class="exec-output">${escapeHtml(preview)}</pre>
+            <div class="meta">⏱ ${(duration/1000).toFixed(1)}s</div>
+          </div>
+        `;
+      }
+
+      // Record result in bus
+      await invoke('group_agent_response', {
+        agentId,
+        content: `[执行完成] ${result.substring(0, 500)}`,
+        tokens: null,
+        model: null,
+        durationMs: duration,
+      });
+    } else {
+      const execEl = document.getElementById(execId);
+      if (execEl) {
+        execEl.querySelector('.bubble').innerHTML = `
+          <div class="name" style="color:${agent.color}">${agent.name}</div>
+          <span style="color:#ff6464">未启动，跳过执行</span>
+        `;
+      }
+    }
+
+    updateAgentStatus(agentId, 'ready');
+    messages.scrollTop = messages.scrollHeight;
+
+    // Brief pause between agents
+    await sleep(1000);
+  }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 window.continueDicussion = function() {
   const input = document.getElementById('group-input');
