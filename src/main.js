@@ -224,20 +224,98 @@ async function initTerminal(agentId) {
   const container = document.getElementById(`term-${agentId}`);
   if (!container) return;
 
-  // If session already exists, reattach terminal to new container
+  // If session already exists with a terminal, reattach
   if (sessions[agentId] && sessions[agentId].terminal) {
     const { terminal, fitAddon } = sessions[agentId];
     container.innerHTML = '';
-    // xterm.js requires re-opening in new container
     terminal.open(container);
     terminal.element.style.display = '';
     setTimeout(() => fitAddon.fit(), 50);
     return;
   }
 
-  // Create new terminal instance
+  // If session exists with ptyId but no terminal (spawned by group chat), create terminal and attach
+  if (sessions[agentId] && sessions[agentId].ptyId && !sessions[agentId].terminal) {
+    const agent = agents.find(a => a.id === agentId);
+    const terminal = createTerminal();
+    const fitAddon = new FitAddon();
+    terminal.loadAddon(fitAddon);
+    terminal.loadAddon(new WebLinksAddon());
+    container.innerHTML = '';
+    terminal.open(container);
+    setTimeout(() => fitAddon.fit(), 50);
+
+    // Attach input to existing PTY
+    terminal.onData(data => {
+      invoke('pty_write', { id: sessions[agentId].ptyId, data });
+    });
+
+    // Pipe buffer output to terminal (catch up on missed output)
+    if (window._agentBuffers && window._agentBuffers[agentId]) {
+      terminal.write(window._agentBuffers[agentId]);
+    }
+
+    sessions[agentId].terminal = terminal;
+    sessions[agentId].fitAddon = fitAddon;
+    updateAgentStatus(agentId, 'ready');
+
+    const resizeObserver = new ResizeObserver(() => { if (fitAddon) fitAddon.fit(); });
+    resizeObserver.observe(container);
+    return;
+  }
+
+  // No session at all — create new terminal + spawn agent
   const agent = agents.find(a => a.id === agentId);
-  const terminal = new Terminal({
+  const terminal = createTerminal();
+  const fitAddon = new FitAddon();
+  terminal.loadAddon(fitAddon);
+  terminal.loadAddon(new WebLinksAddon());
+  container.innerHTML = '';
+  terminal.open(container);
+  setTimeout(() => fitAddon.fit(), 50);
+
+  // Spawn Agent PTY
+  if (!window._agentBuffers) window._agentBuffers = {};
+  window._agentBuffers[agentId] = '';
+
+  const onData = new Channel();
+  onData.onmessage = (data) => {
+    terminal.write(data);
+    window._agentBuffers[agentId] += data;
+  };
+
+  try {
+    const ptyId = await invoke('spawn_agent', {
+      agentId,
+      cwd: workspace,
+      cols: terminal.cols,
+      rows: terminal.rows,
+      onData,
+    });
+
+    sessions[agentId] = { ptyId, terminal, fitAddon };
+
+    // Terminal input → PTY stdin
+    terminal.onData(data => {
+      invoke('pty_write', { id: ptyId, data });
+    });
+
+    updateAgentStatus(agentId, 'ready');
+    updateStatus(`${agent.name} 已启动 · ${shortenPath(workspace)}`);
+  } catch (e) {
+    terminal.write(`\r\n\x1b[31m启动失败: ${e}\x1b[0m\r\n`);
+    terminal.write(`\r\n\x1b[33m提示: 请确认已在配置面板填写 API Key，且 bundle/ 中有对应二进制\x1b[0m\r\n`);
+    sessions[agentId] = { ptyId: null, terminal, fitAddon };
+    updateAgentStatus(agentId, 'error');
+    updateStatus(`${agent.name} 启动失败`);
+  }
+
+  const resizeObserver = new ResizeObserver(() => { if (fitAddon) fitAddon.fit(); });
+  resizeObserver.observe(container);
+}
+
+function createTerminal() {
+  return new Terminal({
     theme: {
       background: '#0a1a1a',
       foreground: '#ffe6cb',
@@ -258,53 +336,6 @@ async function initTerminal(agentId) {
     cursorBlink: true,
     scrollback: 5000,
   });
-
-  const fitAddon = new FitAddon();
-  terminal.loadAddon(fitAddon);
-  terminal.loadAddon(new WebLinksAddon());
-
-  container.innerHTML = '';
-  terminal.open(container);
-  setTimeout(() => fitAddon.fit(), 50);
-
-  // Spawn Agent PTY
-  const onData = new Channel();
-  onData.onmessage = (data) => {
-    terminal.write(data);
-  };
-
-  try {
-    const ptyId = await invoke('spawn_agent', {
-      agentId,
-      cwd: workspace,
-      cols: terminal.cols,
-      rows: terminal.rows,
-      onData,
-    });
-
-    sessions[agentId] = { ptyId, terminal, fitAddon };
-
-    // Terminal input → PTY stdin
-    terminal.onData(data => {
-      invoke('pty_write', { id: ptyId, data });
-    });
-
-    // Update sidebar status dot
-    updateAgentStatus(agentId, 'ready');
-    updateStatus(`${agent.name} 已启动 · ${shortenPath(workspace)}`);
-  } catch (e) {
-    terminal.write(`\r\n\x1b[31m启动失败: ${e}\x1b[0m\r\n`);
-    terminal.write(`\r\n\x1b[33m提示: 请确认已在配置面板填写 API Key，且 bundle/ 中有对应二进制\x1b[0m\r\n`);
-    sessions[agentId] = { ptyId: null, terminal, fitAddon };
-    updateAgentStatus(agentId, 'error');
-    updateStatus(`${agent.name} 启动失败`);
-  }
-
-  // Handle resize
-  const resizeObserver = new ResizeObserver(() => {
-    if (fitAddon) fitAddon.fit();
-  });
-  resizeObserver.observe(container);
 }
 
 function updateAgentStatus(agentId, status) {
@@ -351,12 +382,9 @@ window.sendGroupMessage = async function() {
 };
 
 async function runDiscussion() {
-  const messages = document.getElementById('group-messages');
-
   while (true) {
     const speaker = await invoke('group_next_speaker');
     if (!speaker) {
-      // All agents have spoken — show confirm buttons
       addSystemMessage(`
         所有 Agent 已发言完毕。
         <div class="actions">
@@ -371,6 +399,11 @@ async function runDiscussion() {
     const agent = agents.find(a => a.id === speaker.agent_id);
     if (!agent) continue;
 
+    // Always get fresh DOM reference (user might have switched panels)
+    let messages = document.getElementById('group-messages');
+    if (!messages) { await sleep(500); messages = document.getElementById('group-messages'); }
+    if (!messages) break; // User left group chat entirely
+
     // Show thinking indicator
     updateAgentStatus(speaker.agent_id, 'busy');
     const thinkingId = `thinking-${Date.now()}`;
@@ -381,6 +414,7 @@ async function runDiscussion() {
       </div>
     `;
     messages.scrollTop = messages.scrollHeight;
+    groupMessagesHtml = messages.innerHTML;
 
     // Build prompt and inject into agent's PTY
     const prompt = await invoke('group_build_prompt', { agentId: speaker.agent_id });
@@ -432,8 +466,12 @@ async function runDiscussion() {
     }
 
     updateAgentStatus(speaker.agent_id, 'ready');
-    messages.scrollTop = messages.scrollHeight;
-    groupMessagesHtml = messages.innerHTML; // Persist
+    // Refresh DOM ref and persist
+    messages = document.getElementById('group-messages');
+    if (messages) {
+      messages.scrollTop = messages.scrollHeight;
+      groupMessagesHtml = messages.innerHTML;
+    }
   }
 }
 
