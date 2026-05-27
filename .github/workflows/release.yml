@@ -1,0 +1,215 @@
+name: Release Yuai (Full Bundle)
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  bundle-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Rust
+        run: |
+          rustup default stable
+          rustup target add x86_64-pc-windows-msvc
+
+      - name: Install npm deps
+        run: npm install
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: --target x86_64-pc-windows-msvc
+
+      - name: Download Agent binaries
+        shell: bash
+        run: |
+          set -e
+          mkdir -p bundle/claude/windows-x64
+          mkdir -p bundle/codex/windows-x64
+          mkdir -p bundle/cc-switch/windows-x64
+
+          # Claude from claude-portable (latest release)
+          echo "Fetching claude..."
+          CLAUDE_TAG=$(curl -fsSL https://api.github.com/repos/yuluyangguang1/claude-portable/releases/latest | jq -r '.tag_name // empty' || echo "")
+          if [ -n "$CLAUDE_TAG" ]; then
+            echo "  claude tag: $CLAUDE_TAG (skipping - zip layout varies)"
+          fi
+          echo "  Note: claude binary must be added manually or from a stable release"
+
+          # Codex from openai/codex (latest release)
+          echo "Fetching codex..."
+          CODEX_TAG=$(curl -fsSL https://api.github.com/repos/openai/codex/releases/latest | jq -r '.tag_name')
+          curl -fsSL "https://github.com/openai/codex/releases/download/${CODEX_TAG}/codex-x86_64-pc-windows-msvc.exe.tar.gz" | tar -xz -C bundle/codex/windows-x64/
+          # Normalize name
+          if [ ! -f bundle/codex/windows-x64/codex.exe ]; then
+            found=$(find bundle/codex/windows-x64 -name "*.exe" | head -1)
+            [ -n "$found" ] && mv "$found" bundle/codex/windows-x64/codex.exe
+          fi
+
+          # CC-Switch from codex-portable auxiliary release
+          echo "Fetching cc-switch..."
+          curl -fsSL -o bundle/cc-switch/windows-x64/cc-switch.exe \
+            "https://github.com/yuluyangguang1/codex-portable/releases/download/cc-switch-assets/cc-switch-windows-x64.exe"
+
+          ls -la bundle/*/windows-x64/
+
+      - name: Assemble full package
+        shell: bash
+        run: |
+          set -e
+          DIST="dist/Yuai-windows-x64"
+          mkdir -p "$DIST/bundle/codex/windows-x64"
+          mkdir -p "$DIST/bundle/cc-switch/windows-x64"
+          mkdir -p "$DIST/data"
+
+          # Copy Tauri exe
+          cp src-tauri/target/x86_64-pc-windows-msvc/release/yuai-gui.exe "$DIST/Yuai.exe" || true
+
+          # Copy agent binaries
+          cp -r bundle/codex/windows-x64/* "$DIST/bundle/codex/windows-x64/" 2>/dev/null || true
+          cp -r bundle/cc-switch/windows-x64/* "$DIST/bundle/cc-switch/windows-x64/" 2>/dev/null || true
+
+          # Create default agents.json
+          cat > "$DIST/data/agents.json" << 'AGENTS'
+          [
+            {"id":"claude","name":"claude","chinese_name":"利刃","glyph":"刃","color":"#ff8c32","specialty":"编程、架构设计、代码审查","binary":"bundle/claude/{platform}/claude","config_type":"anthropic_env","enabled":true,"in_group":true},
+            {"id":"codex","name":"codex","chinese_name":"方盒","glyph":"盒","color":"#50c878","specialty":"编程、快速原型、OpenAI 生态","binary":"bundle/codex/{platform}/codex","config_type":"codex_toml","enabled":true,"in_group":true},
+            {"id":"openclaw","name":"openclaw","chinese_name":"百川","glyph":"匣","color":"#ff6464","specialty":"内容生成、渠道运营、技能调用","binary":"bundle/openclaw/{platform}/openclaw","config_type":"openai_env","enabled":true,"in_group":true},
+            {"id":"hermes","name":"hermes","chinese_name":"砚墨","glyph":"砚","color":"#a064ff","specialty":"记忆、学习、任务编排","binary":"bundle/hermes/{platform}/hermes","config_type":"openai_env","enabled":true,"in_group":true}
+          ]
+          AGENTS
+
+          # Zip
+          cd dist
+          7z a -tzip "Yuai-windows-x64-full.zip" "Yuai-windows-x64/" || zip -r "Yuai-windows-x64-full.zip" "Yuai-windows-x64/"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: yuai-windows-x64-full
+          path: dist/*.zip
+
+  bundle-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Rust
+        run: |
+          rustup default stable
+          rustup target add aarch64-apple-darwin
+
+      - name: Install npm deps
+        run: npm install
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: --target aarch64-apple-darwin
+
+      - name: Download Agent binaries
+        run: |
+          set -e
+          mkdir -p bundle/codex/macos-arm64
+          mkdir -p bundle/cc-switch/macos-arm64
+
+          # Codex
+          CODEX_TAG=$(curl -fsSL https://api.github.com/repos/openai/codex/releases/latest | jq -r '.tag_name')
+          curl -fsSL "https://github.com/openai/codex/releases/download/${CODEX_TAG}/codex-aarch64-apple-darwin.tar.gz" | tar -xz -C bundle/codex/macos-arm64/
+          if [ ! -f bundle/codex/macos-arm64/codex ]; then
+            found=$(find bundle/codex/macos-arm64 -type f -name 'codex*' ! -name '*.tar*' | head -1)
+            [ -n "$found" ] && mv "$found" bundle/codex/macos-arm64/codex
+          fi
+          chmod +x bundle/codex/macos-arm64/codex
+
+          # CC-Switch (universal binary)
+          curl -fsSL -o bundle/cc-switch/macos-arm64/cc-switch \
+            "https://github.com/yuluyangguang1/codex-portable/releases/download/cc-switch-assets/cc-switch-macos"
+          chmod +x bundle/cc-switch/macos-arm64/cc-switch
+
+          ls -la bundle/*/macos-arm64/
+
+      - name: Assemble full package
+        run: |
+          set -e
+          DIST="dist/Yuai-macos-arm64"
+          mkdir -p "$DIST/bundle/codex/macos-arm64"
+          mkdir -p "$DIST/bundle/cc-switch/macos-arm64"
+          mkdir -p "$DIST/data"
+
+          # Copy Tauri app
+          cp -r src-tauri/target/aarch64-apple-darwin/release/bundle/macos/*.app "$DIST/" 2>/dev/null || true
+
+          # Copy agent binaries
+          cp bundle/codex/macos-arm64/codex "$DIST/bundle/codex/macos-arm64/"
+          cp bundle/cc-switch/macos-arm64/cc-switch "$DIST/bundle/cc-switch/macos-arm64/"
+
+          # agents.json
+          cat > "$DIST/data/agents.json" << 'AGENTS'
+          [
+            {"id":"claude","name":"claude","chinese_name":"利刃","glyph":"刃","color":"#ff8c32","specialty":"编程、架构设计、代码审查","binary":"bundle/claude/{platform}/claude","config_type":"anthropic_env","enabled":true,"in_group":true},
+            {"id":"codex","name":"codex","chinese_name":"方盒","glyph":"盒","color":"#50c878","specialty":"编程、快速原型、OpenAI 生态","binary":"bundle/codex/{platform}/codex","config_type":"codex_toml","enabled":true,"in_group":true},
+            {"id":"openclaw","name":"openclaw","chinese_name":"百川","glyph":"匣","color":"#ff6464","specialty":"内容生成、渠道运营、技能调用","binary":"bundle/openclaw/{platform}/openclaw","config_type":"openai_env","enabled":true,"in_group":true},
+            {"id":"hermes","name":"hermes","chinese_name":"砚墨","glyph":"砚","color":"#a064ff","specialty":"记忆、学习、任务编排","binary":"bundle/hermes/{platform}/hermes","config_type":"openai_env","enabled":true,"in_group":true}
+          ]
+          AGENTS
+
+          # Zip
+          cd dist
+          zip -r "Yuai-macos-arm64-full.zip" "Yuai-macos-arm64/"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: yuai-macos-arm64-full
+          path: dist/*.zip
+
+  create-release:
+    needs: [bundle-windows, bundle-macos]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*.zip
+          body: |
+            ## Yuai v${{ github.ref_name }}
+
+            四器合一 · 群聊研讨 · 专长分工 · 共享工作区
+
+            **包含：**
+            - Yuai GUI 启动器
+            - Codex CLI (OpenAI)
+            - CC-Switch 配置管理
+
+            **需要手动添加：**
+            - Claude CLI (从 claude-portable release 获取)
+            - OpenClaw (从 openclaw-portable release 获取)
+            - Hermes (从 hermes-portable release 获取)
+
+            配置 API Key 后即可使用。

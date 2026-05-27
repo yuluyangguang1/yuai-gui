@@ -116,3 +116,18 @@ echo "[done] Bundle directory: $SCRIPT_DIR/bundle/"
 echo ""
 echo "Note: claude/openclaw/hermes binaries need to be dropped manually for now."
 echo "      Auto-fetch from those repos will be added once their zip layout stabilizes."
+
+# Create default agents.json if not exists
+AGENTS_FILE="$SCRIPT_DIR/data/agents.json"
+if [ ! -f "$AGENTS_FILE" ]; then
+    mkdir -p "$SCRIPT_DIR/data"
+    cat > "$AGENTS_FILE" << 'EOF'
+[
+  {"id":"claude","name":"claude","chinese_name":"利刃","glyph":"刃","color":"#ff8c32","specialty":"编程、架构设计、代码审查","binary":"bundle/claude/{platform}/claude","config_type":"anthropic_env","enabled":true,"in_group":true},
+  {"id":"codex","name":"codex","chinese_name":"方盒","glyph":"盒","color":"#50c878","specialty":"编程、快速原型、OpenAI 生态","binary":"bundle/codex/{platform}/codex","config_type":"codex_toml","enabled":true,"in_group":true},
+  {"id":"openclaw","name":"openclaw","chinese_name":"百川","glyph":"匣","color":"#ff6464","specialty":"内容生成、渠道运营、技能调用","binary":"bundle/openclaw/{platform}/openclaw","config_type":"openai_env","enabled":true,"in_group":true},
+  {"id":"hermes","name":"hermes","chinese_name":"砚墨","glyph":"砚","color":"#a064ff","specialty":"记忆、学习、任务编排","binary":"bundle/hermes/{platform}/hermes","config_type":"openai_env","enabled":true,"in_group":true}
+]
+EOF
+    echo "  [created] data/agents.json"
+fi
