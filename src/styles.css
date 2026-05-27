@@ -102,3 +102,13 @@ body{font-family:var(--sans);background:var(--bg);color:var(--mid)}
 .recent-workspaces{margin-top:24px;display:flex;flex-direction:column;gap:6px;width:100%;max-width:400px}
 .recent-ws-btn{background:transparent;border:1px solid var(--border);border-radius:6px;padding:8px 14px;color:var(--mid);font-family:var(--mono);font-size:.75rem;cursor:pointer;text-align:left;opacity:.7;transition:all .15s}
 .recent-ws-btn:hover{opacity:1;border-color:var(--accent);color:var(--accent)}
+
+/* Group chat extras */
+.thinking{opacity:.5;animation:pulse 1.2s infinite}
+.msg .name{font-family:var(--mono);font-size:.65rem;letter-spacing:.06rem;margin-bottom:4px}
+.msg .meta{font-family:var(--mono);font-size:.6rem;opacity:.35;margin-top:6px;text-align:right}
+.system-msg .actions{display:flex;gap:8px;justify-content:center;margin-top:10px}
+.system-msg .actions button{font-family:var(--mono);font-size:.68rem;padding:6px 14px;border-radius:4px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--mid);transition:all .15s}
+.system-msg .actions button:hover{border-color:var(--accent);color:var(--accent)}
+.system-msg .actions button.primary{border-color:var(--accent);color:var(--accent);background:rgba(0,255,200,.06)}
+.system-msg .actions button.primary:hover{background:var(--accent);color:var(--bg)}

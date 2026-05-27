@@ -304,13 +304,13 @@ function updateAgentStatus(agentId, status) {
 }
 
 // ═══ Message Sending ═══
-window.sendGroupMessage = function() {
+window.sendGroupMessage = async function() {
   const input = document.getElementById('group-input');
   if (!input || !input.value.trim()) return;
   const msg = input.value.trim();
   input.value = '';
 
-  // Add user message to chat
+  // Add user message to UI
   const messages = document.getElementById('group-messages');
   messages.innerHTML += `
     <div class="msg user">
@@ -320,13 +320,232 @@ window.sendGroupMessage = function() {
   `;
   messages.scrollTop = messages.scrollHeight;
 
-  // TODO Phase 2: Route to message bus → inject into Agent PTYs
-  messages.innerHTML += `
-    <div class="system-msg" style="opacity:.5;font-size:.75rem">
-      [Phase 2] 消息总线将把此消息分发给群聊中的 Agent
-    </div>
-  `;
+  // Handle commands
+  if (msg.startsWith('/')) {
+    await handleCommand(msg);
+    return;
+  }
+
+  // Send to message bus
+  try {
+    const speakers = await invoke('group_send', { content: msg });
+    updateStatus(`讨论中 · ${speakers.length} 个 Agent 将发言`);
+
+    // Trigger agent responses sequentially
+    await runDiscussion();
+  } catch (e) {
+    addSystemMessage(`错误: ${e}`);
+  }
 };
+
+async function runDiscussion() {
+  const messages = document.getElementById('group-messages');
+
+  while (true) {
+    const speaker = await invoke('group_next_speaker');
+    if (!speaker) {
+      // All agents have spoken — show confirm buttons
+      addSystemMessage(`
+        所有 Agent 已发言完毕。
+        <div class="actions">
+          <button class="primary" onclick="confirmExecution()">✓ 确认执行</button>
+          <button onclick="continueDicussion()">↻ 继续讨论</button>
+        </div>
+      `);
+      updateStatus('待确认');
+      break;
+    }
+
+    const agent = agents.find(a => a.id === speaker.agent_id);
+    if (!agent) continue;
+
+    // Show thinking indicator
+    updateAgentStatus(speaker.agent_id, 'busy');
+    const thinkingId = `thinking-${Date.now()}`;
+    messages.innerHTML += `
+      <div class="msg" id="${thinkingId}">
+        <div class="avatar" style="background:${agent.color}20;color:${agent.color};border-color:${agent.color}40">${agent.glyph}</div>
+        <div class="bubble"><div class="name" style="color:${agent.color}">${agent.name} · ${agent.chinese_name}</div><span class="thinking">思考中...</span></div>
+      </div>
+    `;
+    messages.scrollTop = messages.scrollHeight;
+
+    // Build prompt and inject into agent's PTY
+    const prompt = await invoke('group_build_prompt', { agentId: speaker.agent_id });
+
+    // Ensure agent is spawned
+    if (!sessions[speaker.agent_id]) {
+      await spawnAgentForGroup(speaker.agent_id);
+    }
+
+    // Write prompt to agent's stdin
+    if (sessions[speaker.agent_id] && sessions[speaker.agent_id].ptyId) {
+      const startTime = Date.now();
+      await invoke('pty_write', { id: sessions[speaker.agent_id].ptyId, data: prompt + '\n' });
+
+      // Wait for response (capture stdout for a few seconds)
+      const response = await captureAgentResponse(speaker.agent_id, 15000);
+      const duration = Date.now() - startTime;
+
+      // Record in bus
+      await invoke('group_agent_response', {
+        agentId: speaker.agent_id,
+        content: response,
+        tokens: null,
+        model: null,
+        durationMs: duration,
+      });
+
+      // Replace thinking indicator with actual response
+      const thinkingEl = document.getElementById(thinkingId);
+      if (thinkingEl) {
+        thinkingEl.innerHTML = `
+          <div class="avatar" style="background:${agent.color}20;color:${agent.color};border-color:${agent.color}40">${agent.glyph}</div>
+          <div class="bubble">
+            <div class="name" style="color:${agent.color}">${agent.name} · ${agent.chinese_name}</div>
+            ${escapeHtml(response)}
+            <div class="meta">⏱ ${(duration/1000).toFixed(1)}s</div>
+          </div>
+        `;
+      }
+    } else {
+      // Agent not available — skip
+      const thinkingEl = document.getElementById(thinkingId);
+      if (thinkingEl) {
+        thinkingEl.innerHTML = `
+          <div class="avatar" style="background:${agent.color}20;color:${agent.color};border-color:${agent.color}40">${agent.glyph}</div>
+          <div class="bubble"><div class="name" style="color:${agent.color}">${agent.name}</div><span style="opacity:.5">未启动，跳过</span></div>
+        `;
+      }
+    }
+
+    updateAgentStatus(speaker.agent_id, 'ready');
+    messages.scrollTop = messages.scrollHeight;
+  }
+}
+
+async function spawnAgentForGroup(agentId) {
+  const onData = new Channel();
+  // Buffer stdout for group chat capture
+  if (!window._agentBuffers) window._agentBuffers = {};
+  window._agentBuffers[agentId] = '';
+  onData.onmessage = (data) => {
+    window._agentBuffers[agentId] += data;
+    // Also write to terminal if it exists
+    if (sessions[agentId] && sessions[agentId].terminal) {
+      sessions[agentId].terminal.write(data);
+    }
+  };
+
+  try {
+    const ptyId = await invoke('spawn_agent', {
+      agentId,
+      cwd: workspace,
+      cols: 120,
+      rows: 40,
+      onData,
+    });
+    if (!sessions[agentId]) sessions[agentId] = {};
+    sessions[agentId].ptyId = ptyId;
+    updateAgentStatus(agentId, 'ready');
+  } catch (e) {
+    console.error(`spawn ${agentId} for group:`, e);
+  }
+}
+
+async function captureAgentResponse(agentId, timeoutMs) {
+  // Clear buffer
+  if (!window._agentBuffers) window._agentBuffers = {};
+  window._agentBuffers[agentId] = '';
+
+  // Wait for output to stabilize (no new output for 3s, or timeout)
+  return new Promise(resolve => {
+    let lastLen = 0;
+    let stableCount = 0;
+    const checkInterval = setInterval(() => {
+      const buf = window._agentBuffers[agentId] || '';
+      if (buf.length === lastLen && buf.length > 0) {
+        stableCount++;
+        if (stableCount >= 3) { // 3 seconds of no new output
+          clearInterval(checkInterval);
+          resolve(cleanAnsi(buf));
+        }
+      } else {
+        stableCount = 0;
+        lastLen = buf.length;
+      }
+    }, 1000);
+
+    // Hard timeout
+    setTimeout(() => {
+      clearInterval(checkInterval);
+      const buf = window._agentBuffers[agentId] || '';
+      resolve(buf.length > 0 ? cleanAnsi(buf) : '(无响应)');
+    }, timeoutMs);
+  });
+}
+
+function cleanAnsi(str) {
+  // Strip ANSI escape codes
+  return str.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+    .replace(/\x1b\][^\x07]*\x07/g, '')  // OSC sequences
+    .replace(/\r/g, '')
+    .split('\n')
+    .filter(l => l.trim().length > 0)
+    .join('\n')
+    .trim();
+}
+
+window.confirmExecution = async function() {
+  try {
+    await invoke('group_confirm_exec', { order: null });
+    addSystemMessage('开始执行...');
+    updateStatus('执行中');
+    // TODO Phase 2 continued: run execution queue
+  } catch (e) {
+    addSystemMessage(`错误: ${e}`);
+  }
+};
+
+window.continueDicussion = function() {
+  const input = document.getElementById('group-input');
+  if (input) input.focus();
+};
+
+async function handleCommand(cmd) {
+  const parts = cmd.split(' ');
+  const command = parts[0];
+  const arg = parts.slice(1).join(' ');
+
+  switch (command) {
+    case '/invite':
+      if (arg) {
+        await invoke('group_invite', { agentId: arg });
+        addSystemMessage(`已邀请 ${arg} 加入群聊`);
+      }
+      break;
+    case '/kick':
+      if (arg) {
+        await invoke('group_kick', { agentId: arg });
+        addSystemMessage(`已将 ${arg} 移出群聊`);
+      }
+      break;
+    case '/agents':
+      const phase = await invoke('group_get_phase');
+      addSystemMessage(`当前阶段: ${phase}<br>参与者: ${agents.filter(a=>a.enabled).map(a=>a.name).join(', ')}`);
+      break;
+    default:
+      addSystemMessage(`未知命令: ${command}`);
+  }
+}
+
+function addSystemMessage(html) {
+  const messages = document.getElementById('group-messages');
+  if (messages) {
+    messages.innerHTML += `<div class="system-msg">${html}</div>`;
+    messages.scrollTop = messages.scrollHeight;
+  }
+}
 
 window.sendToAgent = function(agentId) {
   const input = document.getElementById(`input-${agentId}`);

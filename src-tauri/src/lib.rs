@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use tauri::{ipc::Channel, Manager};
 
 mod agents;
+mod bus;
 mod config;
 
 // ═══════════════════════════════════════════
@@ -299,6 +300,99 @@ fn get_active_provider(app: tauri::AppHandle, app_type: String) -> Result<Option
 }
 
 // ═══════════════════════════════════════════
+// Group Chat Commands
+// ═══════════════════════════════════════════
+
+/// Send a user message to the group chat. Returns the list of agents that will speak.
+#[tauri::command]
+fn group_send(state: tauri::State<bus::SharedGroupChat>, content: String) -> Result<Vec<bus::NextSpeaker>, String> {
+    let mut chat = state.write().map_err(|e| e.to_string())?;
+    Ok(chat.user_message(&content))
+}
+
+/// Get the next agent that should speak in the discussion.
+#[tauri::command]
+fn group_next_speaker(state: tauri::State<bus::SharedGroupChat>) -> Result<Option<bus::NextSpeaker>, String> {
+    let mut chat = state.write().map_err(|e| e.to_string())?;
+    Ok(chat.next_speaker())
+}
+
+/// Record an agent's response in the group chat.
+#[tauri::command]
+fn group_agent_response(
+    state: tauri::State<bus::SharedGroupChat>,
+    agent_id: String,
+    content: String,
+    tokens: Option<u32>,
+    model: Option<String>,
+    duration_ms: Option<u64>,
+) -> Result<(), String> {
+    let mut chat = state.write().map_err(|e| e.to_string())?;
+    chat.agent_response(&agent_id, &content, tokens, model, duration_ms);
+    Ok(())
+}
+
+/// Build the discussion prompt for a specific agent.
+#[tauri::command]
+fn group_build_prompt(
+    app: tauri::AppHandle,
+    state: tauri::State<bus::SharedGroupChat>,
+    agent_id: String,
+) -> Result<String, String> {
+    let chat = state.read().map_err(|e| e.to_string())?;
+    let all_agents = agents::load_agents(&app)?;
+    let agents_info: Vec<(String, String, String)> = all_agents.iter()
+        .map(|a| (a.id.clone(), a.name.clone(), a.specialty.clone()))
+        .collect();
+    Ok(chat.build_discussion_prompt(&agent_id, &agents_info))
+}
+
+/// User confirms execution. Optionally specify execution order.
+#[tauri::command]
+fn group_confirm_exec(state: tauri::State<bus::SharedGroupChat>, order: Option<Vec<String>>) -> Result<(), String> {
+    let mut chat = state.write().map_err(|e| e.to_string())?;
+    chat.confirm_execution(order);
+    Ok(())
+}
+
+/// Get the next agent to execute.
+#[tauri::command]
+fn group_next_executor(state: tauri::State<bus::SharedGroupChat>) -> Result<Option<String>, String> {
+    let mut chat = state.write().map_err(|e| e.to_string())?;
+    Ok(chat.next_executor())
+}
+
+/// Get current chat phase.
+#[tauri::command]
+fn group_get_phase(state: tauri::State<bus::SharedGroupChat>) -> Result<bus::ChatPhase, String> {
+    let chat = state.read().map_err(|e| e.to_string())?;
+    Ok(chat.phase.clone())
+}
+
+/// Get all messages in the group chat.
+#[tauri::command]
+fn group_get_messages(state: tauri::State<bus::SharedGroupChat>) -> Result<Vec<bus::ChatMessage>, String> {
+    let chat = state.read().map_err(|e| e.to_string())?;
+    Ok(chat.messages.clone())
+}
+
+/// Invite an agent to the group.
+#[tauri::command]
+fn group_invite(state: tauri::State<bus::SharedGroupChat>, agent_id: String) -> Result<(), String> {
+    let mut chat = state.write().map_err(|e| e.to_string())?;
+    chat.invite(&agent_id);
+    Ok(())
+}
+
+/// Kick an agent from the group.
+#[tauri::command]
+fn group_kick(state: tauri::State<bus::SharedGroupChat>, agent_id: String) -> Result<(), String> {
+    let mut chat = state.write().map_err(|e| e.to_string())?;
+    chat.kick(&agent_id);
+    Ok(())
+}
+
+// ═══════════════════════════════════════════
 // App Entry
 // ═══════════════════════════════════════════
 
@@ -310,6 +404,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_process::init())
         .manage(AppState::default())
+        .manage(bus::new_group_chat())
         .invoke_handler(tauri::generate_handler![
             pty_spawn,
             pty_write,
@@ -321,6 +416,16 @@ pub fn run() {
             get_providers,
             save_provider,
             get_active_provider,
+            group_send,
+            group_next_speaker,
+            group_agent_response,
+            group_build_prompt,
+            group_confirm_exec,
+            group_next_executor,
+            group_get_phase,
+            group_get_messages,
+            group_invite,
+            group_kick,
         ])
         .run(tauri::generate_context!())
         .expect("error while running yuai-gui");
