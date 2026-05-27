@@ -181,16 +181,6 @@ function renderGroupPanel() {
   if (msgs) msgs.scrollTop = msgs.scrollHeight;
 }
 
-// Override innerHTML updates to also save to groupMessagesHtml
-const _origAddSystemMessage = function(html) {
-  const messages = document.getElementById('group-messages');
-  if (messages) {
-    messages.innerHTML += `<div class="system-msg">${html}</div>`;
-    messages.scrollTop = messages.scrollHeight;
-    groupMessagesHtml = messages.innerHTML;
-  }
-};
-
 
 // ═══ Single Agent Panel (with embedded terminal) ═══
 function renderAgentPanel(agentId) {
@@ -340,6 +330,7 @@ window.sendGroupMessage = async function() {
     </div>
   `;
   messages.scrollTop = messages.scrollHeight;
+  groupMessagesHtml = messages.innerHTML;
 
   // Handle commands
   if (msg.startsWith('/')) {
@@ -686,8 +677,14 @@ window.sendToAgent = function(agentId) {
   input.value = '';
 
   // Write directly to PTY stdin
-  if (sessions[agentId]) {
+  if (sessions[agentId] && sessions[agentId].ptyId) {
     invoke('pty_write', { id: sessions[agentId].ptyId, data: msg + '\n' });
+  } else {
+    // Agent not running — show error in terminal
+    if (sessions[agentId] && sessions[agentId].terminal) {
+      sessions[agentId].terminal.write('\r\n\x1b[31mAgent 未启动，请先在配置面板设置 API Key\x1b[0m\r\n');
+    }
+  }
   }
 };
 
