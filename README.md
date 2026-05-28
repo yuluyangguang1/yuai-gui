@@ -194,9 +194,11 @@ npm run tauri dev
 - [x] **Phase 2** — 群聊消息总线 + 讨论 + 执行调度
 - [x] **Phase 3** — 共用 Key + 模板 + 自定义 Agent
 - [x] **Phase 4** — release 打包流程
-- [ ] **Phase 5** — 打磨发布 v0.1.0
-- [ ] **Phase 6** — 任务跟踪面板（进度、产物、回滚）
-- [ ] **Phase 7** — 上游 release 监控 + 自动更新
+- [ ] **Phase 5** (v0.1.0) — 打磨发布
+- [ ] **Phase 6** (v0.2) — git worktree 隔离 + Diff 审查面板
+- [ ] **Phase 7** (v0.3) — OS 完成通知 + 任务看板视图
+- [ ] **Phase 8** (v0.4) — 会话 pause/resume + 活动监控
+- [ ] **Phase 9** (v0.5) — MCP 集成（升级 Agent 间通信协议）
 
 ---
 
