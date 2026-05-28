@@ -36,6 +36,7 @@ pub fn load_agents(app: &tauri::AppHandle) -> Result<Vec<AgentDef>, String> {
 
 /// Resolve the actual binary path from the template in agents.json.
 /// Replaces {platform} with the current platform directory name.
+/// In dev mode, falls back to searching system PATH if bundle binary not found.
 pub fn resolve_binary_path(root: &std::path::Path, binary_template: &str) -> PathBuf {
     let platform = current_platform();
     let resolved = binary_template.replace("{platform}", platform);
@@ -47,7 +48,39 @@ pub fn resolve_binary_path(root: &std::path::Path, binary_template: &str) -> Pat
         resolved
     };
 
-    root.join(resolved)
+    let bundle_path = root.join(&resolved);
+
+    // If bundle binary exists, use it
+    if bundle_path.exists() {
+        return bundle_path;
+    }
+
+    // Fallback: search system PATH for the binary name (dev mode convenience)
+    let binary_name = std::path::Path::new(&resolved)
+        .file_name()
+        .unwrap_or_default()
+        .to_string_lossy()
+        .to_string();
+
+    if let Some(found) = find_in_path(&binary_name) {
+        return found;
+    }
+
+    // Return the bundle path anyway (caller will report "not found")
+    bundle_path
+}
+
+/// Simple PATH lookup without external crate.
+fn find_in_path(name: &str) -> Option<PathBuf> {
+    let path_var = std::env::var("PATH").ok()?;
+    let sep = if cfg!(windows) { ';' } else { ':' };
+    for dir in path_var.split(sep) {
+        let candidate = PathBuf::from(dir).join(name);
+        if candidate.exists() {
+            return Some(candidate);
+        }
+    }
+    None
 }
 
 fn current_platform() -> &'static str {
