@@ -15,6 +15,10 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+.kiro/
+
+# Icon generation script (local tool, not source)
+src-tauri/icons/gen_icons.py
 
 # Env
 .env

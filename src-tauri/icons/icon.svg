@@ -1,7 +1,45 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
-  <rect width="1024" height="1024" rx="200" fill="#041c1c"/>
-  <text x="512" y="640" text-anchor="middle"
-        font-family="Georgia, 'LXGW WenKai', serif"
-        font-size="540" font-weight="700"
-        fill="#00ffc8" opacity="0.85">余</text>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a1e1e"/>
+      <stop offset="100%" stop-color="#020c0c"/>
+    </linearGradient>
+    <radialGradient id="center-light" cx="50%" cy="50%" r="35%">
+      <stop offset="0%" stop-color="#00ffc8" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#00ffc8" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Clipping for rounded square -->
+    <clipPath id="rounded">
+      <rect width="1024" height="1024" rx="224" ry="224"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#rounded)">
+    <!-- Background -->
+    <rect width="1024" height="1024" fill="url(#bg)"/>
+    
+    <!-- Ambient light -->
+    <circle cx="512" cy="512" r="360" fill="url(#center-light)"/>
+
+    <!-- The mark: abstract "与" character deconstructed into 4 strokes
+         Each stroke represents one agent, together they form unity -->
+    
+    <!-- Stroke 1 (Claude/orange): horizontal top bar -->
+    <rect x="310" y="295" width="404" height="52" rx="26" fill="#ff8c32" opacity="0.92"/>
+    
+    <!-- Stroke 2 (Codex/green): vertical center spine -->
+    <rect x="486" y="295" width="52" height="434" rx="26" fill="#50c878" opacity="0.92"/>
+    
+    <!-- Stroke 3 (Hermes/purple): left diagonal -->
+    <rect x="280" y="500" width="232" height="48" rx="24" fill="#a064ff" opacity="0.88"
+          transform="rotate(-32 396 524)"/>
+    
+    <!-- Stroke 4 (OpenClaw/red): right diagonal -->
+    <rect x="512" y="500" width="232" height="48" rx="24" fill="#ff6464" opacity="0.88"
+          transform="rotate(32 628 524)"/>
+
+    <!-- Convergence point where strokes meet — subtle glow -->
+    <circle cx="512" cy="520" r="8" fill="#00ffc8" opacity="0.9"/>
+    <circle cx="512" cy="520" r="20" fill="#00ffc8" opacity="0.15"/>
+  </g>
 </svg>
