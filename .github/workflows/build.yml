@@ -18,7 +18,9 @@ jobs:
           - platform: 'macos-latest'
             target: 'aarch64-apple-darwin'
             label: 'macos-arm64'
-          - platform: 'macos-13'
+          # Use macos-latest (arm64 host) to cross-compile to x86_64
+          # to avoid the chronic queueing on macos-13 runners.
+          - platform: 'macos-latest'
             target: 'x86_64-apple-darwin'
             label: 'macos-x64'
 
