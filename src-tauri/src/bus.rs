@@ -182,7 +182,10 @@ impl GroupChat {
     }
 
     /// Build the prompt for execution phase.
-    pub fn build_execution_prompt(&self, agent_id: &str, task: &str) -> String {
+    /// Reserved for future use — currently the frontend builds execution
+    /// prompts directly. Kept here for potential server-side orchestration.
+    #[allow(dead_code)]
+    pub fn build_execution_prompt(&self, _agent_id: &str, task: &str) -> String {
         let summary = self.summarize_discussion();
         format!(
             "团队已确认分工，现在轮到你执行。\n\n\
@@ -242,6 +245,7 @@ impl GroupChat {
             .join("\n")
     }
 
+    #[allow(dead_code)]
     fn summarize_discussion(&self) -> String {
         // Simple: just return last 5 messages
         self.messages.iter()

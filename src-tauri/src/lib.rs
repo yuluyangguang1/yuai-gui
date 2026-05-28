@@ -7,7 +7,7 @@ use std::thread;
 
 use portable_pty::{native_pty_system, CommandBuilder, PtySize};
 use serde::{Deserialize, Serialize};
-use tauri::{ipc::Channel, Manager};
+use tauri::ipc::Channel;
 
 mod agents;
 mod bus;
