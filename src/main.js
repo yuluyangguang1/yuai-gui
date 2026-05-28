@@ -49,8 +49,8 @@ function renderSidebar() {
   sidebar.innerHTML = `
     ${agentButtons}
     <div class="sep"></div>
-    <button class="nav-btn active" data-panel="group" title="群聊">群</button>
-    <button class="nav-btn" data-panel="config" title="配置">⚙</button>
+    <button class="nav-btn active" data-panel="group" title="群聊">合</button>
+    <button class="nav-btn" data-panel="config" title="配置">器</button>
   `;
 
   // Event listeners
@@ -66,13 +66,13 @@ function renderSidebar() {
 function renderWorkspaceSelector() {
   mainPanel.innerHTML = `
     <div class="workspace-selector">
-      <div style="font-family:var(--brush);font-size:3rem;color:var(--accent);opacity:.6;margin-bottom:16px">合</div>
-      <h2 style="font-family:var(--serif);margin-bottom:8px">选择工作区</h2>
-      <p style="opacity:.5;font-size:.85rem;margin-bottom:24px">所有 Agent 将在同一个目录中协作</p>
-      <button class="workspace-btn" onclick="selectWorkspace()">📂 选择项目目录</button>
+      <div style="font-family:var(--brush);font-size:4rem;color:var(--jade);opacity:.7;margin-bottom:8px;line-height:1">合</div>
+      <h2>选择工作区</h2>
+      <p>所有 Agent 将在同一个目录中协作</p>
+      <button class="workspace-btn" onclick="selectWorkspace()">Choose Directory</button>
       ${getRecentWorkspaces().length > 0 ? `
         <div class="recent-workspaces">
-          <span style="font-family:var(--mono);font-size:.65rem;opacity:.4;margin-bottom:8px;display:block">最近使用</span>
+          <span style="font-family:var(--mono);font-size:.6rem;letter-spacing:.18em;color:var(--silver);margin-bottom:10px;display:block;text-transform:uppercase">Recent</span>
           ${getRecentWorkspaces().map(w => `
             <button class="recent-ws-btn" onclick="setWorkspace('${w.replace(/\\/g, '\\\\')}')">${shortenPath(w)}</button>
           `).join('')}
@@ -150,9 +150,10 @@ function renderGroupPanel() {
   if (!groupMessagesHtml) {
     groupMessagesHtml = `
       <div class="system-msg">
-        <div style="font-family:var(--brush);font-size:2rem;color:var(--accent);opacity:.6;margin-bottom:8px">合</div>
-        群聊模式 · 四器协作<br>
-        <span style="opacity:.5;font-size:.8rem">输入需求，所有已启用的 Agent 将参与讨论${workspace ? '<br>工作区: ' + shortenPath(workspace) : ''}</span>
+        <div style="font-family:var(--brush);font-size:2.4rem;color:var(--jade);opacity:.7;margin-bottom:10px;line-height:1">合</div>
+        <div style="font-family:var(--display);font-style:italic;font-size:1rem;letter-spacing:.04em;margin-bottom:6px">Four Vessels · One Workspace</div>
+        <div style="font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;color:var(--silver);text-transform:uppercase">输入需求 · 所有已启用的 Agent 将参与讨论</div>
+        ${workspace ? `<div style="font-family:var(--mono);font-size:.6rem;color:var(--silver);margin-top:10px;letter-spacing:.04em;opacity:.7">${shortenPath(workspace)}</div>` : ''}
       </div>
     `;
   }
@@ -161,9 +162,9 @@ function renderGroupPanel() {
     <div class="chat-panel">
       <div class="chat-messages" id="group-messages">${groupMessagesHtml}</div>
       <div class="chat-input">
-        <span class="mode-tag">群聊</span>
-        <input type="text" id="group-input" placeholder="描述你的需求... (所有 Agent 参与讨论)">
-        <button onclick="sendGroupMessage()">发送</button>
+        <span class="mode-tag">Group</span>
+        <input type="text" id="group-input" placeholder="描述你的需求 · 所有 Agent 参与讨论">
+        <button onclick="sendGroupMessage()">Send</button>
       </div>
     </div>
   `;
@@ -194,15 +195,15 @@ function renderAgentPanel(agentId) {
         <span class="agent-title">${agent.name} · ${agent.chinese_name}</span>
         <span class="agent-specialty">${agent.specialty}</span>
         <div class="view-toggle">
-          <button class="active" onclick="showAgentChat('${agentId}')">对话</button>
-          <button onclick="showAgentTerminal('${agentId}')">终端</button>
+          <button class="active" onclick="showAgentChat('${agentId}')">Chat</button>
+          <button onclick="showAgentTerminal('${agentId}')">Term</button>
         </div>
       </div>
       <div class="terminal-container" id="term-${agentId}"></div>
       <div class="chat-input">
-        <span class="mode-tag" style="border-color:${agent.color};color:${agent.color}">${agent.glyph}</span>
-        <input type="text" id="input-${agentId}" placeholder="和 ${agent.name} 对话...">
-        <button onclick="sendToAgent('${agentId}')">发送</button>
+        <span class="mode-tag" style="border-color:${agent.color}40;color:${agent.color}">${agent.name}</span>
+        <input type="text" id="input-${agentId}" placeholder="和 ${agent.name} 直接对话...">
+        <button onclick="sendToAgent('${agentId}')">Send</button>
       </div>
     </div>
   `;
@@ -388,8 +389,8 @@ async function runDiscussion() {
       addSystemMessage(`
         所有 Agent 已发言完毕。
         <div class="actions">
-          <button class="primary" onclick="confirmExecution()">✓ 确认执行</button>
-          <button onclick="continueDicussion()">↻ 继续讨论</button>
+          <button class="primary" onclick="confirmExecution()">Confirm · 确认执行</button>
+          <button onclick="continueDicussion()">Continue · 继续讨论</button>
         </div>
       `);
       updateStatus('待确认');
@@ -751,7 +752,7 @@ function renderConfigPanel() {
           <input type="password" class="cfg-key" placeholder="sk-..." data-agent="${a.id}">
           <label>模型</label>
           <input type="text" class="cfg-model" placeholder="claude-sonnet-4 / gpt-5.4" data-agent="${a.id}">
-          <button class="cfg-save" onclick="saveAgentConfig('${a.id}', '${appType}')">保存</button>
+          <button class="cfg-save" onclick="saveAgentConfig('${a.id}', '${appType}')">Save</button>
           <span class="cfg-status" id="cfg-status-${a.id}"></span>
         </div>
       </div>
@@ -761,28 +762,28 @@ function renderConfigPanel() {
   mainPanel.innerHTML = `
     <div class="config-panel">
       <div class="config-header">
-        <h2 style="font-family:var(--serif)">API 配置</h2>
-        <p style="opacity:.5;font-size:.82rem;margin-top:4px">每个 Agent 可独立配置，也可共用同一个中转站 Key</p>
+        <h2>API 配置</h2>
+        <p>每个 Agent 可独立配置，也可共用同一个中转站 Key</p>
       </div>
 
       <!-- 共用 Key 快捷设置 -->
       <div class="shared-key-section">
-        <h3 style="font-family:var(--serif);font-size:.95rem;margin-bottom:10px">🔗 共用 Key（一键填充所有 Agent）</h3>
-        <div class="config-fields" style="border:1px solid var(--border);border-radius:8px;padding:14px">
+        <h3>共用 Key · Shared</h3>
+        <div class="config-fields" style="margin-top:10px">
           <label>Base URL</label>
-          <input type="text" id="shared-url" placeholder="https://your-relay.com/v1 (中转站地址)">
+          <input type="text" id="shared-url" placeholder="https://your-relay.com/v1">
           <label>API Key</label>
-          <input type="password" id="shared-key" placeholder="sk-... (共用 Key)">
-          <label>模型</label>
+          <input type="password" id="shared-key" placeholder="sk-...">
+          <label>Model</label>
           <input type="text" id="shared-model" placeholder="留空则各 Agent 用默认模型">
-          <button class="cfg-save" onclick="applySharedKey()">应用到所有 Agent</button>
+          <button class="cfg-save" onclick="applySharedKey()">Apply To All</button>
           <span class="cfg-status" id="cfg-status-shared"></span>
         </div>
       </div>
 
       <!-- Provider 模板 -->
       <div class="template-section">
-        <h3 style="font-family:var(--serif);font-size:.95rem;margin:20px 0 10px">📋 快速模板</h3>
+        <h3>快速模板 · Templates</h3>
         <div class="template-grid">
           <button class="template-btn" onclick="applyTemplate('openai')">OpenAI 官方</button>
           <button class="template-btn" onclick="applyTemplate('anthropic')">Anthropic 官方</button>
@@ -794,30 +795,30 @@ function renderConfigPanel() {
       </div>
 
       <!-- 各 Agent 独立配置 -->
-      <h3 style="font-family:var(--serif);font-size:.95rem;margin:24px 0 10px">⚙ 各 Agent 独立配置</h3>
+      <h3 style="margin-top:32px">各 Agent · Per-Agent</h3>
       <div class="config-agents">
         ${agentSections}
       </div>
 
       <!-- 添加自定义 Agent -->
       <div class="add-agent-section">
-        <h3 style="font-family:var(--serif);font-size:.95rem;margin:24px 0 10px">➕ 添加自定义 Agent</h3>
-        <div class="config-fields" style="border:1px solid var(--border);border-radius:8px;padding:14px">
+        <h3>添加自定义 Agent · Custom</h3>
+        <div class="config-fields" style="margin-top:10px">
           <label>ID</label>
           <input type="text" id="new-agent-id" placeholder="gemini">
-          <label>名称</label>
+          <label>Name</label>
           <input type="text" id="new-agent-name" placeholder="gemini-cli">
           <label>中文名</label>
           <input type="text" id="new-agent-cn" placeholder="明镜">
-          <label>图标字</label>
+          <label>图标</label>
           <input type="text" id="new-agent-glyph" placeholder="镜" maxlength="1">
           <label>颜色</label>
           <input type="color" id="new-agent-color" value="#4285f4">
           <label>专长</label>
           <input type="text" id="new-agent-spec" placeholder="搜索、多模态">
-          <label>二进制路径</label>
+          <label>Binary</label>
           <input type="text" id="new-agent-bin" placeholder="bundle/gemini/{platform}/gemini">
-          <button class="cfg-save" onclick="addCustomAgent()">添加 Agent</button>
+          <button class="cfg-save" onclick="addCustomAgent()">Add Agent</button>
           <span class="cfg-status" id="cfg-status-new"></span>
         </div>
       </div>

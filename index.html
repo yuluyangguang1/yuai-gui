@@ -4,24 +4,32 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Yuai · 与 AI · 同在</title>
-<link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai:wght@400;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;700;900&family=LXGW+WenKai:wght@400;700&family=Ma+Shan+Zheng&family=JetBrains+Mono:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/src/styles.css">
 </head>
 <body>
 <div class="app">
+  <!-- Background atmospherics -->
+  <div class="bg-grain" aria-hidden="true"></div>
+  <div class="bg-glow" aria-hidden="true"></div>
+
   <div class="titlebar">
-    <span class="brand">yu.ai</span>
+    <span class="seal" aria-hidden="true"></span>
+    <span class="brand">yu<span class="dot">.</span>ai</span>
+    <span class="title-divider" aria-hidden="true"></span>
     <span class="title-text">与 AI · 同在</span>
-    <button class="workspace-indicator" id="ws-indicator" onclick="selectWorkspace()">📂 选择工作区</button>
-    <span id="status-bar" class="status-text">加载中...</span>
+    <button class="workspace-indicator" id="ws-indicator" onclick="selectWorkspace()">
+      <span class="ws-icon">⌘</span><span>选择工作区</span>
+    </button>
+    <span id="status-bar" class="status-text">加载中<span class="dots">...</span></span>
   </div>
   <div class="layout">
-    <div class="sidebar" id="sidebar">
+    <aside class="sidebar" id="sidebar">
       <!-- Dynamic: rendered by JS -->
-    </div>
-    <div class="main-panel" id="main-panel">
+    </aside>
+    <main class="main-panel" id="main-panel">
       <!-- Dynamic: rendered by JS -->
-    </div>
+    </main>
   </div>
 </div>
 <script type="module" src="/src/main.js"></script>
