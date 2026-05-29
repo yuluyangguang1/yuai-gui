@@ -300,6 +300,261 @@ fn get_active_provider(app: tauri::AppHandle, app_type: String) -> Result<Option
 }
 
 // ═══════════════════════════════════════════
+// File Tree
+// ═══════════════════════════════════════════
+
+#[derive(Debug, Serialize)]
+struct FileNode {
+    name: String,
+    path: String,
+    is_dir: bool,
+    children: Option<Vec<FileNode>>,
+}
+
+/// Read the file tree of a directory, up to 2 levels deep, with sensible filtering.
+#[tauri::command]
+fn read_dir_tree(path: String, max_depth: Option<u32>) -> Result<Vec<FileNode>, String> {
+    let root = std::path::Path::new(&path);
+    if !root.exists() {
+        return Err(format!("path does not exist: {}", path));
+    }
+    let depth = max_depth.unwrap_or(2);
+    read_dir_recursive(root, depth)
+}
+
+/// Read a text file's content.
+#[tauri::command]
+fn read_file_content(path: String) -> Result<String, String> {
+    let p = std::path::Path::new(&path);
+    if !p.exists() {
+        return Err(format!("file not found: {}", path));
+    }
+    // Limit to 500KB to avoid loading huge binaries
+    let meta = std::fs::metadata(p).map_err(|e| e.to_string())?;
+    if meta.len() > 512_000 {
+        return Err("file too large (>500KB)".into());
+    }
+    std::fs::read_to_string(p).map_err(|e| format!("read error: {}", e))
+}
+
+/// Get git diff for the workspace (unstaged changes).
+#[tauri::command]
+fn get_git_diff(cwd: String) -> Result<String, String> {
+    let output = std::process::Command::new("git")
+        .args(["diff", "--no-color"])
+        .current_dir(&cwd)
+        .output()
+        .map_err(|e| format!("git diff failed: {}", e))?;
+    if !output.status.success() {
+        let output2 = std::process::Command::new("git")
+            .args(["diff", "--cached", "--no-color"])
+            .current_dir(&cwd)
+            .output()
+            .map_err(|e| e.to_string())?;
+        return Ok(String::from_utf8_lossy(&output2.stdout).to_string());
+    }
+    let mut result = String::from_utf8_lossy(&output.stdout).to_string();
+    if let Ok(staged) = std::process::Command::new("git")
+        .args(["diff", "--cached", "--no-color"])
+        .current_dir(&cwd)
+        .output()
+    {
+        let s = String::from_utf8_lossy(&staged.stdout);
+        if !s.is_empty() {
+            result.push_str("\n");
+            result.push_str(&s);
+        }
+    }
+    Ok(result)
+}
+
+/// Get list of changed files with their status.
+#[tauri::command]
+fn get_changed_files(cwd: String) -> Result<Vec<ChangedFile>, String> {
+    let output = std::process::Command::new("git")
+        .args(["status", "--porcelain", "-uall"])
+        .current_dir(&cwd)
+        .output()
+        .map_err(|e| format!("git status failed: {}", e))?;
+    let text = String::from_utf8_lossy(&output.stdout);
+    let files: Vec<ChangedFile> = text.lines()
+        .filter(|l| l.len() > 3)
+        .map(|l| {
+            let status = l[..2].trim().to_string();
+            let path = l[3..].to_string();
+            let action = match status.as_str() {
+                "M" | "MM" => "modified",
+                "A" | "AM" => "added",
+                "D" => "deleted",
+                "??" => "untracked",
+                _ => "changed",
+            }.to_string();
+            ChangedFile { path, status: action }
+        })
+        .collect();
+    Ok(files)
+}
+
+/// Revert a specific file (reject changes).
+#[tauri::command]
+fn revert_file(cwd: String, path: String) -> Result<(), String> {
+    // Try git checkout first (for tracked files)
+    let result = std::process::Command::new("git")
+        .args(["checkout", "--", &path])
+        .current_dir(&cwd)
+        .output()
+        .map_err(|e| format!("git checkout failed: {}", e))?;
+    if !result.status.success() {
+        // For untracked files, just delete
+        let full_path = std::path::Path::new(&cwd).join(&path);
+        if full_path.exists() {
+            std::fs::remove_file(&full_path).map_err(|e| e.to_string())?;
+        }
+    }
+    Ok(())
+}
+
+/// Accept changes: stage a specific file.
+#[tauri::command]
+fn accept_file(cwd: String, path: String) -> Result<(), String> {
+    std::process::Command::new("git")
+        .args(["add", &path])
+        .current_dir(&cwd)
+        .output()
+        .map_err(|e| format!("git add failed: {}", e))?;
+    Ok(())
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ChangedFile {
+    path: String,
+    status: String,
+}
+
+// ═══════════════════════════════════════════
+// Chat Persistence
+// ═══════════════════════════════════════════
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct ChatRecord {
+    id: Option<i64>,
+    timestamp: u64,
+    from: String,       // "user" | agent_id
+    content: String,
+    msg_type: String,   // "chat" | "system"
+    workspace: String,
+}
+
+/// Save a chat message to local DB.
+#[tauri::command]
+fn save_chat_message(app: tauri::AppHandle, record: ChatRecord) -> Result<(), String> {
+    let root = agents::bundle_root(&app);
+    let db_dir = root.join("data");
+    std::fs::create_dir_all(&db_dir).map_err(|e| e.to_string())?;
+    let db_path = db_dir.join("chat_history.db");
+
+    let conn = rusqlite::Connection::open(&db_path).map_err(|e| e.to_string())?;
+    conn.execute_batch(
+        "CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp INTEGER NOT NULL,
+            sender TEXT NOT NULL,
+            content TEXT NOT NULL,
+            msg_type TEXT NOT NULL DEFAULT 'chat',
+            workspace TEXT NOT NULL DEFAULT ''
+        );"
+    ).map_err(|e| e.to_string())?;
+
+    conn.execute(
+        "INSERT INTO messages (timestamp, sender, content, msg_type, workspace) VALUES (?1, ?2, ?3, ?4, ?5)",
+        rusqlite::params![record.timestamp, record.from, record.content, record.msg_type, record.workspace],
+    ).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// Load chat history for a workspace (last 100 messages).
+#[tauri::command]
+fn load_chat_history(app: tauri::AppHandle, workspace: String) -> Result<Vec<ChatRecord>, String> {
+    let root = agents::bundle_root(&app);
+    let db_path = root.join("data").join("chat_history.db");
+    if !db_path.exists() {
+        return Ok(vec![]);
+    }
+
+    let conn = rusqlite::Connection::open_with_flags(
+        &db_path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY
+    ).map_err(|e| e.to_string())?;
+
+    let mut stmt = conn.prepare(
+        "SELECT id, timestamp, sender, content, msg_type, workspace FROM messages WHERE workspace = ?1 ORDER BY timestamp DESC LIMIT 100"
+    ).map_err(|e| e.to_string())?;
+
+    let rows = stmt.query_map(rusqlite::params![workspace], |row| {
+        Ok(ChatRecord {
+            id: row.get(0)?,
+            timestamp: row.get(1)?,
+            from: row.get(2)?,
+            content: row.get(3)?,
+            msg_type: row.get(4)?,
+            workspace: row.get(5)?,
+        })
+    }).map_err(|e| e.to_string())?;
+
+    let mut records: Vec<ChatRecord> = Vec::new();
+    for row in rows {
+        if let Ok(r) = row { records.push(r); }
+    }
+    records.reverse(); // oldest first
+    Ok(records)
+}
+
+fn read_dir_recursive(dir: &std::path::Path, depth: u32) -> Result<Vec<FileNode>, String> {
+    if depth == 0 {
+        return Ok(vec![]);
+    }
+
+    let mut entries: Vec<FileNode> = Vec::new();
+    let read = std::fs::read_dir(dir).map_err(|e| format!("read_dir: {}", e))?;
+
+    for entry in read.flatten() {
+        let path = entry.path();
+        let name = entry.file_name().to_string_lossy().to_string();
+
+        // Skip hidden files and common heavy directories
+        if name.starts_with('.') {
+            continue;
+        }
+        if matches!(
+            name.as_str(),
+            "node_modules" | "target" | "dist" | "build" | "__pycache__" | ".next" | ".cache"
+        ) {
+            continue;
+        }
+
+        let is_dir = path.is_dir();
+        let path_str = path.to_string_lossy().to_string();
+
+        let children = if is_dir && depth > 1 {
+            // Lazily expand: only top level loads children
+            read_dir_recursive(&path, depth - 1).ok()
+        } else {
+            None
+        };
+
+        entries.push(FileNode { name, path: path_str, is_dir, children });
+    }
+
+    // Sort: dirs first, then alphabetical
+    entries.sort_by(|a, b| match (a.is_dir, b.is_dir) {
+        (true, false) => std::cmp::Ordering::Less,
+        (false, true) => std::cmp::Ordering::Greater,
+        _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
+    });
+
+    Ok(entries)
+}
+
+// ═══════════════════════════════════════════
 // Group Chat Commands
 // ═══════════════════════════════════════════
 
@@ -416,6 +671,14 @@ pub fn run() {
             get_providers,
             save_provider,
             get_active_provider,
+            read_dir_tree,
+            read_file_content,
+            get_git_diff,
+            get_changed_files,
+            revert_file,
+            accept_file,
+            save_chat_message,
+            load_chat_history,
             group_send,
             group_next_speaker,
             group_agent_response,

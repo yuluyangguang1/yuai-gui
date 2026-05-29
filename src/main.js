@@ -6,267 +6,422 @@ import { WebLinksAddon } from '@xterm/addon-web-links';
 
 // ═══ State ═══
 let agents = [];
-let activePanel = 'group'; // 'group' | agent id | 'config'
-let sessions = {}; // agentId → { ptyId, terminal, fitAddon, container }
-let workspace = null; // current workspace path
+let activeAgent = null; // 当前ly previewed agent id
+let sessions = {}; // agentId → { ptyId, terminal, fitAddon }
+let workspace = null;
+let fileTree = [];
 
-// ═══ DOM refs ═══
-const sidebar = document.getElementById('sidebar');
-const mainPanel = document.getElementById('main-panel');
+// ═══ DOM refs (3-column layout) ═══
+const rail = document.getElementById('sidebar');
+const wsBody = document.getElementById('workspace-body');
+const previewBody = document.getElementById('preview-body');
+const previewTitle = document.getElementById('preview-title');
+const chatBody = document.getElementById('chat-body');
+const chatTitle = document.getElementById('chat-title');
 const statusBar = document.getElementById('status-bar');
 
 // ═══ Initialize ═══
 async function init() {
   try {
     agents = await invoke('list_agents');
-    // Try to load saved workspace
     workspace = localStorage.getItem('yuai_workspace') || null;
-    renderSidebar();
-    if (!workspace) {
-      renderWorkspaceSelector();
-    } else {
-      renderGroupPanel();
-    }
-    updateStatus(workspace ? `工作区: ${shortenPath(workspace)}` : '请选择工作区');
+    renderRail();
+    renderWorkspaceColumn();
+    renderPreviewColumn();
+    renderChatColumn();
+    updateStatus(workspace ? shortenPath(workspace) : 'no workspace');
   } catch (e) {
     console.error('init failed:', e);
-    mainPanel.innerHTML = `<div class="error">初始化失败: ${e}</div>`;
+    previewBody.innerHTML = `<div class="error">初始化失败: ${e}</div>`;
   }
 }
 
-// ═══ Sidebar ═══
-function renderSidebar() {
-  const agentButtons = agents
-    .filter(a => a.enabled)
-    .map(a => `
-      <button class="agent-btn" data-id="${a.id}" style="color:${a.color}" title="${a.name}">
-        ${a.glyph}
-        <span class="status-dot off"></span>
-        <span class="expand-label">${a.name}</span>
-      </button>
-    `).join('');
+// ═══ Rail (agent switcher) ═══
+function renderRail() {
+  const btns = agents.filter(a => a.enabled).map(a => `
+    <button class="agent-btn" data-id="${a.id}" style="color:${a.color}" title="${a.name}">
+      ${a.glyph}
+      <span class="status-dot off"></span>
+      <span class="expand-label">${a.name}</span>
+    </button>
+  `).join('');
 
-  sidebar.innerHTML = `
-    ${agentButtons}
+  rail.innerHTML = `
+    ${btns}
     <div class="sep"></div>
     <button class="nav-btn active" data-panel="group" title="群聊">合</button>
     <button class="nav-btn" data-panel="config" title="配置">器</button>
   `;
 
-  // Event listeners
-  sidebar.querySelectorAll('.agent-btn').forEach(btn => {
-    btn.addEventListener('click', () => switchPanel(btn.dataset.id));
+  rail.querySelectorAll('.agent-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchAgent(btn.dataset.id));
   });
-  sidebar.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.addEventListener('click', () => switchPanel(btn.dataset.panel));
+  rail.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchChatMode(btn.dataset.panel));
   });
 }
 
-// ═══ Workspace Selector ═══
-function renderWorkspaceSelector() {
-  mainPanel.innerHTML = `
-    <div class="workspace-selector">
-      <div style="font-family:var(--brush);font-size:4rem;color:var(--jade);opacity:.7;margin-bottom:8px;line-height:1">合</div>
-      <h2>选择工作区</h2>
-      <p>所有 Agent 将在同一个目录中协作</p>
-      <button class="workspace-btn" onclick="selectWorkspace()">Choose Directory</button>
-      ${getRecentWorkspaces().length > 0 ? `
-        <div class="recent-workspaces">
-          <span style="font-family:var(--mono);font-size:.6rem;letter-spacing:.18em;color:var(--silver);margin-bottom:10px;display:block;text-transform:uppercase">Recent</span>
-          ${getRecentWorkspaces().map(w => `
-            <button class="recent-ws-btn" onclick="setWorkspace('${w.replace(/\\/g, '\\\\')}')">${shortenPath(w)}</button>
-          `).join('')}
-        </div>
-      ` : ''}
-    </div>
-  `;
-}
-
-window.selectWorkspace = async function() {
-  try {
-    const selected = await open({ directory: true, multiple: false, title: '选择工作区目录' });
-    if (selected) {
-      setWorkspace(selected);
-    }
-  } catch (e) {
-    console.error('select workspace:', e);
+function switchAgent(agentId) {
+  activeAgent = agentId;
+  // Update rail active state
+  rail.querySelectorAll('.agent-btn').forEach(b => b.classList.remove('active'));
+  const btn = rail.querySelector(`[data-id="${agentId}"]`);
+  if (btn) btn.classList.add('active');
+  // Switch chat to 1v1 mode with this agent
+  renderAgentChat(agentId);
+  // Spawn agent in background if not already running
+  if (!sessions[agentId]?.ptyId && workspace) {
+    spawnAgentForGroup(agentId);
   }
-};
-
-window.setWorkspace = function(path) {
-  workspace = path;
-  localStorage.setItem('yuai_workspace', path);
-  // Save to recent list
-  let recent = getRecentWorkspaces();
-  recent = [path, ...recent.filter(w => w !== path)].slice(0, 5);
-  localStorage.setItem('yuai_recent_workspaces', JSON.stringify(recent));
-  updateStatus(`工作区: ${shortenPath(path)}`);
-  renderGroupPanel();
-};
-
-function getRecentWorkspaces() {
-  try {
-    return JSON.parse(localStorage.getItem('yuai_recent_workspaces') || '[]');
-  } catch { return []; }
 }
 
-function shortenPath(p) {
-  if (!p) return '';
-  const parts = p.replace(/\\/g, '/').split('/');
-  if (parts.length <= 3) return p;
-  return '.../' + parts.slice(-2).join('/');
-}
-
-// ═══ Panel Switching (improved: preserves terminal sessions) ═══
-// ═══ Panel Switching (improved: preserves terminal sessions) ═══
-function switchPanel(panelId) {
-  activePanel = panelId;
-
-  // Update sidebar active state
-  sidebar.querySelectorAll('.agent-btn, .nav-btn').forEach(b => b.classList.remove('active'));
-  const activeBtn = sidebar.querySelector(`[data-id="${panelId}"], [data-panel="${panelId}"]`);
-  if (activeBtn) activeBtn.classList.add('active');
-
-  // Detach any currently visible terminal (don't destroy it)
-  Object.values(sessions).forEach(s => {
-    if (s.terminal && s.terminal.element) {
-      s.terminal.element.style.display = 'none';
-    }
-  });
-
-  if (panelId === 'group') {
-    renderGroupPanel();
-  } else if (panelId === 'config') {
+function switchChatMode(mode) {
+  rail.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const btn = rail.querySelector(`[data-panel="${mode}"]`);
+  if (btn) btn.classList.add('active');
+  if (mode === 'group') {
+    renderGroupChat();
+  } else if (mode === 'config') {
     renderConfigPanel();
-  } else {
-    renderAgentPanel(panelId);
   }
 }
 
-// ═══ Group Chat Panel ═══
-let groupMessagesHtml = ''; // Persist across panel switches
-
-function renderGroupPanel() {
-  if (!groupMessagesHtml) {
-    groupMessagesHtml = `
-      <div class="system-msg">
-        <div style="font-family:var(--brush);font-size:2.4rem;color:var(--jade);opacity:.7;margin-bottom:10px;line-height:1">合</div>
-        <div style="font-family:var(--display);font-style:italic;font-size:1rem;letter-spacing:.04em;margin-bottom:6px">Four Vessels · One Workspace</div>
-        <div style="font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;color:var(--silver);text-transform:uppercase">输入需求 · 所有已启用的 Agent 将参与讨论</div>
-        ${workspace ? `<div style="font-family:var(--mono);font-size:.6rem;color:var(--silver);margin-top:10px;letter-spacing:.04em;opacity:.7">${shortenPath(workspace)}</div>` : ''}
+// ═══ Column 1: 状态 + 规划 ═══
+function renderWorkspaceColumn() {
+  if (!workspace) {
+    wsBody.innerHTML = `
+      <div class="workspace-empty">
+        <div class="glyph">合</div>
+        <h3>选择工作区</h3>
+        <p>所有 Agent 在同一目录协作</p>
+        <button class="workspace-btn" onclick="selectWorkspace()">选择目录</button>
+        ${getRecentWorkspaces().length > 0 ? `
+          <div class="recent-workspaces">
+            ${getRecentWorkspaces().map(w => `
+              <button class="recent-ws-btn" onclick="setWorkspace('${w.replace(/\\/g, '\\\\')}')">${shortenPath(w)}</button>
+            `).join('')}
+          </div>
+        ` : ''}
       </div>
     `;
+    return;
   }
 
-  mainPanel.innerHTML = `
-    <div class="chat-panel">
-      <div class="chat-messages" id="group-messages">${groupMessagesHtml}</div>
-      <div class="chat-input">
-        <span class="mode-tag">Group</span>
-        <input type="text" id="group-input" placeholder="描述你的需求 · 所有 Agent 参与讨论">
-        <button onclick="sendGroupMessage()">Send</button>
-      </div>
+  const enabledAgents = agents.filter(a => a.enabled);
+  const agentStatusItems = enabledAgents.map(a => {
+    const isRunning = sessions[a.id]?.ptyId ? true : false;
+    const statusLabel = isRunning ? '运行中' : '空闲';
+    const statusCls = isRunning ? 'status-on' : 'status-off';
+    return `<div class="task-item">
+      <span class="task-dot" style="background:${a.color}"></span>
+      <span class="task-name">${a.name} · ${a.chinese_name}</span>
+      <span class="task-status ${statusCls}">${statusLabel}</span>
+    </div>`;
+  }).join('');
+
+  wsBody.innerHTML = `
+    <!-- Collapsible file tree -->
+    <details class="filetree-collapse">
+      <summary class="filetree-summary">
+        <span class="filetree-icon">◇</span>
+        <span>${shortenPath(workspace)}</span>
+      </summary>
+      <div class="file-tree" id="file-tree"></div>
+    </details>
+
+    <!-- Current work status -->
+    <div class="status-section">
+      <div class="section-label">协作器</div>
+      <div class="task-list">${agentStatusItems}</div>
     </div>
-  `;
 
-  const input = document.getElementById('group-input');
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendGroupMessage();
-    }
-  });
-
-  // Scroll to bottom
-  const msgs = document.getElementById('group-messages');
-  if (msgs) msgs.scrollTop = msgs.scrollHeight;
-}
-
-
-// ═══ Single Agent Panel (with embedded terminal) ═══
-function renderAgentPanel(agentId) {
-  const agent = agents.find(a => a.id === agentId);
-  if (!agent) return;
-
-  mainPanel.innerHTML = `
-    <div class="agent-panel">
-      <div class="agent-header">
-        <span class="agent-glyph" style="color:${agent.color}">${agent.glyph}</span>
-        <span class="agent-title">${agent.name} · ${agent.chinese_name}</span>
-        <span class="agent-specialty">${agent.specialty}</span>
-        <div class="view-toggle">
-          <button class="active" onclick="showAgentChat('${agentId}')">Chat</button>
-          <button onclick="showAgentTerminal('${agentId}')">Term</button>
+    <!-- Next steps / plan -->
+    <div class="status-section">
+      <div class="section-label">规划</div>
+      <div class="task-list" id="plan-list">
+        <div class="task-item">
+          <span class="task-dot" style="background:var(--jade)"></span>
+          <span class="task-name">群聊讨论需求</span>
+          <span class="task-status status-on">当前</span>
+        </div>
+        <div class="task-item">
+          <span class="task-dot" style="background:var(--gold)"></span>
+          <span class="task-name">确认分工</span>
+          <span class="task-status status-off">待办</span>
+        </div>
+        <div class="task-item">
+          <span class="task-dot" style="background:var(--gold)"></span>
+          <span class="task-name">并行执行</span>
+          <span class="task-status status-off">待办</span>
+        </div>
+        <div class="task-item">
+          <span class="task-dot" style="background:var(--gold)"></span>
+          <span class="task-name">审查产物 Diff</span>
+          <span class="task-status status-off">待办</span>
         </div>
       </div>
-      <div class="terminal-container" id="term-${agentId}"></div>
-      <div class="chat-input">
-        <span class="mode-tag" style="border-color:${agent.color}40;color:${agent.color}">${agent.name}</span>
-        <input type="text" id="input-${agentId}" placeholder="和 ${agent.name} 直接对话...">
-        <button onclick="sendToAgent('${agentId}')">Send</button>
-      </div>
     </div>
   `;
 
-  // Initialize or reattach terminal
-  initTerminal(agentId);
-
-  const input = document.getElementById(`input-${agentId}`);
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendToAgent(agentId);
-    }
-  });
+  loadFileTree();
 }
 
-// ═══ Terminal Management (session persistence) ═══
-async function initTerminal(agentId) {
-  const container = document.getElementById(`term-${agentId}`);
-  if (!container) return;
+async function loadFileTree() {
+  const container = document.getElementById('file-tree');
+  if (!container || !workspace) return;
+  try {
+    fileTree = await invoke('read_dir_tree', { path: workspace, maxDepth: 2 });
+    container.innerHTML = renderTreeNodes(fileTree, 0);
+    // Bind click events
+    container.querySelectorAll('.tree-node').forEach(node => {
+      node.addEventListener('click', () => {
+        const path = node.dataset.path;
+        const isDir = node.dataset.dir === 'true';
+        if (!isDir) {
+          // File click → show in code preview
+          container.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
+          node.classList.add('selected');
+          currentFile = path;
+          previewMode = 'code';
+          document.querySelectorAll('.preview-mode-tab').forEach(t => t.classList.remove('active'));
+          document.querySelector('.preview-mode-tab[data-mode="code"]')?.classList.add('active');
+          loadFilePreview(path);
+        } else {
+          // Dir click → toggle expand (future: lazy load children)
+          node.classList.toggle('expanded');
+          const children = node.nextElementSibling;
+          if (children && children.classList.contains('tree-children')) {
+            children.style.display = children.style.display === 'none' ? '' : 'none';
+          }
+        }
+      });
+    });
+  } catch (e) {
+    container.innerHTML = `<div class="tree-error">${e}</div>`;
+  }
+}
 
-  // If session already exists with a terminal, reattach
-  if (sessions[agentId] && sessions[agentId].terminal) {
+function renderTreeNodes(nodes, depth) {
+  return nodes.map(n => {
+    const indent = depth * 14;
+    const icon = n.is_dir ? '◇' : '·';
+    const cls = n.is_dir ? 'is-dir' : 'is-file';
+    const twist = n.is_dir ? '<span class="twist">▸</span>' : '<span class="twist"> </span>';
+    let html = `<div class="tree-node ${cls}" style="padding-left:${indent + 8}px" data-path="${n.path}" data-dir="${n.is_dir}">
+      ${twist}<span class="icon">${icon}</span>${n.name}
+    </div>`;
+    if (n.children && n.children.length > 0) {
+      html += `<div class="tree-children">${renderTreeNodes(n.children, depth + 1)}</div>`;
+    }
+    return html;
+  }).join('');
+}
+
+// ═══ Column 2: Artifact Preview (Code / Diff / Web) ═══
+let previewMode = 'code'; // 'code' | 'diff' | 'web'
+let currentFile = null; // path of file being viewed
+
+function renderPreviewColumn() {
+  // Bind mode tabs
+  document.querySelectorAll('.preview-mode-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      previewMode = tab.dataset.mode;
+      document.querySelectorAll('.preview-mode-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      renderPreviewContent();
+    });
+  });
+  renderPreviewContent();
+}
+
+function renderPreviewContent() {
+  if (!workspace) {
+    previewBody.innerHTML = `
+      <div class="preview-empty">
+        <div class="glyph">器</div>
+        <p>选择工作区后可预览文件</p>
+      </div>
+    `;
+    return;
+  }
+
+  switch (previewMode) {
+    case 'code':
+      if (currentFile) {
+        loadFilePreview(currentFile);
+      } else {
+        previewBody.innerHTML = `
+          <div class="preview-empty">
+            <div class="glyph">文</div>
+            <p>点击左侧文件查看内容</p>
+          </div>
+        `;
+      }
+      break;
+    case 'diff':
+      loadDiffPreview();
+      break;
+    case 'web':
+      renderWebPreview();
+      break;
+  }
+}
+
+async function loadFilePreview(filePath) {
+  previewBody.innerHTML = `<div class="preview-loading">加载中...</div>`;
+  try {
+    const content = await invoke('read_file_content', { path: filePath });
+    const ext = filePath.split('.').pop() || '';
+    const fileName = filePath.split('/').pop() || filePath.split('\\').pop() || filePath;
+    previewTitle.textContent = fileName;
+    previewBody.innerHTML = `
+      <div class="code-preview">
+        <div class="code-meta">
+          <span class="code-path">${shortenPath(filePath)}</span>
+          <span class="code-ext">${ext}</span>
+        </div>
+        <pre class="code-content"><code>${escapeHtml(content)}</code></pre>
+      </div>
+    `;
+  } catch (e) {
+    previewBody.innerHTML = `<div class="preview-empty"><p style="color:var(--vermilion-glow)">${e}</p></div>`;
+  }
+}
+
+async function loadDiffPreview() {
+  previewBody.innerHTML = `<div class="preview-loading">加载变更...</div>`;
+  try {
+    const files = await invoke('get_changed_files', { cwd: workspace });
+    if (!files || files.length === 0) {
+      previewBody.innerHTML = `
+        <div class="preview-empty">
+          <div class="glyph" style="font-size:2.5rem">∅</div>
+          <p>工作区无变更</p>
+        </div>
+      `;
+      return;
+    }
+    const diff = await invoke('get_git_diff', { cwd: workspace });
+    previewTitle.textContent = `变更 (${files.length})`;
+    previewBody.innerHTML = `
+      <div class="diff-preview">
+        <div class="diff-file-list">
+          ${files.map(f => `
+            <div class="diff-file-item" data-path="${f.path}">
+              <span class="diff-file-status ${f.status}">${f.status[0].toUpperCase()}</span>
+              <span class="diff-file-name">${f.path}</span>
+              <div class="diff-file-actions">
+                <button class="diff-accept" onclick="acceptChange('${f.path.replace(/'/g, "\\'")}')">接受</button>
+                <button class="diff-reject" onclick="rejectChange('${f.path.replace(/'/g, "\\'")}')">拒绝</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="diff-accept-all">
+          <button class="diff-accept" onclick="acceptAllChanges()">全部接受</button>
+          <button class="diff-reject" onclick="rejectAllChanges()">全部拒绝</button>
+        </div>
+        <pre class="diff-content">${renderDiffHtml(diff)}</pre>
+      </div>
+    `;
+  } catch (e) {
+    previewBody.innerHTML = `<div class="preview-empty"><p style="color:var(--vermilion-glow)">${e}</p></div>`;
+  }
+}
+
+window.acceptChange = async function(path) {
+  try {
+    await invoke('accept_file', { cwd: workspace, path });
+    const item = document.querySelector(`.diff-file-item[data-path="${path}"]`);
+    if (item) { item.style.opacity = '.4'; item.querySelector('.diff-file-actions').innerHTML = '<span style="color:var(--jade)">已接受</span>'; }
+  } catch (e) { console.error(e); }
+};
+
+window.rejectChange = async function(path) {
+  try {
+    await invoke('revert_file', { cwd: workspace, path });
+    const item = document.querySelector(`.diff-file-item[data-path="${path}"]`);
+    if (item) { item.style.opacity = '.4'; item.querySelector('.diff-file-actions').innerHTML = '<span style="color:var(--vermilion-glow)">已拒绝</span>'; }
+  } catch (e) { console.error(e); }
+};
+
+window.acceptAllChanges = async function() {
+  for (const item of document.querySelectorAll('.diff-file-item')) {
+    await invoke('accept_file', { cwd: workspace, path: item.dataset.path });
+    item.style.opacity = '.4';
+    item.querySelector('.diff-file-actions').innerHTML = '<span style="color:var(--jade)">已接受</span>';
+  }
+};
+
+window.rejectAllChanges = async function() {
+  for (const item of document.querySelectorAll('.diff-file-item')) {
+    await invoke('revert_file', { cwd: workspace, path: item.dataset.path });
+    item.style.opacity = '.4';
+    item.querySelector('.diff-file-actions').innerHTML = '<span style="color:var(--vermilion-glow)">已拒绝</span>';
+  }
+};
+
+function renderDiffHtml(diff) {
+  return diff.split('\n').map(line => {
+    if (line.startsWith('+++') || line.startsWith('---')) {
+      return `<span class="diff-file">${escapeHtml(line)}</span>`;
+    } else if (line.startsWith('+')) {
+      return `<span class="diff-add">${escapeHtml(line)}</span>`;
+    } else if (line.startsWith('-')) {
+      return `<span class="diff-del">${escapeHtml(line)}</span>`;
+    } else if (line.startsWith('@@')) {
+      return `<span class="diff-hunk">${escapeHtml(line)}</span>`;
+    } else if (line.startsWith('diff ')) {
+      return `<span class="diff-header">${escapeHtml(line)}</span>`;
+    }
+    return escapeHtml(line);
+  }).join('\n');
+}
+
+function renderWebPreview() {
+  previewTitle.textContent = 'Web Preview';
+  previewBody.innerHTML = `
+    <div class="web-preview">
+      <div class="web-bar">
+        <input type="text" id="web-url" class="web-url-input" value="http://localhost:1420" placeholder="http://localhost:...">
+        <button class="web-reload-btn" onclick="reloadWebPreview()">↻</button>
+      </div>
+      <iframe id="web-iframe" class="web-iframe" src="http://localhost:3000" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+    </div>
+  `;
+  // Try common dev server ports
+  const iframe = document.getElementById('web-iframe');
+  const urlInput = document.getElementById('web-url');
+  if (urlInput) {
+    urlInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        iframe.src = urlInput.value;
+      }
+    });
+  }
+}
+
+window.reloadWebPreview = function() {
+  const iframe = document.getElementById('web-iframe');
+  const urlInput = document.getElementById('web-url');
+  if (iframe && urlInput) iframe.src = urlInput.value;
+};
+
+// ═══ Terminal Management ═══
+async function initTerminal(agentId, container) {
+  // Already has terminal — reattach
+  if (sessions[agentId]?.terminal) {
     const { terminal, fitAddon } = sessions[agentId];
-    container.innerHTML = '';
-    terminal.open(container);
+    if (!container.querySelector('.xterm')) {
+      container.innerHTML = '';
+      terminal.open(container);
+    }
     terminal.element.style.display = '';
     setTimeout(() => fitAddon.fit(), 50);
     return;
   }
 
-  // If session exists with ptyId but no terminal (spawned by group chat), create terminal and attach
-  if (sessions[agentId] && sessions[agentId].ptyId && !sessions[agentId].terminal) {
-    const agent = agents.find(a => a.id === agentId);
-    const terminal = createTerminal();
-    const fitAddon = new FitAddon();
-    terminal.loadAddon(fitAddon);
-    terminal.loadAddon(new WebLinksAddon());
-    container.innerHTML = '';
-    terminal.open(container);
-    setTimeout(() => fitAddon.fit(), 50);
-
-    // Attach input to existing PTY
-    terminal.onData(data => {
-      invoke('pty_write', { id: sessions[agentId].ptyId, data });
-    });
-
-    // Pipe buffer output to terminal (catch up on missed output)
-    if (window._agentBuffers && window._agentBuffers[agentId]) {
-      terminal.write(window._agentBuffers[agentId]);
-    }
-
-    sessions[agentId].terminal = terminal;
-    sessions[agentId].fitAddon = fitAddon;
-    updateAgentStatus(agentId, 'ready');
-
-    const resizeObserver = new ResizeObserver(() => { if (fitAddon) fitAddon.fit(); });
-    resizeObserver.observe(container);
-    return;
-  }
-
-  // No session at all — create new terminal + spawn agent
-  const agent = agents.find(a => a.id === agentId);
+  // Create new terminal + spawn agent
   const terminal = createTerminal();
   const fitAddon = new FitAddon();
   terminal.loadAddon(fitAddon);
@@ -275,7 +430,6 @@ async function initTerminal(agentId) {
   terminal.open(container);
   setTimeout(() => fitAddon.fit(), 50);
 
-  // Spawn Agent PTY
   if (!window._agentBuffers) window._agentBuffers = {};
   window._agentBuffers[agentId] = '';
 
@@ -287,63 +441,149 @@ async function initTerminal(agentId) {
 
   try {
     const ptyId = await invoke('spawn_agent', {
-      agentId,
-      cwd: workspace,
-      cols: terminal.cols,
-      rows: terminal.rows,
-      onData,
+      agentId, cwd: workspace, cols: terminal.cols, rows: terminal.rows, onData,
     });
-
     sessions[agentId] = { ptyId, terminal, fitAddon };
-
-    // Terminal input → PTY stdin
-    terminal.onData(data => {
-      invoke('pty_write', { id: ptyId, data });
-    });
-
+    terminal.onData(data => invoke('pty_write', { id: ptyId, data }));
     updateAgentStatus(agentId, 'ready');
-    updateStatus(`${agent.name} 已启动 · ${shortenPath(workspace)}`);
+    updateStatus(`${agentId} 已启动`);
   } catch (e) {
     terminal.write(`\r\n\x1b[31m启动失败: ${e}\x1b[0m\r\n`);
-    terminal.write(`\r\n\x1b[33m提示: 请确认已在配置面板填写 API Key，且 bundle/ 中有对应二进制\x1b[0m\r\n`);
+    terminal.write(`\r\n\x1b[33m提示: 确认 API Key 已配置且 bundle/ 有对应二进制\x1b[0m\r\n`);
     sessions[agentId] = { ptyId: null, terminal, fitAddon };
     updateAgentStatus(agentId, 'error');
-    updateStatus(`${agent.name} 启动失败`);
   }
 
-  const resizeObserver = new ResizeObserver(() => { if (fitAddon) fitAddon.fit(); });
-  resizeObserver.observe(container);
+  const ro = new ResizeObserver(() => fitAddon?.fit());
+  ro.observe(container);
 }
 
 function createTerminal() {
   return new Terminal({
     theme: {
-      background: '#0a1a1a',
-      foreground: '#ffe6cb',
+      background: '#02100f',
+      foreground: '#f0e8d6',
       cursor: '#00ffc8',
-      cursorAccent: '#041c1c',
+      cursorAccent: '#02100f',
       selectionBackground: '#00ffc840',
-      black: '#0a1a1a',
-      brightBlack: '#7a9a90',
-      green: '#00ffc8',
-      brightGreen: '#50c878',
-      red: '#ff6464',
-      yellow: '#ffc857',
-      blue: '#4285f4',
-      magenta: '#a064ff',
+      black: '#02100f', brightBlack: '#6e8a82',
+      green: '#00ffc8', brightGreen: '#50c878',
+      red: '#e85a3a', yellow: '#d4af6a',
+      blue: '#4285f4', magenta: '#a064ff',
     },
-    fontFamily: "'Courier New', 'Menlo', 'Consolas', monospace",
-    fontSize: 13,
-    cursorBlink: true,
-    scrollback: 5000,
+    fontFamily: "'JetBrains Mono', 'Menlo', monospace",
+    fontSize: 13, cursorBlink: true, scrollback: 5000,
   });
 }
 
 function updateAgentStatus(agentId, status) {
-  const dot = sidebar.querySelector(`[data-id="${agentId}"] .status-dot`);
+  const dot = rail.querySelector(`[data-id="${agentId}"] .status-dot`);
   if (!dot) return;
   dot.classList.remove('off', 'ready', 'busy');
   dot.classList.add(status === 'ready' ? 'ready' : status === 'busy' ? 'busy' : 'off');
+}
+
+// ═══ Column 3: Chat ═══
+let groupMessagesHtml = '';
+
+function renderChatColumn() {
+  renderGroupChat();
+}
+
+function renderGroupChat() {
+  chatTitle.textContent = '群聊';
+  rail.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const gb = rail.querySelector('[data-panel="group"]');
+  if (gb) gb.classList.add('active');
+
+  if (!groupMessagesHtml) {
+    // Try loading history
+    loadChatHistory();
+    return;
+  }
+  renderGroupChatUI();
+}
+
+async function loadChatHistory() {
+  try {
+    const history = await invoke('load_chat_history', { workspace: workspace || '' });
+    if (history && history.length > 0) {
+      groupMessagesHtml = history.map(m => {
+        if (m.from === 'user') {
+          return `<div class="msg user"><div class="avatar user-av">Y</div><div class="bubble">${escapeHtml(m.content)}</div></div>`;
+        } else if (m.msg_type === 'system') {
+          return `<div class="system-msg">${escapeHtml(m.content)}</div>`;
+        } else {
+          const agent = agents.find(a => a.id === m.from);
+          const color = agent?.color || 'var(--bone-dim)';
+          const glyph = agent?.glyph || m.from[0];
+          return `<div class="msg"><div class="avatar" style="color:${color}">${glyph}</div><div class="bubble"><div class="name" style="color:${color}">${m.from}</div>${escapeHtml(m.content)}</div></div>`;
+        }
+      }).join('');
+    } else {
+      groupMessagesHtml = `
+        <div class="system-msg">
+          <div style="font-family:var(--brush);font-size:2rem;color:var(--jade);opacity:.7;line-height:1;margin-bottom:8px">合</div>
+          <div style="font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;color:var(--silver)">
+            ${workspace ? shortenPath(workspace) : '请先选择工作区'}
+          </div>
+        </div>
+      `;
+    }
+  } catch (e) {
+    groupMessagesHtml = `
+      <div class="system-msg">
+        <div style="font-family:var(--brush);font-size:2rem;color:var(--jade);opacity:.7;line-height:1;margin-bottom:8px">合</div>
+        <div style="font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;color:var(--silver)">
+          ${workspace ? shortenPath(workspace) : '请先选择工作区'}
+        </div>
+      </div>
+    `;
+  }
+  renderGroupChatUI();
+}
+
+function renderGroupChatUI() {
+
+  chatBody.innerHTML = `
+    <div class="chat-messages" id="group-messages">${groupMessagesHtml}</div>
+    <div class="chat-input">
+      <input type="text" id="group-input" placeholder="输入需求...">
+      <button onclick="sendGroupMessage()">发送</button>
+    </div>
+  `;
+
+  const input = document.getElementById('group-input');
+  if (input) input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendGroupMessage(); }
+  });
+  const msgs = document.getElementById('group-messages');
+  if (msgs) msgs.scrollTop = msgs.scrollHeight;
+}
+
+function renderAgentChat(agentId) {
+  const agent = agents.find(a => a.id === agentId);
+  if (!agent) return;
+  chatTitle.textContent = `${agent.name} · ${agent.chinese_name}`;
+  rail.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+  chatBody.innerHTML = `
+    <div class="chat-messages" id="agent-messages">
+      <div class="system-msg">
+        <div style="font-family:var(--brush);font-size:1.8rem;color:${agent.color};opacity:.8;line-height:1;margin-bottom:6px">${agent.glyph}</div>
+        <div style="font-family:var(--mono);font-size:.58rem;color:var(--silver)">${agent.specialty}</div>
+      </div>
+    </div>
+    <div class="chat-input">
+      <input type="text" id="input-${agentId}" placeholder="对话...">
+      <button onclick="sendToAgent('${agentId}')">发送</button>
+    </div>
+  `;
+
+  const input = document.getElementById(`input-${agentId}`);
+  if (input) input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendToAgent(agentId); }
+  });
 }
 
 // ═══ Message Sending ═══
@@ -353,32 +593,37 @@ window.sendGroupMessage = async function() {
   const msg = input.value.trim();
   input.value = '';
 
-  // Add user message to UI
+  // Persist
+  await invoke('save_chat_message', { record: { id: null, timestamp: Date.now(), from: 'user', content: msg, msg_type: 'chat', workspace: workspace || '' } }).catch(() => {});
+
   const messages = document.getElementById('group-messages');
   messages.innerHTML += `
     <div class="msg user">
-      <div class="avatar user-av">你</div>
+      <div class="avatar user-av">Y</div>
       <div class="bubble">${escapeHtml(msg)}</div>
     </div>
   `;
   messages.scrollTop = messages.scrollHeight;
   groupMessagesHtml = messages.innerHTML;
 
-  // Handle commands
-  if (msg.startsWith('/')) {
-    await handleCommand(msg);
-    return;
-  }
+  if (msg.startsWith('/')) { await handleCommand(msg); return; }
 
-  // Send to message bus
   try {
     const speakers = await invoke('group_send', { content: msg });
-    updateStatus(`讨论中 · ${speakers.length} 个 Agent 将发言`);
-
-    // Trigger agent responses sequentially
+    updateStatus(`讨论中 · ${speakers.length} 个 Agent`);
     await runDiscussion();
   } catch (e) {
     addSystemMessage(`错误: ${e}`);
+  }
+};
+
+window.sendToAgent = function(agentId) {
+  const input = document.getElementById(`input-${agentId}`);
+  if (!input || !input.value.trim()) return;
+  const msg = input.value.trim();
+  input.value = '';
+  if (sessions[agentId]?.ptyId) {
+    invoke('pty_write', { id: sessions[agentId].ptyId, data: msg + '\n' });
   }
 };
 
@@ -387,286 +632,112 @@ async function runDiscussion() {
     const speaker = await invoke('group_next_speaker');
     if (!speaker) {
       addSystemMessage(`
-        所有 Agent 已发言完毕。
+        讨论完毕
         <div class="actions">
-          <button class="primary" onclick="confirmExecution()">Confirm · 确认执行</button>
-          <button onclick="continueDicussion()">Continue · 继续讨论</button>
+          <button class="primary" onclick="confirmExecution()">确认执行</button>
+          <button onclick="continueDicussion()">继续讨论</button>
         </div>
       `);
       updateStatus('待确认');
       break;
     }
-
     const agent = agents.find(a => a.id === speaker.agent_id);
     if (!agent) continue;
 
-    // Always get fresh DOM reference (user might have switched panels)
     let messages = document.getElementById('group-messages');
     if (!messages) { await sleep(500); messages = document.getElementById('group-messages'); }
-    if (!messages) break; // User left group chat entirely
+    if (!messages) break;
 
-    // Show thinking indicator
     updateAgentStatus(speaker.agent_id, 'busy');
     const thinkingId = `thinking-${Date.now()}`;
     messages.innerHTML += `
       <div class="msg" id="${thinkingId}">
         <div class="avatar" style="background:${agent.color}20;color:${agent.color};border-color:${agent.color}40">${agent.glyph}</div>
-        <div class="bubble"><div class="name" style="color:${agent.color}">${agent.name} · ${agent.chinese_name}</div><span class="thinking">思考中...</span></div>
+        <div class="bubble"><div class="name" style="color:${agent.color}">${agent.name}</div><span class="thinking">思考中...</span></div>
       </div>
     `;
     messages.scrollTop = messages.scrollHeight;
     groupMessagesHtml = messages.innerHTML;
 
-    // Build prompt and inject into agent's PTY
     const prompt = await invoke('group_build_prompt', { agentId: speaker.agent_id });
+    if (!sessions[speaker.agent_id]) await spawnAgentForGroup(speaker.agent_id);
 
-    // Ensure agent is spawned
-    if (!sessions[speaker.agent_id]) {
-      await spawnAgentForGroup(speaker.agent_id);
-    }
-
-    // Write prompt to agent's stdin
-    if (sessions[speaker.agent_id] && sessions[speaker.agent_id].ptyId) {
+    if (sessions[speaker.agent_id]?.ptyId) {
       const startTime = Date.now();
       await invoke('pty_write', { id: sessions[speaker.agent_id].ptyId, data: prompt + '\n' });
-
-      // Wait for response (capture stdout for a few seconds)
       const response = await captureAgentResponse(speaker.agent_id, 15000);
       const duration = Date.now() - startTime;
+      await invoke('group_agent_response', { agentId: speaker.agent_id, content: response, tokens: null, model: null, durationMs: duration });
 
-      // Record in bus
-      await invoke('group_agent_response', {
-        agentId: speaker.agent_id,
-        content: response,
-        tokens: null,
-        model: null,
-        durationMs: duration,
-      });
-
-      // Replace thinking indicator with actual response
-      const thinkingEl = document.getElementById(thinkingId);
-      if (thinkingEl) {
-        thinkingEl.innerHTML = `
+      const el = document.getElementById(thinkingId);
+      if (el) {
+        el.innerHTML = `
           <div class="avatar" style="background:${agent.color}20;color:${agent.color};border-color:${agent.color}40">${agent.glyph}</div>
-          <div class="bubble">
-            <div class="name" style="color:${agent.color}">${agent.name} · ${agent.chinese_name}</div>
-            ${escapeHtml(response)}
-            <div class="meta">⏱ ${(duration/1000).toFixed(1)}s</div>
-          </div>
+          <div class="bubble"><div class="name" style="color:${agent.color}">${agent.name}</div>${escapeHtml(response)}<div class="meta">${(duration/1000).toFixed(1)}s</div></div>
         `;
       }
     } else {
-      // Agent not available — skip
-      const thinkingEl = document.getElementById(thinkingId);
-      if (thinkingEl) {
-        thinkingEl.innerHTML = `
-          <div class="avatar" style="background:${agent.color}20;color:${agent.color};border-color:${agent.color}40">${agent.glyph}</div>
-          <div class="bubble"><div class="name" style="color:${agent.color}">${agent.name}</div><span style="opacity:.5">未启动，跳过</span></div>
-        `;
-      }
+      const el = document.getElementById(thinkingId);
+      if (el) el.querySelector('.thinking').textContent = '未启动，跳过';
     }
 
     updateAgentStatus(speaker.agent_id, 'ready');
-    // Refresh DOM ref and persist
     messages = document.getElementById('group-messages');
-    if (messages) {
-      messages.scrollTop = messages.scrollHeight;
-      groupMessagesHtml = messages.innerHTML;
-    }
+    if (messages) { messages.scrollTop = messages.scrollHeight; groupMessagesHtml = messages.innerHTML; }
   }
 }
 
+// ═══ Group chat helpers ═══
 async function spawnAgentForGroup(agentId) {
-  // If agent already has a PTY session (from single-chat), reuse it
-  if (sessions[agentId] && sessions[agentId].ptyId) {
-    // Just ensure the buffer callback is set up
+  if (sessions[agentId]?.ptyId) {
     if (!window._agentBuffers) window._agentBuffers = {};
     if (!(agentId in window._agentBuffers)) window._agentBuffers[agentId] = '';
     return;
   }
-
   const onData = new Channel();
-  // Buffer stdout for group chat capture
   if (!window._agentBuffers) window._agentBuffers = {};
   window._agentBuffers[agentId] = '';
   onData.onmessage = (data) => {
     window._agentBuffers[agentId] += data;
-    // Also write to terminal if it exists
-    if (sessions[agentId] && sessions[agentId].terminal) {
-      sessions[agentId].terminal.write(data);
-    }
+    if (sessions[agentId]?.terminal) sessions[agentId].terminal.write(data);
   };
-
   try {
-    const ptyId = await invoke('spawn_agent', {
-      agentId,
-      cwd: workspace,
-      cols: 120,
-      rows: 40,
-      onData,
-    });
+    const ptyId = await invoke('spawn_agent', { agentId, cwd: workspace, cols: 120, rows: 40, onData });
     if (!sessions[agentId]) sessions[agentId] = {};
     sessions[agentId].ptyId = ptyId;
     updateAgentStatus(agentId, 'ready');
-
-    // Wait for startup banner to finish (2s) before using in group chat
     await sleep(2000);
-    window._agentBuffers[agentId] = ''; // Clear startup output
-  } catch (e) {
-    console.error(`spawn ${agentId} for group:`, e);
-  }
+    window._agentBuffers[agentId] = '';
+  } catch (e) { console.error(`spawn ${agentId}:`, e); }
 }
 
 async function captureAgentResponse(agentId, timeoutMs) {
-  // Clear buffer
   if (!window._agentBuffers) window._agentBuffers = {};
   window._agentBuffers[agentId] = '';
-
-  // Wait for output to stabilize (no new output for 3s, or timeout)
   return new Promise(resolve => {
-    let lastLen = 0;
-    let stableCount = 0;
-    const checkInterval = setInterval(() => {
+    let lastLen = 0, stableCount = 0;
+    const iv = setInterval(() => {
       const buf = window._agentBuffers[agentId] || '';
       if (buf.length === lastLen && buf.length > 0) {
         stableCount++;
-        if (stableCount >= 3) { // 3 seconds of no new output
-          clearInterval(checkInterval);
-          resolve(cleanAnsi(buf));
-        }
-      } else {
-        stableCount = 0;
-        lastLen = buf.length;
-      }
+        if (stableCount >= 3) { clearInterval(iv); resolve(cleanAnsi(buf)); }
+      } else { stableCount = 0; lastLen = buf.length; }
     }, 1000);
-
-    // Hard timeout
     setTimeout(() => {
-      clearInterval(checkInterval);
+      clearInterval(iv);
       const buf = window._agentBuffers[agentId] || '';
-      resolve(buf.length > 0 ? cleanAnsi(buf) : '(无响应)');
+      resolve(buf.length > 0 ? cleanAnsi(buf) : '（无响应）');
     }, timeoutMs);
   });
-}
-
-function cleanAnsi(str) {
-  // Strip ANSI escape codes
-  return str.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
-    .replace(/\x1b\][^\x07]*\x07/g, '')  // OSC sequences
-    .replace(/\r/g, '')
-    .split('\n')
-    .filter(l => l.trim().length > 0)
-    .join('\n')
-    .trim();
 }
 
 window.confirmExecution = async function() {
   try {
     await invoke('group_confirm_exec', { order: null });
-    addSystemMessage('🚀 开始执行 · 按分工顺序串行');
+    addSystemMessage('开始执行...');
     updateStatus('执行中');
-
-    // Run execution queue
-    await runExecution();
-  } catch (e) {
-    addSystemMessage(`错误: ${e}`);
-  }
+  } catch (e) { addSystemMessage(`Error: ${e}`); }
 };
-
-async function runExecution() {
-  const messages = document.getElementById('group-messages');
-
-  while (true) {
-    const agentId = await invoke('group_next_executor');
-    if (!agentId) {
-      addSystemMessage('✅ 所有任务执行完毕');
-      updateStatus('完成');
-      break;
-    }
-
-    const agent = agents.find(a => a.id === agentId);
-    if (!agent) continue;
-
-    // Show execution start
-    updateAgentStatus(agentId, 'busy');
-    const execId = `exec-${agentId}-${Date.now()}`;
-    messages.innerHTML += `
-      <div class="msg" id="${execId}">
-        <div class="avatar" style="background:${agent.color}20;color:${agent.color};border-color:${agent.color}40">${agent.glyph}</div>
-        <div class="bubble">
-          <div class="name" style="color:${agent.color}">${agent.name} · 执行中</div>
-          <span class="thinking">正在执行任务...</span>
-          <div class="exec-hint">点击侧栏「${agent.glyph}」查看实时终端输出</div>
-        </div>
-      </div>
-    `;
-    messages.scrollTop = messages.scrollHeight;
-
-    // Ensure agent is spawned
-    if (!sessions[agentId] || !sessions[agentId].ptyId) {
-      await spawnAgentForGroup(agentId);
-    }
-
-    if (sessions[agentId] && sessions[agentId].ptyId) {
-      // Build execution prompt from bus
-      const chatMessages = await invoke('group_get_messages');
-      const agentMessages = chatMessages.filter(m => m.from === agentId && m.msg_type === 'chat');
-      const task = agentMessages.length > 0
-        ? agentMessages[agentMessages.length - 1].content
-        : '执行你在讨论中承诺的任务';
-
-      const execPrompt = `请开始执行你在讨论中承诺的任务。直接操作文件和代码。\n你的任务摘要：${task}\n`;
-
-      // Clear buffer and inject execution prompt
-      window._agentBuffers[agentId] = '';
-      const startTime = Date.now();
-      await invoke('pty_write', { id: sessions[agentId].ptyId, data: execPrompt + '\n' });
-
-      // Wait for execution to complete (longer timeout: 60s)
-      const result = await captureAgentResponse(agentId, 60000);
-      const duration = Date.now() - startTime;
-
-      // Update UI
-      const execEl = document.getElementById(execId);
-      if (execEl) {
-        const preview = result.length > 300 ? result.substring(0, 300) + '...' : result;
-        execEl.innerHTML = `
-          <div class="avatar" style="background:${agent.color}20;color:${agent.color};border-color:${agent.color}40">${agent.glyph}</div>
-          <div class="bubble">
-            <div class="name" style="color:${agent.color}">${agent.name} · 执行完成 ✓</div>
-            <pre class="exec-output">${escapeHtml(preview)}</pre>
-            <div class="meta">⏱ ${(duration/1000).toFixed(1)}s</div>
-          </div>
-        `;
-      }
-
-      // Record result in bus
-      await invoke('group_agent_response', {
-        agentId,
-        content: `[执行完成] ${result.substring(0, 500)}`,
-        tokens: null,
-        model: null,
-        durationMs: duration,
-      });
-    } else {
-      const execEl = document.getElementById(execId);
-      if (execEl) {
-        execEl.querySelector('.bubble').innerHTML = `
-          <div class="name" style="color:${agent.color}">${agent.name}</div>
-          <span style="color:#ff6464">未启动，跳过执行</span>
-        `;
-      }
-    }
-
-    updateAgentStatus(agentId, 'ready');
-    messages.scrollTop = messages.scrollHeight;
-
-    // Brief pause between agents
-    await sleep(1000);
-  }
-}
-
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 window.continueDicussion = function() {
   const input = document.getElementById('group-input');
@@ -674,29 +745,13 @@ window.continueDicussion = function() {
 };
 
 async function handleCommand(cmd) {
-  const parts = cmd.split(' ');
-  const command = parts[0];
-  const arg = parts.slice(1).join(' ');
-
+  const [command, ...rest] = cmd.split(' ');
+  const arg = rest.join(' ');
   switch (command) {
-    case '/invite':
-      if (arg) {
-        await invoke('group_invite', { agentId: arg });
-        addSystemMessage(`已邀请 ${arg} 加入群聊`);
-      }
-      break;
-    case '/kick':
-      if (arg) {
-        await invoke('group_kick', { agentId: arg });
-        addSystemMessage(`已将 ${arg} 移出群聊`);
-      }
-      break;
-    case '/agents':
-      const phase = await invoke('group_get_phase');
-      addSystemMessage(`当前阶段: ${phase}<br>参与者: ${agents.filter(a=>a.enabled).map(a=>a.name).join(', ')}`);
-      break;
-    default:
-      addSystemMessage(`未知命令: ${command}`);
+    case '/invite': if (arg) { await invoke('group_invite', { agentId: arg }); addSystemMessage(`invited ${arg}`); } break;
+    case '/kick': if (arg) { await invoke('group_kick', { agentId: arg }); addSystemMessage(`removed ${arg}`); } break;
+    case '/agents': const phase = await invoke('group_get_phase'); addSystemMessage(`phase: ${phase}`); break;
+    default: addSystemMessage(`unknown: ${command}`);
   }
 }
 
@@ -709,293 +764,173 @@ function addSystemMessage(html) {
   }
 }
 
-window.sendToAgent = function(agentId) {
-  const input = document.getElementById(`input-${agentId}`);
-  if (!input || !input.value.trim()) return;
-  const msg = input.value.trim();
-  input.value = '';
-
-  // Write directly to PTY stdin
-  if (sessions[agentId] && sessions[agentId].ptyId) {
-    invoke('pty_write', { id: sessions[agentId].ptyId, data: msg + '\n' });
-  } else {
-    // Agent not running — show error in terminal
-    if (sessions[agentId] && sessions[agentId].terminal) {
-      sessions[agentId].terminal.write('\r\n\x1b[31mAgent 未启动，请先在配置面板设置 API Key\x1b[0m\r\n');
-    }
-  }
-};
-
-window.showAgentChat = function(agentId) {
-  // TODO: toggle between chat view and terminal view
-};
-
-window.showAgentTerminal = function(agentId) {
-  // Already showing terminal
-};
-
-// ═══ Config Panel ═══
+// ═══ Config Panel (renders in preview area) ═══
 function renderConfigPanel() {
+  chatTitle.textContent = '配置';
   const agentSections = agents.filter(a => a.enabled).map(a => {
     const appType = a.id === 'claude' ? 'claude' : a.id === 'codex' ? 'codex' : a.id;
     return `
-      <div class="config-agent" data-app-type="${appType}" data-agent-id="${a.id}">
+      <div class="config-agent">
         <div class="config-agent-header">
           <span style="color:${a.color};font-family:var(--brush);font-size:1.4rem">${a.glyph}</span>
-          <span style="font-family:var(--serif);font-weight:700">${a.name}</span>
-          <span style="opacity:.4;font-size:.75rem;margin-left:auto">${a.config_type}</span>
+          <span style="font-family:var(--serif-zh);font-weight:600">${a.name}</span>
+          <span style="opacity:.4;font-size:.64rem;margin-left:auto;font-family:var(--mono)">${a.config_type}</span>
         </div>
         <div class="config-fields">
-          <label>Base URL</label>
-          <input type="text" class="cfg-url" placeholder="https://api.example.com/v1" data-agent="${a.id}">
-          <label>API Key</label>
-          <input type="password" class="cfg-key" placeholder="sk-..." data-agent="${a.id}">
-          <label>模型</label>
-          <input type="text" class="cfg-model" placeholder="claude-sonnet-4 / gpt-5.4" data-agent="${a.id}">
-          <button class="cfg-save" onclick="saveAgentConfig('${a.id}', '${appType}')">Save</button>
+          <label>地址</label><input type="text" class="cfg-url" placeholder="https://api.example.com/v1" data-agent="${a.id}">
+          <label>密钥</label><input type="password" class="cfg-key" placeholder="sk-..." data-agent="${a.id}">
+          <label>模型</label><input type="text" class="cfg-model" placeholder="模型名称" data-agent="${a.id}">
+          <button class="cfg-save" onclick="saveAgentConfig('${a.id}', '${appType}')">保存</button>
           <span class="cfg-status" id="cfg-status-${a.id}"></span>
         </div>
-      </div>
-    `;
+      </div>`;
   }).join('');
 
-  mainPanel.innerHTML = `
+  // Render config in the preview body (takes over the preview area)
+  previewBody.innerHTML = `
     <div class="config-panel">
       <div class="config-header">
         <h2>API 配置</h2>
         <p>每个 Agent 可独立配置，也可共用同一个中转站 Key</p>
       </div>
-
-      <!-- 共用 Key 快捷设置 -->
       <div class="shared-key-section">
-        <h3>共用 Key · Shared</h3>
+        <h3>共用 Key</h3>
         <div class="config-fields" style="margin-top:10px">
-          <label>Base URL</label>
-          <input type="text" id="shared-url" placeholder="https://your-relay.com/v1">
-          <label>API Key</label>
-          <input type="password" id="shared-key" placeholder="sk-...">
-          <label>Model</label>
-          <input type="text" id="shared-model" placeholder="留空则各 Agent 用默认模型">
-          <button class="cfg-save" onclick="applySharedKey()">Apply To All</button>
+          <label>地址</label><input type="text" id="shared-url" placeholder="https://your-relay.com/v1">
+          <label>密钥</label><input type="password" id="shared-key" placeholder="sk-...">
+          <label>模型</label><input type="text" id="shared-model" placeholder="可选">
+          <button class="cfg-save" onclick="applySharedKey()">全部应用</button>
           <span class="cfg-status" id="cfg-status-shared"></span>
         </div>
       </div>
-
-      <!-- Provider 模板 -->
       <div class="template-section">
-        <h3>快速模板 · Templates</h3>
+        <h3>快速模板</h3>
         <div class="template-grid">
           <button class="template-btn" onclick="applyTemplate('openai')">OpenAI 官方</button>
           <button class="template-btn" onclick="applyTemplate('anthropic')">Anthropic 官方</button>
-          <button class="template-btn" onclick="applyTemplate('deepseek')">DeepSeek</button>
+          <button class="template-btn" onclick="applyTemplate('deepseek')">深度求索</button>
           <button class="template-btn" onclick="applyTemplate('oneapi')">one-api 中转</button>
           <button class="template-btn" onclick="applyTemplate('newapi')">new-api 中转</button>
-          <button class="template-btn" onclick="applyTemplate('azure')">Azure OpenAI</button>
+          <button class="template-btn" onclick="applyTemplate('azure')">Azure 云</button>
         </div>
       </div>
-
-      <!-- 各 Agent 独立配置 -->
-      <h3 style="margin-top:32px">各 Agent · Per-Agent</h3>
-      <div class="config-agents">
-        ${agentSections}
-      </div>
-
-      <!-- 添加自定义 Agent -->
-      <div class="add-agent-section">
-        <h3>添加自定义 Agent · Custom</h3>
-        <div class="config-fields" style="margin-top:10px">
-          <label>ID</label>
-          <input type="text" id="new-agent-id" placeholder="gemini">
-          <label>Name</label>
-          <input type="text" id="new-agent-name" placeholder="gemini-cli">
-          <label>中文名</label>
-          <input type="text" id="new-agent-cn" placeholder="明镜">
-          <label>图标</label>
-          <input type="text" id="new-agent-glyph" placeholder="镜" maxlength="1">
-          <label>颜色</label>
-          <input type="color" id="new-agent-color" value="#4285f4">
-          <label>专长</label>
-          <input type="text" id="new-agent-spec" placeholder="搜索、多模态">
-          <label>Binary</label>
-          <input type="text" id="new-agent-bin" placeholder="bundle/gemini/{platform}/gemini">
-          <button class="cfg-save" onclick="addCustomAgent()">Add Agent</button>
-          <span class="cfg-status" id="cfg-status-new"></span>
-        </div>
-      </div>
+      <h3 style="margin-top:28px">各 Agent 配置</h3>
+      <div class="config-agents">${agentSections}</div>
     </div>
   `;
-
-  // Load existing configs
+  previewTitle.textContent = '配置';
   agents.filter(a => a.enabled).forEach(a => loadAgentConfig(a.id));
 }
 
-// ═══ Shared Key ═══
+// ═══ Config helpers ═══
+const TEMPLATES = {
+  openai: { url: 'https://api.openai.com/v1', model: 'gpt-5.4' },
+  anthropic: { url: 'https://api.anthropic.com/v1', model: 'claude-sonnet-4' },
+  deepseek: { url: 'https://api.deepseek.com/v1', model: 'deepseek-chat' },
+  oneapi: { url: 'http://localhost:3000/v1', model: '' },
+  newapi: { url: 'http://localhost:3000/v1', model: '' },
+  azure: { url: 'https://YOUR_RESOURCE.openai.azure.com/openai/v1', model: 'gpt-4o' },
+};
+
+window.applyTemplate = function(id) {
+  const t = TEMPLATES[id]; if (!t) return;
+  const u = document.getElementById('shared-url');
+  const m = document.getElementById('shared-model');
+  if (u) u.value = t.url;
+  if (m) m.value = t.model;
+};
+
 window.applySharedKey = async function() {
   const url = document.getElementById('shared-url')?.value || '';
   const key = document.getElementById('shared-key')?.value || '';
   const model = document.getElementById('shared-model')?.value || '';
   const status = document.getElementById('cfg-status-shared');
-
-  if (!url && !key) {
-    if (status) { status.textContent = '请填写 URL 或 Key'; status.style.color = '#ff6464'; }
-    return;
-  }
-
+  if (!url && !key) { if (status) { status.textContent = '请填写'; status.style.color = '#e85a3a'; } return; }
   let saved = 0;
   for (const a of agents.filter(a => a.enabled)) {
     const appType = a.id === 'claude' ? 'claude' : a.id === 'codex' ? 'codex' : a.id;
-    const agentModel = model || (a.id === 'claude' ? 'claude-sonnet-4' : a.id === 'codex' ? 'gpt-5.4' : '');
+    const m = model || (a.id === 'claude' ? 'claude-sonnet-4' : a.id === 'codex' ? 'gpt-5.4' : '');
     try {
-      await invoke('save_provider', {
-        provider: {
-          id: `${a.id}-shared`,
-          app_type: appType,
-          name: 'Shared Provider',
-          base_url: url,
-          api_key: key,
-          model: agentModel,
-          is_current: true,
-        }
-      });
+      await invoke('save_provider', { provider: { id: `${a.id}-shared`, app_type: appType, name: 'Shared', base_url: url, api_key: key, model: m, is_当前: true } });
       saved++;
-    } catch (e) { console.error(`save ${a.id}:`, e); }
+    } catch (e) { console.error(e); }
   }
-
-  if (status) {
-    status.textContent = `✓ 已应用到 ${saved} 个 Agent`;
-    status.style.color = 'var(--accent)';
-    setTimeout(() => { status.textContent = ''; }, 3000);
-  }
-
-  // Refresh individual fields
+  if (status) { status.textContent = `已应用 ${saved} 个`; status.style.color = 'var(--jade)'; setTimeout(() => status.textContent = '', 3000); }
   agents.filter(a => a.enabled).forEach(a => loadAgentConfig(a.id));
 };
 
-// ═══ Templates ═══
-const TEMPLATES = {
-  openai: { url: 'https://api.openai.com/v1', model: 'gpt-5.4', hint: '填入 OpenAI API Key' },
-  anthropic: { url: 'https://api.anthropic.com/v1', model: 'claude-sonnet-4', hint: '填入 Anthropic API Key' },
-  deepseek: { url: 'https://api.deepseek.com/v1', model: 'deepseek-chat', hint: '填入 DeepSeek API Key' },
-  oneapi: { url: 'http://localhost:3000/v1', model: '', hint: '填入 one-api 的 Token' },
-  newapi: { url: 'http://localhost:3000/v1', model: '', hint: '填入 new-api 的 Token' },
-  azure: { url: 'https://YOUR_RESOURCE.openai.azure.com/openai/v1', model: 'gpt-4o', hint: '填入 Azure API Key' },
-};
-
-window.applyTemplate = function(templateId) {
-  const t = TEMPLATES[templateId];
-  if (!t) return;
-  const urlEl = document.getElementById('shared-url');
-  const modelEl = document.getElementById('shared-model');
-  if (urlEl) urlEl.value = t.url;
-  if (modelEl) modelEl.value = t.model;
-  const status = document.getElementById('cfg-status-shared');
-  if (status) { status.textContent = `模板已填入 · ${t.hint}`; status.style.color = 'var(--accent)'; }
-};
-
-// ═══ Custom Agent ═══
-window.addCustomAgent = async function() {
-  const id = document.getElementById('new-agent-id')?.value?.trim();
-  const name = document.getElementById('new-agent-name')?.value?.trim();
-  const cn = document.getElementById('new-agent-cn')?.value?.trim();
-  const glyph = document.getElementById('new-agent-glyph')?.value?.trim();
-  const color = document.getElementById('new-agent-color')?.value || '#888888';
-  const spec = document.getElementById('new-agent-spec')?.value?.trim();
-  const bin = document.getElementById('new-agent-bin')?.value?.trim();
-  const status = document.getElementById('cfg-status-new');
-
-  if (!id || !name) {
-    if (status) { status.textContent = '请填写 ID 和名称'; status.style.color = '#ff6464'; }
-    return;
-  }
-
-  const newAgent = {
-    id, name,
-    chinese_name: cn || name,
-    glyph: glyph || name[0],
-    color,
-    specialty: spec || '',
-    binary: bin || `bundle/${id}/{platform}/${id}`,
-    config_type: 'openai_env',
-    enabled: true,
-    in_group: true,
-  };
-
-  // Add to local agents list and save to agents.json via backend
-  agents.push(newAgent);
-  // Re-render sidebar
-  renderSidebar();
-
-  if (status) {
-    status.textContent = `✓ 已添加 ${name}（重启后生效）`;
-    status.style.color = 'var(--accent)';
-  }
-
-  // TODO: save to data/agents.json via Tauri command (Phase 3 enhancement)
+window.saveAgentConfig = async function(agentId, appType) {
+  const url = document.querySelector(`.cfg-url[data-agent="${agentId}"]`)?.value || '';
+  const key = document.querySelector(`.cfg-key[data-agent="${agentId}"]`)?.value || '';
+  const model = document.querySelector(`.cfg-model[data-agent="${agentId}"]`)?.value || '';
+  const status = document.getElementById(`cfg-status-${agentId}`);
+  try {
+    await invoke('save_provider', { provider: { id: `${agentId}-default`, app_type: appType, name: `${agentId}`, base_url: url, api_key: key, model, is_当前: true } });
+    if (status) { status.textContent = '已保存'; status.style.color = 'var(--jade)'; setTimeout(() => status.textContent = '', 2000); }
+  } catch (e) { if (status) { status.textContent = e; status.style.color = '#e85a3a'; } }
 };
 
 async function loadAgentConfig(agentId) {
   const appType = agentId === 'claude' ? 'claude' : agentId === 'codex' ? 'codex' : agentId;
   try {
-    const provider = await invoke('get_active_provider', { appType });
-    if (provider) {
-      const urlInput = document.querySelector(`.cfg-url[data-agent="${agentId}"]`);
-      const keyInput = document.querySelector(`.cfg-key[data-agent="${agentId}"]`);
-      const modelInput = document.querySelector(`.cfg-model[data-agent="${agentId}"]`);
-      if (urlInput) urlInput.value = provider.base_url || '';
-      if (keyInput) keyInput.value = provider.api_key || '';
-      if (modelInput) modelInput.value = provider.model || '';
+    const p = await invoke('get_active_provider', { appType });
+    if (p) {
+      const u = document.querySelector(`.cfg-url[data-agent="${agentId}"]`);
+      const k = document.querySelector(`.cfg-key[data-agent="${agentId}"]`);
+      const m = document.querySelector(`.cfg-model[data-agent="${agentId}"]`);
+      if (u) u.value = p.base_url || '';
+      if (k) k.value = p.api_key || '';
+      if (m) m.value = p.model || '';
     }
-  } catch (e) {
-    console.log(`No config for ${agentId}:`, e);
-  }
+  } catch (e) { /* no config yet */ }
 }
 
-window.saveAgentConfig = async function(agentId, appType) {
-  const urlInput = document.querySelector(`.cfg-url[data-agent="${agentId}"]`);
-  const keyInput = document.querySelector(`.cfg-key[data-agent="${agentId}"]`);
-  const modelInput = document.querySelector(`.cfg-model[data-agent="${agentId}"]`);
-  const status = document.getElementById(`cfg-status-${agentId}`);
-
-  const provider = {
-    id: `${agentId}-default`,
-    app_type: appType,
-    name: `${agentId} provider`,
-    base_url: urlInput?.value || '',
-    api_key: keyInput?.value || '',
-    model: modelInput?.value || '',
-    is_current: true,
-  };
-
+// ═══ Workspace selection ═══
+window.selectWorkspace = async function() {
   try {
-    await invoke('save_provider', { provider });
-    if (status) {
-      status.textContent = '✓ 已保存';
-      status.style.color = 'var(--accent)';
-      setTimeout(() => { status.textContent = ''; }, 2000);
-    }
-  } catch (e) {
-    if (status) {
-      status.textContent = '✗ ' + e;
-      status.style.color = '#ff6464';
-    }
-  }
+    const selected = await open({ directory: true, multiple: false, title: '选择工作区目录' });
+    if (selected) setWorkspace(selected);
+  } catch (e) { console.error('select workspace:', e); }
 };
 
+window.setWorkspace = function(path) {
+  workspace = path;
+  localStorage.setItem('yuai_workspace', path);
+  let recent = getRecentWorkspaces();
+  recent = [path, ...recent.filter(w => w !== path)].slice(0, 5);
+  localStorage.setItem('yuai_recent_workspaces', JSON.stringify(recent));
+  updateStatus(shortenPath(path));
+  renderWorkspaceColumn();
+  renderPreviewColumn();
+  renderGroupChat();
+};
+
+function getRecentWorkspaces() {
+  try { return JSON.parse(localStorage.getItem('yuai_recent_workspaces') || '[]'); }
+  catch { return []; }
+}
+
 // ═══ Utilities ═══
-function getDefaultShell() {
-  const platform = navigator.platform.toLowerCase();
-  if (platform.includes('win')) return 'cmd.exe';
-  if (platform.includes('mac')) return '/bin/zsh';
-  return '/bin/bash';
+function shortenPath(p) {
+  if (!p) return '';
+  const parts = p.replace(/\\/g, '/').split('/');
+  if (parts.length <= 3) return p;
+  return '.../' + parts.slice(-2).join('/');
 }
 
 function escapeHtml(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function updateStatus(text) {
-  if (statusBar) statusBar.textContent = text;
+function cleanAnsi(str) {
+  return str.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+    .replace(/\x1b\][^\x07]*\x07/g, '')
+    .replace(/\r/g, '')
+    .split('\n').filter(l => l.trim().length > 0).join('\n').trim();
 }
+
+function updateStatus(text) { if (statusBar) statusBar.textContent = text; }
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // ═══ Start ═══
 init();
