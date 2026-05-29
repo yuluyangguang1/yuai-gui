@@ -1,4 +1,4 @@
-name: Release Yuai (Full Bundle)
+name: Release Yuai
 
 on:
   workflow_dispatch:
@@ -7,8 +7,23 @@ on:
       - 'v*'
 
 jobs:
-  bundle-windows:
-    runs-on: windows-latest
+  bundle:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'windows-latest'
+            target: 'x86_64-pc-windows-msvc'
+            label: 'windows-x64'
+          - platform: 'macos-latest'
+            target: 'aarch64-apple-darwin'
+            label: 'macos-arm64'
+          - platform: 'macos-latest'
+            target: 'x86_64-apple-darwin'
+            label: 'macos-x64'
+
+    runs-on: ${{ matrix.platform }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -20,7 +35,7 @@ jobs:
       - name: Setup Rust
         run: |
           rustup default stable
-          rustup target add x86_64-pc-windows-msvc
+          rustup target add ${{ matrix.target }}
 
       - name: Install npm deps
         run: npm install
@@ -30,138 +45,119 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: --target x86_64-pc-windows-msvc
+          args: --target ${{ matrix.target }}
 
-      - name: Download Agent binaries
+      # ────────────────────────────────────────────────
+      # Fetch agent binaries
+      # ────────────────────────────────────────────────
+      # Strategy: we ship codex + cc-switch directly (small, stable
+      # download endpoints). claude / openclaw / hermes are heavy
+      # bundles (100MB-500MB each) so we let the user pull them
+      # via setup-bundle.sh on first run. This keeps the release
+      # zip under ~80MB per platform.
+      - name: Fetch codex + cc-switch (bash)
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           set -e
-          mkdir -p bundle/claude/windows-x64
-          mkdir -p bundle/codex/windows-x64
-          mkdir -p bundle/cc-switch/windows-x64
+          PLAT="${{ matrix.label }}"
+          mkdir -p "bundle/codex/$PLAT" "bundle/cc-switch/$PLAT"
 
-          # Claude from claude-portable (latest release)
-          echo "Fetching claude..."
-          CLAUDE_TAG=$(curl -fsSL https://api.github.com/repos/yuluyangguang1/claude-portable/releases/latest | jq -r '.tag_name // empty' || echo "")
-          if [ -n "$CLAUDE_TAG" ]; then
-            echo "  claude tag: $CLAUDE_TAG (skipping - zip layout varies)"
-          fi
-          echo "  Note: claude binary must be added manually or from a stable release"
-
-          # Codex from openai/codex (latest release)
-          echo "Fetching codex..."
+          # ── codex ──
+          case "$PLAT" in
+            macos-arm64)  CODEX_ASSET="codex-aarch64-apple-darwin.tar.gz";  CODEX_BIN="codex" ;;
+            macos-x64)    CODEX_ASSET="codex-x86_64-apple-darwin.tar.gz";   CODEX_BIN="codex" ;;
+          esac
           CODEX_TAG=$(curl -fsSL https://api.github.com/repos/openai/codex/releases/latest | jq -r '.tag_name')
-          curl -fsSL "https://github.com/openai/codex/releases/download/${CODEX_TAG}/codex-x86_64-pc-windows-msvc.exe.tar.gz" | tar -xz -C bundle/codex/windows-x64/
-          # Normalize name
-          if [ ! -f bundle/codex/windows-x64/codex.exe ]; then
-            found=$(find bundle/codex/windows-x64 -name "*.exe" | head -1)
-            [ -n "$found" ] && mv "$found" bundle/codex/windows-x64/codex.exe
+          echo "  codex tag: $CODEX_TAG"
+          curl -fsSL "https://github.com/openai/codex/releases/download/${CODEX_TAG}/${CODEX_ASSET}" \
+            | tar -xz -C "bundle/codex/$PLAT/"
+          if [ ! -f "bundle/codex/$PLAT/$CODEX_BIN" ]; then
+            found=$(find "bundle/codex/$PLAT" -type f \( -name 'codex' -o -name 'codex-*' \) ! -name '*.tar*' | head -1)
+            [ -n "$found" ] && mv "$found" "bundle/codex/$PLAT/$CODEX_BIN"
           fi
+          chmod +x "bundle/codex/$PLAT/$CODEX_BIN"
 
-          # CC-Switch from codex-portable auxiliary release
-          echo "Fetching cc-switch..."
-          curl -fsSL -o bundle/cc-switch/windows-x64/cc-switch.exe \
-            "https://github.com/yuluyangguang1/codex-portable/releases/download/cc-switch-assets/cc-switch-windows-x64.exe"
-
-          ls -la bundle/*/windows-x64/
-
-      - name: Assemble full package
-        shell: bash
-        run: |
-          set -e
-          DIST="dist/Yuai-windows-x64"
-          mkdir -p "$DIST/bundle/codex/windows-x64"
-          mkdir -p "$DIST/bundle/cc-switch/windows-x64"
-          mkdir -p "$DIST/data"
-
-          # Copy Tauri exe
-          cp src-tauri/target/x86_64-pc-windows-msvc/release/yuai-gui.exe "$DIST/Yuai.exe" || true
-
-          # Copy agent binaries
-          cp -r bundle/codex/windows-x64/* "$DIST/bundle/codex/windows-x64/" 2>/dev/null || true
-          cp -r bundle/cc-switch/windows-x64/* "$DIST/bundle/cc-switch/windows-x64/" 2>/dev/null || true
-
-          # Create default agents.json
-          cat > "$DIST/data/agents.json" << 'AGENTS'
-          [
-            {"id":"claude","name":"claude","chinese_name":"利刃","glyph":"刃","color":"#ff8c32","specialty":"编程、架构设计、代码审查","binary":"bundle/claude/{platform}/claude","config_type":"anthropic_env","enabled":true,"in_group":true},
-            {"id":"codex","name":"codex","chinese_name":"方盒","glyph":"盒","color":"#50c878","specialty":"编程、快速原型、OpenAI 生态","binary":"bundle/codex/{platform}/codex","config_type":"codex_toml","enabled":true,"in_group":true},
-            {"id":"openclaw","name":"openclaw","chinese_name":"百川","glyph":"匣","color":"#ff6464","specialty":"内容生成、渠道运营、技能调用","binary":"bundle/openclaw/{platform}/openclaw","config_type":"openai_env","enabled":true,"in_group":true},
-            {"id":"hermes","name":"hermes","chinese_name":"砚墨","glyph":"砚","color":"#a064ff","specialty":"记忆、学习、任务编排","binary":"bundle/hermes/{platform}/hermes","config_type":"openai_env","enabled":true,"in_group":true}
-          ]
-          AGENTS
-
-          # Zip
-          cd dist
-          7z a -tzip "Yuai-windows-x64-full.zip" "Yuai-windows-x64/" || zip -r "Yuai-windows-x64-full.zip" "Yuai-windows-x64/"
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: yuai-windows-x64-full
-          path: dist/*.zip
-
-  bundle-macos:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Setup Rust
-        run: |
-          rustup default stable
-          rustup target add aarch64-apple-darwin
-
-      - name: Install npm deps
-        run: npm install
-
-      - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          args: --target aarch64-apple-darwin
-
-      - name: Download Agent binaries
-        run: |
-          set -e
-          mkdir -p bundle/codex/macos-arm64
-          mkdir -p bundle/cc-switch/macos-arm64
-
-          # Codex
-          CODEX_TAG=$(curl -fsSL https://api.github.com/repos/openai/codex/releases/latest | jq -r '.tag_name')
-          curl -fsSL "https://github.com/openai/codex/releases/download/${CODEX_TAG}/codex-aarch64-apple-darwin.tar.gz" | tar -xz -C bundle/codex/macos-arm64/
-          if [ ! -f bundle/codex/macos-arm64/codex ]; then
-            found=$(find bundle/codex/macos-arm64 -type f -name 'codex*' ! -name '*.tar*' | head -1)
-            [ -n "$found" ] && mv "$found" bundle/codex/macos-arm64/codex
-          fi
-          chmod +x bundle/codex/macos-arm64/codex
-
-          # CC-Switch (universal binary)
-          curl -fsSL -o bundle/cc-switch/macos-arm64/cc-switch \
+          # ── cc-switch ──
+          # Single universal binary for macOS in the codex-portable assets
+          curl -fsSL -o "bundle/cc-switch/$PLAT/cc-switch" \
             "https://github.com/yuluyangguang1/codex-portable/releases/download/cc-switch-assets/cc-switch-macos"
-          chmod +x bundle/cc-switch/macos-arm64/cc-switch
+          chmod +x "bundle/cc-switch/$PLAT/cc-switch"
 
-          ls -la bundle/*/macos-arm64/
+          ls -la "bundle/codex/$PLAT/" "bundle/cc-switch/$PLAT/"
 
-      - name: Assemble full package
+      - name: Fetch codex + cc-switch (Windows PowerShell)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $plat = '${{ matrix.label }}'
+          New-Item -ItemType Directory -Force -Path "bundle/codex/$plat","bundle/cc-switch/$plat" | Out-Null
+
+          # codex
+          $codexTag = (Invoke-RestMethod 'https://api.github.com/repos/openai/codex/releases/latest').tag_name
+          $codexUrl = "https://github.com/openai/codex/releases/download/$codexTag/codex-x86_64-pc-windows-msvc.exe.tar.gz"
+          Invoke-WebRequest $codexUrl -OutFile "codex.tar.gz"
+          tar -xzf codex.tar.gz -C "bundle/codex/$plat/"
+          # Normalize name
+          $codexExe = Get-ChildItem "bundle/codex/$plat" -Filter '*.exe' | Select-Object -First 1
+          if ($codexExe -and $codexExe.Name -ne 'codex.exe') {
+            Move-Item $codexExe.FullName "bundle/codex/$plat/codex.exe" -Force
+          }
+
+          # cc-switch
+          Invoke-WebRequest 'https://github.com/yuluyangguang1/codex-portable/releases/download/cc-switch-assets/cc-switch-windows-x64.exe' `
+            -OutFile "bundle/cc-switch/$plat/cc-switch.exe"
+
+          Get-ChildItem -Recurse "bundle"
+
+      # ────────────────────────────────────────────────
+      # Assemble release package
+      # ────────────────────────────────────────────────
+      - name: Assemble package (macOS)
+        if: runner.os == 'macOS'
         run: |
           set -e
-          DIST="dist/Yuai-macos-arm64"
-          mkdir -p "$DIST/bundle/codex/macos-arm64"
-          mkdir -p "$DIST/bundle/cc-switch/macos-arm64"
-          mkdir -p "$DIST/data"
+          PLAT="${{ matrix.label }}"
+          DIST="dist/Yuai-$PLAT"
+          mkdir -p "$DIST/bundle" "$DIST/data"
 
-          # Copy Tauri app
-          cp -r src-tauri/target/aarch64-apple-darwin/release/bundle/macos/*.app "$DIST/" 2>/dev/null || true
+          # Copy Tauri .app
+          APP_SRC=$(find "src-tauri/target/${{ matrix.target }}/release/bundle/macos" -maxdepth 1 -name '*.app' | head -1)
+          if [ -n "$APP_SRC" ]; then
+            cp -r "$APP_SRC" "$DIST/"
+          fi
 
-          # Copy agent binaries
-          cp bundle/codex/macos-arm64/codex "$DIST/bundle/codex/macos-arm64/"
-          cp bundle/cc-switch/macos-arm64/cc-switch "$DIST/bundle/cc-switch/macos-arm64/"
+          # Also copy DMG if present (alternative install)
+          find "src-tauri/target/${{ matrix.target }}/release/bundle/dmg" -name '*.dmg' -exec cp {} "$DIST/" \; 2>/dev/null || true
+
+          # Copy bundled binaries
+          cp -R bundle/codex "$DIST/bundle/"
+          cp -R bundle/cc-switch "$DIST/bundle/"
+
+          # Copy setup script for fetching heavy agents
+          cp setup-bundle.sh "$DIST/"
+          chmod +x "$DIST/setup-bundle.sh"
+
+          # README for the package
+          cat > "$DIST/README.txt" << 'EOF'
+          Yuai 多 Agent 协作桌面端
+          ===========================
+
+          已包含：
+            • Yuai GUI 启动器 (.app)
+            • Codex CLI
+            • CC-Switch 配置管理
+
+          首次使用：
+            1. 双击 Yuai.app 启动
+            2. 在配置面板填写 OpenAI / Anthropic 等供应商 API Key
+            3. （可选）拉取其他 Agent 二进制：
+               bash setup-bundle.sh
+               这会从对应 portable 仓库下载 claude / openclaw / hermes
+
+          数据全部存于本目录的 data/，可整体复制带走。
+          EOF
 
           # agents.json
           cat > "$DIST/data/agents.json" << 'AGENTS'
@@ -175,41 +171,119 @@ jobs:
 
           # Zip
           cd dist
-          zip -r "Yuai-macos-arm64-full.zip" "Yuai-macos-arm64/"
+          zip -r "Yuai-$PLAT.zip" "Yuai-$PLAT/"
+          ls -la
+
+      - name: Assemble package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $plat = '${{ matrix.label }}'
+          $dist = "dist/Yuai-$plat"
+          New-Item -ItemType Directory -Force -Path "$dist/bundle","$dist/data" | Out-Null
+
+          # Tauri .exe (NSIS / MSI installer)
+          $exeBundle = "src-tauri/target/${{ matrix.target }}/release/bundle"
+          Get-ChildItem "$exeBundle" -Recurse -Include '*.exe','*.msi' | ForEach-Object {
+            Copy-Item $_.FullName -Destination $dist
+          }
+
+          # Also copy the raw exe for direct launch
+          $rawExe = "src-tauri/target/${{ matrix.target }}/release/yuai-gui.exe"
+          if (Test-Path $rawExe) { Copy-Item $rawExe "$dist/Yuai.exe" -Force }
+
+          # Copy bundled agents
+          Copy-Item -Recurse "bundle/codex" "$dist/bundle/"
+          Copy-Item -Recurse "bundle/cc-switch" "$dist/bundle/"
+
+          # README
+          @"
+          Yuai 多 Agent 协作桌面端
+          ===========================
+
+          已包含：Yuai GUI、Codex CLI、CC-Switch
+          双击 Yuai.exe 启动，配置面板填写 API Key 即可使用。
+
+          其他 Agent (claude / openclaw / hermes) 请到对应 portable
+          仓库下载 zip，把里面的 bin/<platform>/<name>.exe 放到：
+            bundle/<agent_id>/<platform>/<name>.exe
+"@ | Set-Content "$dist/README.txt"
+
+          # agents.json (UTF-8)
+          $agents = @"
+          [
+            {"id":"claude","name":"claude","chinese_name":"利刃","glyph":"刃","color":"#ff8c32","specialty":"编程、架构设计、代码审查","binary":"bundle/claude/{platform}/claude","config_type":"anthropic_env","enabled":true,"in_group":true},
+            {"id":"codex","name":"codex","chinese_name":"方盒","glyph":"盒","color":"#50c878","specialty":"编程、快速原型、OpenAI 生态","binary":"bundle/codex/{platform}/codex","config_type":"codex_toml","enabled":true,"in_group":true},
+            {"id":"openclaw","name":"openclaw","chinese_name":"百川","glyph":"匣","color":"#ff6464","specialty":"内容生成、渠道运营、技能调用","binary":"bundle/openclaw/{platform}/openclaw","config_type":"openai_env","enabled":true,"in_group":true},
+            {"id":"hermes","name":"hermes","chinese_name":"砚墨","glyph":"砚","color":"#a064ff","specialty":"记忆、学习、任务编排","binary":"bundle/hermes/{platform}/hermes","config_type":"openai_env","enabled":true,"in_group":true}
+          ]
+"@
+          [System.IO.File]::WriteAllText("$dist/data/agents.json", $agents, [System.Text.UTF8Encoding]::new($false))
+
+          # Zip
+          Compress-Archive -Path $dist -DestinationPath "dist/Yuai-$plat.zip" -Force
+          Get-ChildItem dist
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: yuai-macos-arm64-full
-          path: dist/*.zip
+          name: yuai-${{ matrix.label }}
+          path: dist/Yuai-*.zip
+          if-no-files-found: error
 
-  create-release:
-    needs: [bundle-windows, bundle-macos]
+  release:
+    needs: bundle
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
     steps:
+      - uses: actions/checkout@v4
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts/
 
+      - name: Stage assets
+        run: |
+          mkdir -p release-assets
+          find artifacts -name '*.zip' -exec cp {} release-assets/ \;
+          ls -la release-assets/
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/**/*.zip
+          files: release-assets/*.zip
+          generate_release_notes: true
           body: |
-            ## Yuai v${{ github.ref_name }}
+            ## Yuai ${{ github.ref_name }}
 
-            四器合一 · 群聊研讨 · 专长分工 · 共享工作区
+            **四器合一 · 群聊研讨 · 专长分工 · 共享工作区**
 
-            **包含：**
-            - Yuai GUI 启动器
-            - Codex CLI (OpenAI)
+            ### 包内含
+            - Yuai GUI 启动器（macOS / Windows）
+            - Codex CLI（OpenAI 官方）
             - CC-Switch 配置管理
 
-            **需要手动添加：**
-            - Claude CLI (从 claude-portable release 获取)
-            - OpenClaw (从 openclaw-portable release 获取)
-            - Hermes (从 hermes-portable release 获取)
+            ### 首次使用
+            1. 解压并启动 Yuai.app（macOS）或 Yuai.exe（Windows）
+            2. 在配置面板填写 API Key（OpenAI / Anthropic / 自定义供应商）
+            3. 创建工作区，选择参与协作的 Agent
 
-            配置 API Key 后即可使用。
+            ### 添加其他 Agent
+            可选：拉取 claude / openclaw / hermes 二进制以解锁更多协作角色。
+
+            **macOS：**
+            ```
+            bash setup-bundle.sh
+            ```
+
+            **Windows：** 到下列仓库 Releases 下载并把可执行文件放到 `bundle/<agent>/<platform>/`：
+            - https://github.com/yuluyangguang1/claude-portable/releases
+            - https://github.com/yuluyangguang1/openclaw-portable/releases
+            - https://github.com/yuluyangguang1/hermes-portable/releases
+
+            ### 数据
+            所有配置、会话、变更记录都在解压目录的 `data/` 下，可整包带走。
