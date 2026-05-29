@@ -183,43 +183,46 @@ jobs:
           $dist = "dist/Yuai-$plat"
           New-Item -ItemType Directory -Force -Path "$dist/bundle","$dist/data" | Out-Null
 
-          # Tauri .exe (NSIS / MSI installer)
+          # Tauri installers (NSIS / MSI)
           $exeBundle = "src-tauri/target/${{ matrix.target }}/release/bundle"
-          Get-ChildItem "$exeBundle" -Recurse -Include '*.exe','*.msi' | ForEach-Object {
-            Copy-Item $_.FullName -Destination $dist
+          if (Test-Path $exeBundle) {
+            Get-ChildItem "$exeBundle" -Recurse -Include '*.exe','*.msi' | ForEach-Object {
+              Copy-Item $_.FullName -Destination $dist -Force
+            }
           }
 
-          # Also copy the raw exe for direct launch
+          # Raw exe for direct launch
           $rawExe = "src-tauri/target/${{ matrix.target }}/release/yuai-gui.exe"
           if (Test-Path $rawExe) { Copy-Item $rawExe "$dist/Yuai.exe" -Force }
 
           # Copy bundled agents
-          Copy-Item -Recurse "bundle/codex" "$dist/bundle/"
-          Copy-Item -Recurse "bundle/cc-switch" "$dist/bundle/"
+          Copy-Item -Recurse "bundle/codex" "$dist/bundle/" -Force
+          Copy-Item -Recurse "bundle/cc-switch" "$dist/bundle/" -Force
 
-          # README
-          @"
-          Yuai 多 Agent 协作桌面端
-          ===========================
+          # README — write via array to avoid PowerShell here-string
+          # (here-string close `"@` requires column 0, which clashes with YAML).
+          $readme = @(
+            'Yuai 多 Agent 协作桌面端',
+            '===========================',
+            '',
+            '已包含：Yuai GUI、Codex CLI、CC-Switch',
+            '双击 Yuai.exe 启动，配置面板填写 API Key 即可使用。',
+            '',
+            '其他 Agent (claude / openclaw / hermes) 请到对应 portable',
+            '仓库下载 zip，把里面的 bin/<platform>/<name>.exe 放到：',
+            '  bundle/<agent_id>/<platform>/<name>.exe'
+          ) -join "`r`n"
+          [System.IO.File]::WriteAllText("$dist/README.txt", $readme, [System.Text.UTF8Encoding]::new($false))
 
-          已包含：Yuai GUI、Codex CLI、CC-Switch
-          双击 Yuai.exe 启动，配置面板填写 API Key 即可使用。
-
-          其他 Agent (claude / openclaw / hermes) 请到对应 portable
-          仓库下载 zip，把里面的 bin/<platform>/<name>.exe 放到：
-            bundle/<agent_id>/<platform>/<name>.exe
-"@ | Set-Content "$dist/README.txt"
-
-          # agents.json (UTF-8)
-          $agents = @"
-          [
-            {"id":"claude","name":"claude","chinese_name":"利刃","glyph":"刃","color":"#ff8c32","specialty":"编程、架构设计、代码审查","binary":"bundle/claude/{platform}/claude","config_type":"anthropic_env","enabled":true,"in_group":true},
-            {"id":"codex","name":"codex","chinese_name":"方盒","glyph":"盒","color":"#50c878","specialty":"编程、快速原型、OpenAI 生态","binary":"bundle/codex/{platform}/codex","config_type":"codex_toml","enabled":true,"in_group":true},
-            {"id":"openclaw","name":"openclaw","chinese_name":"百川","glyph":"匣","color":"#ff6464","specialty":"内容生成、渠道运营、技能调用","binary":"bundle/openclaw/{platform}/openclaw","config_type":"openai_env","enabled":true,"in_group":true},
-            {"id":"hermes","name":"hermes","chinese_name":"砚墨","glyph":"砚","color":"#a064ff","specialty":"记忆、学习、任务编排","binary":"bundle/hermes/{platform}/hermes","config_type":"openai_env","enabled":true,"in_group":true}
-          ]
-"@
-          [System.IO.File]::WriteAllText("$dist/data/agents.json", $agents, [System.Text.UTF8Encoding]::new($false))
+          # agents.json — build JSON via PSObject to keep YAML-safe formatting
+          $agents = @(
+            [pscustomobject]@{ id='claude';   name='claude';   chinese_name='利刃'; glyph='刃'; color='#ff8c32'; specialty='编程、架构设计、代码审查'; binary='bundle/claude/{platform}/claude';     config_type='anthropic_env'; enabled=$true; in_group=$true },
+            [pscustomobject]@{ id='codex';    name='codex';    chinese_name='方盒'; glyph='盒'; color='#50c878'; specialty='编程、快速原型、OpenAI 生态'; binary='bundle/codex/{platform}/codex';      config_type='codex_toml';    enabled=$true; in_group=$true },
+            [pscustomobject]@{ id='openclaw'; name='openclaw'; chinese_name='百川'; glyph='匣'; color='#ff6464'; specialty='内容生成、渠道运营、技能调用'; binary='bundle/openclaw/{platform}/openclaw'; config_type='openai_env';    enabled=$true; in_group=$true },
+            [pscustomobject]@{ id='hermes';   name='hermes';   chinese_name='砚墨'; glyph='砚'; color='#a064ff'; specialty='记忆、学习、任务编排';     binary='bundle/hermes/{platform}/hermes';     config_type='openai_env';    enabled=$true; in_group=$true }
+          )
+          $json = $agents | ConvertTo-Json -Depth 4 -Compress:$false
+          [System.IO.File]::WriteAllText("$dist/data/agents.json", $json, [System.Text.UTF8Encoding]::new($false))
 
           # Zip
           Compress-Archive -Path $dist -DestinationPath "dist/Yuai-$plat.zip" -Force
