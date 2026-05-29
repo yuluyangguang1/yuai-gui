@@ -58,6 +58,8 @@ jobs:
       - name: Fetch codex + cc-switch (bash)
         if: runner.os != 'Windows'
         shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
           PLAT="${{ matrix.label }}"
@@ -69,9 +71,17 @@ jobs:
             macos-x64)    CODEX_ASSET="codex-x86_64-apple-darwin.tar.gz";   CODEX_BIN="codex" ;;
             *)            echo "ERROR: unknown platform $PLAT"; exit 1 ;;
           esac
-          CODEX_TAG=$(curl -fsSL https://api.github.com/repos/openai/codex/releases/latest | jq -r '.tag_name')
+          # Auth the GitHub API call to avoid the 60-req/hr rate-limit
+          # that often returns 403 on shared-runner IPs.
+          CODEX_TAG=$(curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/openai/codex/releases/latest | jq -r '.tag_name // empty' || echo "")
+          if [ -z "$CODEX_TAG" ]; then
+            echo "  [warn] codex release lookup failed; falling back to known good tag"
+            CODEX_TAG="rust-v0.135.0"
+          fi
           echo "  codex tag: $CODEX_TAG"
-          curl -fsSL "https://github.com/openai/codex/releases/download/${CODEX_TAG}/${CODEX_ASSET}" \
+          curl -fsSL --retry 3 --retry-delay 5 \
+            "https://github.com/openai/codex/releases/download/${CODEX_TAG}/${CODEX_ASSET}" \
             | tar -xz -C "bundle/codex/$PLAT/"
           if [ ! -f "bundle/codex/$PLAT/$CODEX_BIN" ]; then
             found=$(find "bundle/codex/$PLAT" -type f \( -name 'codex' -o -name 'codex-*' \) ! -name '*.tar*' | head -1)
@@ -81,7 +91,7 @@ jobs:
 
           # ── cc-switch ──
           # Single universal binary for macOS in the codex-portable assets
-          curl -fsSL -o "bundle/cc-switch/$PLAT/cc-switch" \
+          curl -fsSL --retry 3 --retry-delay 5 -o "bundle/cc-switch/$PLAT/cc-switch" \
             "https://github.com/yuluyangguang1/codex-portable/releases/download/cc-switch-assets/cc-switch-macos"
           chmod +x "bundle/cc-switch/$PLAT/cc-switch"
 
@@ -90,17 +100,25 @@ jobs:
       - name: Fetch codex + cc-switch (Windows PowerShell)
         if: runner.os == 'Windows'
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $ErrorActionPreference = 'Stop'
           $plat = '${{ matrix.label }}'
           New-Item -ItemType Directory -Force -Path "bundle/codex/$plat","bundle/cc-switch/$plat" | Out-Null
 
-          # codex
-          $codexTag = (Invoke-RestMethod 'https://api.github.com/repos/openai/codex/releases/latest').tag_name
+          # codex — auth the API call to avoid 403 rate-limit on shared runners
+          $headers = @{ 'Authorization' = "Bearer $env:GH_TOKEN"; 'Accept' = 'application/vnd.github+json' }
+          try {
+            $codexTag = (Invoke-RestMethod 'https://api.github.com/repos/openai/codex/releases/latest' -Headers $headers).tag_name
+          } catch {
+            Write-Host "  [warn] codex release lookup failed; falling back to known good tag"
+            $codexTag = 'rust-v0.135.0'
+          }
+          Write-Host "  codex tag: $codexTag"
           $codexUrl = "https://github.com/openai/codex/releases/download/$codexTag/codex-x86_64-pc-windows-msvc.exe.tar.gz"
-          Invoke-WebRequest $codexUrl -OutFile "codex.tar.gz"
+          Invoke-WebRequest $codexUrl -OutFile "codex.tar.gz" -MaximumRetryCount 3 -RetryIntervalSec 5
           tar -xzf codex.tar.gz -C "bundle/codex/$plat/"
-          # Normalize name
           $codexExe = Get-ChildItem "bundle/codex/$plat" -Filter '*.exe' | Select-Object -First 1
           if ($codexExe -and $codexExe.Name -ne 'codex.exe') {
             Move-Item $codexExe.FullName "bundle/codex/$plat/codex.exe" -Force
@@ -108,7 +126,7 @@ jobs:
 
           # cc-switch
           Invoke-WebRequest 'https://github.com/yuluyangguang1/codex-portable/releases/download/cc-switch-assets/cc-switch-windows-x64.exe' `
-            -OutFile "bundle/cc-switch/$plat/cc-switch.exe"
+            -OutFile "bundle/cc-switch/$plat/cc-switch.exe" -MaximumRetryCount 3 -RetryIntervalSec 5
 
           Get-ChildItem -Recurse "bundle"
 
