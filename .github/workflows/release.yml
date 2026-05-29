@@ -67,6 +67,7 @@ jobs:
           case "$PLAT" in
             macos-arm64)  CODEX_ASSET="codex-aarch64-apple-darwin.tar.gz";  CODEX_BIN="codex" ;;
             macos-x64)    CODEX_ASSET="codex-x86_64-apple-darwin.tar.gz";   CODEX_BIN="codex" ;;
+            *)            echo "ERROR: unknown platform $PLAT"; exit 1 ;;
           esac
           CODEX_TAG=$(curl -fsSL https://api.github.com/repos/openai/codex/releases/latest | jq -r '.tag_name')
           echo "  codex tag: $CODEX_TAG"
