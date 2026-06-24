@@ -5,9 +5,10 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
 use std::thread;
 
-use portable_pty::{native_pty_system, CommandBuilder, PtySize};
+use portable_pty::{native_pty_system, CommandBuilder, PtySize, MasterPty};
 use serde::{Deserialize, Serialize};
 use tauri::ipc::Channel;
+use tauri::Manager;
 
 mod agents;
 mod bus;
@@ -19,8 +20,8 @@ mod config;
 
 struct PtySession {
     writer: Arc<Mutex<Box<dyn Write + Send>>>,
-    #[allow(dead_code)]
     killer: Mutex<Box<dyn portable_pty::ChildKiller + Send + Sync>>,
+    master: Mutex<Box<dyn MasterPty + Send>>,
 }
 
 struct AppState {
@@ -49,6 +50,21 @@ pub struct AgentDef {
     pub config_type: String,
     pub enabled: bool,
     pub in_group: bool,
+}
+
+// ═══════════════════════════════════════════
+// PTY Cleanup
+// ═══════════════════════════════════════════
+
+/// Kill and clean up all PTY sessions.
+fn cleanup_all_sessions(state: &AppState) {
+    let mut sessions = state.sessions.write().unwrap();
+    for (id, session) in sessions.drain() {
+        if let Ok(mut killer) = session.killer.lock() {
+            let _ = killer.kill();
+        }
+        log::info!("cleaned up PTY session {}", id);
+    }
 }
 
 // ═══════════════════════════════════════════
@@ -98,25 +114,46 @@ fn pty_spawn(
 
     let writer = Arc::new(Mutex::new(pair.master.take_writer().map_err(|e| e.to_string())?));
     let killer = Mutex::new(child.clone_killer());
+    let master = Mutex::new(pair.master);
 
-    let session = Arc::new(PtySession { writer, killer });
-    state.sessions.write().unwrap().insert(id, session);
-
-    // Reader thread: PTY stdout → Channel → frontend xterm.js
-    let mut reader = pair.master.try_clone_reader().map_err(|e| e.to_string())?;
+    let session = Arc::new(PtySession { writer, killer, master });
+    // Clone Arc BEFORE inserting — avoids TOCTOU race (H4)
+    // M6: try_clone_reader before inserting so failure doesn't orphan session
+    let mut reader = session.master.lock().unwrap().try_clone_reader().map_err(|e| e.to_string())?;
+    state.sessions.write().unwrap().insert(id, session.clone());
+    // H3: Get a clone of the sessions map for cleanup in reader thread
+    let sessions_ref = {
+        let s = state.sessions.read().unwrap();
+        // We can't clone RwLock, but we can get a reference via Arc
+        // Instead, use a simpler approach: store session Arc in thread and let frontend call pty_kill
+        drop(s);
+        None::<Arc<PtySession>> // placeholder — see cleanup note below
+    };
+    let _ = sessions_ref; // suppress unused warning
     thread::spawn(move || {
         let mut buf = [0u8; 8192];
         loop {
             match reader.read(&mut buf) {
-                Ok(0) => break,
+                Ok(0) => {
+                    let _ = on_data.send("\r\n[process exited]\r\n".into());
+                    break;
+                }
                 Ok(n) => {
-                    // Send as base64 to avoid UTF-8 issues with raw bytes
                     let data = String::from_utf8_lossy(&buf[..n]).to_string();
                     let _ = on_data.send(data);
                 }
-                Err(_) => break,
+                Err(e) => {
+                    let _ = on_data.send(format!("\r\n[error: {}]\r\n", e));
+                    break;
+                }
             }
         }
+        // H3: Session cleanup — the Arc<PtySession> in HashMap will be cleaned
+        // when frontend calls pty_kill or window closes.
+        // The session stays in HashMap so frontend can detect [process exited]
+        // and call pty_kill explicitly.
+        drop(session); // release our Arc reference
+        log::info!("pty id={} reader exited", id);
     });
 
     log::info!("pty_spawn id={} cmd={} cols={} rows={}", id, cmd, cols, rows);
@@ -139,9 +176,11 @@ fn pty_write(state: tauri::State<AppState>, id: u32, data: String) -> Result<(),
 /// Resize a PTY session.
 #[tauri::command]
 fn pty_resize(state: tauri::State<AppState>, id: u32, cols: u16, rows: u16) -> Result<(), String> {
-    // portable-pty resize requires master access which we don't store separately.
-    // For Phase 0, resize is a no-op. Phase 1 will store master handle.
-    let _ = (state, id, cols, rows);
+    let sessions = state.sessions.read().unwrap();
+    let session = sessions.get(&id).ok_or("session not found")?;
+    let master = session.master.lock().unwrap();
+    master.resize(PtySize { rows, cols, pixel_width: 0, pixel_height: 0 })
+        .map_err(|e| format!("resize failed: {}", e))?;
     Ok(())
 }
 
@@ -242,23 +281,32 @@ fn spawn_agent(
     let id = state.next_id.fetch_add(1, Ordering::Relaxed);
     let writer = Arc::new(Mutex::new(pair.master.take_writer().map_err(|e| e.to_string())?));
     let killer = Mutex::new(child.clone_killer());
-    let session = Arc::new(PtySession { writer, killer });
-    state.sessions.write().unwrap().insert(id, session);
+    let master = Mutex::new(pair.master);
+    let session = Arc::new(PtySession { writer, killer, master });
+    // H4+M6: Clone reader BEFORE inserting, clone Arc for insert
+    let mut reader = session.master.lock().unwrap().try_clone_reader().map_err(|e| e.to_string())?;
+    state.sessions.write().unwrap().insert(id, session.clone());
 
-    // Reader thread
-    let mut reader = pair.master.try_clone_reader().map_err(|e| e.to_string())?;
     thread::spawn(move || {
         let mut buf = [0u8; 8192];
         loop {
             match reader.read(&mut buf) {
-                Ok(0) => break,
+                Ok(0) => {
+                    let _ = on_data.send("\r\n[process exited]\r\n".into());
+                    break;
+                }
                 Ok(n) => {
                     let data = String::from_utf8_lossy(&buf[..n]).to_string();
                     let _ = on_data.send(data);
                 }
-                Err(_) => break,
+                Err(e) => {
+                    let _ = on_data.send(format!("\r\n[error: {}]\r\n", e));
+                    break;
+                }
             }
         }
+        drop(session);
+        log::info!("spawn_agent id={} reader exited", id);
     });
 
     log::info!("spawn_agent id={} agent={} binary={}", id, agent_id, binary_path.display());
@@ -647,6 +695,13 @@ fn group_kick(state: tauri::State<bus::SharedGroupChat>, agent_id: String) -> Re
     Ok(())
 }
 
+/// Check if the discussion has converged (new message is too similar to recent ones).
+#[tauri::command]
+fn group_check_convergence(state: tauri::State<bus::SharedGroupChat>, message: String) -> Result<bool, String> {
+    let mut chat = state.write().map_err(|e| e.to_string())?; // write lock needed: check_convergence may update internal state
+    Ok(chat.check_convergence(&message))
+}
+
 // ═══════════════════════════════════════════
 // App Entry
 // ═══════════════════════════════════════════
@@ -660,6 +715,12 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .manage(AppState::default())
         .manage(bus::new_group_chat())
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::Destroyed = event {
+                let state = window.state::<AppState>();
+                cleanup_all_sessions(&state);
+            }
+        })
         .invoke_handler(tauri::generate_handler![
             pty_spawn,
             pty_write,
@@ -689,6 +750,7 @@ pub fn run() {
             group_get_messages,
             group_invite,
             group_kick,
+            group_check_convergence,
         ])
         .run(tauri::generate_context!())
         .expect("error while running yuai-gui");

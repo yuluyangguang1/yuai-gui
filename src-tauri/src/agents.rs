@@ -100,8 +100,8 @@ fn default_agents() -> Vec<AgentDef> {
         AgentDef {
             id: "claude".into(),
             name: "claude".into(),
-            chinese_name: "利刃".into(),
-            glyph: "刃".into(),
+            chinese_name: "梅".into(),
+            glyph: "梅".into(),
             color: "#ff8c32".into(),
             specialty: "编程、架构设计、代码审查".into(),
             binary: "bundle/claude/{platform}/claude".into(),
@@ -112,8 +112,8 @@ fn default_agents() -> Vec<AgentDef> {
         AgentDef {
             id: "codex".into(),
             name: "codex".into(),
-            chinese_name: "方盒".into(),
-            glyph: "盒".into(),
+            chinese_name: "兰".into(),
+            glyph: "兰".into(),
             color: "#50c878".into(),
             specialty: "编程、快速原型、OpenAI 生态".into(),
             binary: "bundle/codex/{platform}/codex".into(),
@@ -124,8 +124,8 @@ fn default_agents() -> Vec<AgentDef> {
         AgentDef {
             id: "openclaw".into(),
             name: "openclaw".into(),
-            chinese_name: "百川".into(),
-            glyph: "匣".into(),
+            chinese_name: "竹".into(),
+            glyph: "竹".into(),
             color: "#ff6464".into(),
             specialty: "内容生成、渠道运营、技能调用".into(),
             binary: "bundle/openclaw/{platform}/openclaw".into(),
@@ -136,8 +136,8 @@ fn default_agents() -> Vec<AgentDef> {
         AgentDef {
             id: "hermes".into(),
             name: "hermes".into(),
-            chinese_name: "砚墨".into(),
-            glyph: "砚".into(),
+            chinese_name: "菊".into(),
+            glyph: "菊".into(),
             color: "#a064ff".into(),
             specialty: "记忆、学习、任务编排".into(),
             binary: "bundle/hermes/{platform}/hermes".into(),

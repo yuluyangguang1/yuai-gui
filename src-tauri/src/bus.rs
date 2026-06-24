@@ -50,6 +50,7 @@ pub struct GroupChat {
     pub speaking_order: VecDeque<String>,
     pub current_speaker: Option<String>,
     pub execution_queue: VecDeque<String>, // agents to execute in order
+    pub spoken_this_round: std::collections::HashSet<String>, // track who spoke to prevent loops
     next_msg_id: u32,
 }
 
@@ -64,6 +65,7 @@ impl Default for GroupChat {
             speaking_order: VecDeque::new(),
             current_speaker: None,
             execution_queue: VecDeque::new(),
+            spoken_this_round: std::collections::HashSet::new(),
             next_msg_id: 1,
         }
     }
@@ -86,9 +88,10 @@ impl GroupChat {
         self.next_msg_id += 1;
         self.messages.push(msg);
         self.phase = ChatPhase::Discussing;
+        self.spoken_this_round.clear();
 
-        // Determine speaking order
-        self.determine_speakers(content)
+        // Determine speaking order (specialty-based)
+        self.determine_speakers_by_specialty(content)
     }
 
     /// Add an agent's response to the chat.
@@ -107,23 +110,28 @@ impl GroupChat {
         self.next_msg_id += 1;
         self.messages.push(msg);
 
-        // Check for @mentions in the response
+        // Check for @mentions in the response — but don't re-add already-spoken agents
         let mentions = extract_mentions(content, &self.participants);
-        if !mentions.is_empty() {
-            for m in mentions {
-                if !self.speaking_order.contains(&m) {
-                    self.speaking_order.push_back(m);
-                }
+        for m in mentions {
+            if !self.spoken_this_round.contains(&m) && !self.speaking_order.contains(&m) {
+                self.speaking_order.push_back(m);
             }
         }
     }
 
     /// Get the next agent that should speak. Returns None if all have spoken.
     pub fn next_speaker(&mut self) -> Option<NextSpeaker> {
-        if let Some(agent_id) = self.speaking_order.pop_front() {
+        // Skip agents that already spoke this round
+        while let Some(agent_id) = self.speaking_order.pop_front() {
+            if self.spoken_this_round.contains(&agent_id) {
+                continue; // skip already-spoken agents
+            }
+            self.spoken_this_round.insert(agent_id.clone());
             self.current_speaker = Some(agent_id.clone());
-            Some(NextSpeaker { agent_id, reason: "scheduled".into() })
-        } else {
+            return Some(NextSpeaker { agent_id, reason: "scheduled".into() });
+        }
+        {
+            self.current_speaker = None;
             self.current_speaker = None;
             self.phase = ChatPhase::WaitingConfirm;
             None
@@ -210,8 +218,54 @@ impl GroupChat {
         self.speaking_order.retain(|id| id != agent_id);
     }
 
+    /// Check if the discussion has converged.
+    pub fn check_convergence(&mut self, new_message: &str) -> bool {
+        let stop_signals = ["讨论完毕", "没有其他意见", "我同意以上方案", "TERMINATE", "没有补充"];
+        if stop_signals.iter().any(|s| new_message.contains(s)) {
+            return true;
+        }
+        let recent: Vec<&str> = self.messages.iter()
+            .filter(|m| m.msg_type == "chat" && m.from != "user")
+            .rev()
+            .take(3)
+            .map(|m| m.content.as_str())
+            .collect();
+        if recent.len() < 2 { return false; }
+        for prev in &recent {
+            if jaccard_similarity(new_message, prev) > 0.6 { return true; }
+        }
+        false
+    }
+
+    /// Select speakers based on specialty matching.
+    pub fn determine_speakers_by_specialty(&mut self, content: &str) -> Vec<NextSpeaker> {
+        self.speaking_order.clear();
+        let mut speakers = Vec::new();
+        let mentions = extract_mentions(content, &self.participants);
+        if !mentions.is_empty() {
+            for m in &mentions {
+                self.speaking_order.push_back(m.clone());
+                speakers.push(NextSpeaker { agent_id: m.clone(), reason: "mentioned".into() });
+            }
+            return speakers;
+        }
+        let mut scores: Vec<(String, f32)> = self.participants.iter().map(|p| {
+            (p.clone(), specialty_score(p, content))
+        }).collect();
+        scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        for (agent_id, score) in &scores {
+            self.speaking_order.push_back(agent_id.clone());
+            speakers.push(NextSpeaker {
+                agent_id: agent_id.clone(),
+                reason: if *score > 0.0 { format!("specialty(score={:.1})", score) } else { "round_robin".into() },
+            });
+        }
+        speakers
+    }
+
     // ─── Internal ───
 
+    #[allow(dead_code)]
     fn determine_speakers(&mut self, content: &str) -> Vec<NextSpeaker> {
         self.speaking_order.clear();
         let mut speakers = Vec::new();
@@ -285,4 +339,42 @@ fn now_ms() -> u64 {
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap_or_default()
         .as_millis() as u64
+}
+
+/// Jaccard similarity between two strings using character bigrams.
+/// Works for both Chinese and English text.
+fn jaccard_similarity(a: &str, b: &str) -> f32 {
+    let bigrams_a = char_bigrams(a);
+    let bigrams_b = char_bigrams(b);
+    if bigrams_a.is_empty() && bigrams_b.is_empty() { return 1.0; }
+    if bigrams_a.is_empty() || bigrams_b.is_empty() { return 0.0; }
+    let set_a: std::collections::HashSet<&str> = bigrams_a.iter().map(|s| s.as_str()).collect();
+    let set_b: std::collections::HashSet<&str> = bigrams_b.iter().map(|s| s.as_str()).collect();
+    let intersection = set_a.intersection(&set_b).count();
+    let union = set_a.union(&set_b).count();
+    if union == 0 { 0.0 } else { intersection as f32 / union as f32 }
+}
+
+/// Extract character bigrams from a string, skipping whitespace and punctuation.
+fn char_bigrams(s: &str) -> Vec<String> {
+    let punct = "，。、；：？！\u{201c}\u{201d}\u{2018}\u{2019}（）【】…—《》";
+    let chars: Vec<char> = s.chars().filter(|c| !c.is_whitespace() && !c.is_ascii_punctuation() && !punct.contains(*c)).collect();
+    if chars.len() < 2 { return chars.iter().map(|c| c.to_string()).collect(); }
+    chars.windows(2).map(|w| format!("{}{}", w[0], w[1])).collect()
+}
+
+/// Score an agent by how well its specialty matches the content.
+fn specialty_score(agent_id: &str, content: &str) -> f32 {
+    let content_lower = content.to_lowercase();
+    let keywords: &[(&str, f32)] = match agent_id {
+        "claude" => &[("代码", 1.0), ("编程", 1.0), ("重构", 1.5), ("架构", 1.5), ("bug", 1.0), ("review", 1.0), ("优化", 1.0), ("code", 1.0), ("refactor", 1.5), ("architect", 1.5), ("debug", 1.0), ("fix", 0.8), ("implement", 1.0)],
+        "codex" => &[("原型", 1.0), ("快速", 0.8), ("测试", 1.0), ("demo", 1.0), ("实验", 1.0), ("尝试", 0.8), ("prototype", 1.0), ("quick", 0.8), ("test", 1.0), ("experiment", 1.0), ("try", 0.8), ("hack", 0.8)],
+        "openclaw" => &[("内容", 1.0), ("文案", 1.0), ("运营", 1.0), ("文章", 1.0), ("发布", 0.8), ("推广", 0.8), ("content", 1.0), ("write", 1.0), ("article", 1.0), ("publish", 0.8), ("copy", 0.8), ("marketing", 0.8)],
+        "hermes" => &[("记忆", 1.0), ("学习", 1.0), ("任务", 0.8), ("分析", 1.0), ("研究", 1.0), ("总结", 1.0), ("整理", 0.8), ("memory", 1.0), ("learn", 1.0), ("task", 0.8), ("analyze", 1.0), ("research", 1.0), ("summarize", 1.0), ("organize", 0.8)],
+        _ => &[],
+    };
+    keywords.iter()
+        .filter(|(kw, _)| content_lower.contains(*kw))
+        .map(|(_, score)| *score)
+        .sum()
 }

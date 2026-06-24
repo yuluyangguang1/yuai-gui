@@ -98,6 +98,175 @@ body {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .14 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
+/* ═══════════════════════════════════════════════════
+   中国传统纹样装饰系统
+   纹样参考: wenyang.net 开源图录
+   用 CSS gradient 模拟，零图片依赖
+   ═══════════════════════════════════════════════════ */
+
+/* 星宿点纹 (Star Field) — 散落的微光点 */
+.bg-stars {
+  background-image:
+    radial-gradient(1px 1px at 10% 20%, var(--jade) 0%, transparent 100%),
+    radial-gradient(1px 1px at 30% 60%, var(--jade) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 50% 10%, var(--jade-soft) 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 40%, var(--jade) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 80%, var(--jade) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 20% 90%, var(--jade-soft) 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 15%, var(--jade) 0%, transparent 100%),
+    radial-gradient(1px 1px at 45% 45%, var(--jade) 0%, transparent 100%),
+    radial-gradient(0.8px 0.8px at 15% 75%, var(--gold) 0%, transparent 100%),
+    radial-gradient(0.8px 0.8px at 65% 25%, var(--gold) 0%, transparent 100%);
+  background-size: 200px 200px;
+}
+
+/* 祥云底纹 (Auspicious Cloud) — 柔和的云气 */
+.bg-cloud-pattern {
+  background-image:
+    radial-gradient(ellipse 30px 20px at 30% 50%, var(--ink-rim) 0%, transparent 70%),
+    radial-gradient(ellipse 20px 30px at 70% 30%, var(--ink-rim) 0%, transparent 70%),
+    radial-gradient(ellipse 25px 15px at 50% 70%, var(--ink-rim) 0%, transparent 70%);
+  background-size: 120px 80px;
+}
+
+/* 回纹边框 (Key Fret / 回字纹) — 传统几何边框 */
+.border-huiwen {
+  border-image: repeating-linear-gradient(
+    90deg,
+    var(--hairline-warm) 0px, var(--hairline-warm) 8px,
+    transparent 8px, transparent 12px,
+    var(--hairline-warm) 12px, var(--hairline-warm) 16px,
+    transparent 16px, transparent 20px
+  ) 4;
+}
+
+/* 盘长纹边框 (Endless Knot) — 斜线交织 */
+.border-panchang {
+  position: relative;
+}
+.border-panchang::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid transparent;
+  border-image: repeating-linear-gradient(
+    45deg,
+    var(--hairline-warm) 0px, var(--hairline-warm) 4px,
+    transparent 4px, transparent 8px
+  ) 4;
+  pointer-events: none;
+}
+
+/* 涡纹/旋纹 (Spiral) — conic-gradient 模拟 */
+.bg-spiral {
+  background-image: conic-gradient(
+    from 0deg at 50% 50%,
+    transparent 0deg,
+    var(--ink-rim) 60deg,
+    transparent 120deg,
+    var(--ink-rim) 180deg,
+    transparent 240deg,
+    var(--ink-rim) 300deg,
+    transparent 360deg
+  );
+  background-size: 100px 100px;
+  opacity: 0.3;
+}
+
+/* ─── 纹样应用到 UI 组件 ─── */
+
+/* Rail (左侧导航) 星宿背景 */
+.rail-stars {
+  position: relative;
+}
+.rail-stars::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(0.8px 0.8px at 20% 15%, var(--jade) 0%, transparent 100%),
+    radial-gradient(0.6px 0.6px at 60% 45%, var(--jade) 0%, transparent 100%),
+    radial-gradient(1px 1px at 40% 75%, var(--jade-soft) 0%, transparent 100%),
+    radial-gradient(0.6px 0.6px at 80% 85%, var(--gold) 0%, transparent 100%),
+    radial-gradient(0.8px 0.8px at 30% 55%, var(--jade) 0%, transparent 100%);
+  background-size: 56px 100px;
+  opacity: 0.25;
+  z-index: 0;
+}
+
+/* 标题栏 祥云底纹 */
+.titlebar-cloud {
+  position: relative;
+}
+.titlebar-cloud::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(ellipse 40px 15px at 20% 50%, rgba(0, 255, 200, .03) 0%, transparent 70%),
+    radial-gradient(ellipse 30px 20px at 60% 50%, rgba(212, 175, 106, .02) 0%, transparent 70%),
+    radial-gradient(ellipse 35px 12px at 85% 50%, rgba(0, 255, 200, .02) 0%, transparent 70%);
+  background-size: 200px 44px;
+  z-index: 0;
+}
+
+/* 面板标题 回纹装饰线 */
+.section-huiwen {
+  position: relative;
+  padding-bottom: 8px;
+}
+.section-huiwen::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--gold) 0px, var(--gold) 6px,
+    transparent 6px, transparent 10px,
+    var(--gold) 10px, var(--gold) 14px,
+    transparent 14px, transparent 18px
+  );
+  opacity: 0.25;
+}
+
+/* 聊天气泡 竹简纹理 (Bamboo Slip) */
+.msg-bamboo {
+  position: relative;
+}
+.msg-bamboo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent 0px, transparent 3px,
+    rgba(212, 175, 106, .03) 3px, rgba(212, 175, 106, .03) 4px
+  );
+}
+
+/* 工作区卡片 暗纹 */
+.ws-card-pattern {
+  position: relative;
+  overflow: hidden;
+}
+.ws-card-pattern::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(ellipse 60px 40px at 80% 20%, rgba(0, 255, 200, .04) 0%, transparent 70%),
+    radial-gradient(ellipse 40px 60px at 20% 80%, rgba(212, 175, 106, .03) 0%, transparent 70%);
+  background-size: 260px 200px;
+}
+
 /* ═══ Titlebar ═══ */
 .titlebar {
   position: relative;
@@ -1454,3 +1623,108 @@ details.filetree-collapse[open] .file-tree {
   padding: 10px 16px;
   border-bottom: 1px solid var(--hairline);
 }
+
+/* ═══ Beam Mode ═══ */
+
+.beam-agent-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid;
+  font-size: .6rem;
+  font-family: var(--mono);
+  opacity: .7;
+}
+
+.beam-intro {
+  text-align: center;
+  padding: 16px 12px;
+}
+
+.beam-comparison {
+  margin-top: 12px;
+  border-top: 1px solid var(--hairline);
+  padding-top: 12px;
+}
+
+.beam-comparison-title {
+  font-family: var(--serif-zh);
+  font-size: .75rem;
+  color: var(--gold);
+  margin-bottom: 10px;
+  letter-spacing: .12em;
+}
+
+.beam-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.beam-card {
+  border: 1px solid;
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: var(--ink-deep);
+  transition: border-color .2s;
+}
+
+.beam-card:hover {
+  border-color: var(--jade) !important;
+}
+
+.beam-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: .68rem;
+}
+
+.beam-card-glyph {
+  font-family: var(--brush);
+  font-size: 1.2rem;
+}
+
+.beam-card-name {
+  font-family: var(--serif-zh);
+  font-weight: 600;
+}
+
+.beam-card-time {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: .58rem;
+  opacity: .5;
+}
+
+.beam-card-body {
+  font-size: .68rem;
+  color: var(--bone);
+  line-height: 1.6;
+  max-height: 120px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.beam-pick-btn {
+  margin-top: 8px;
+  padding: 4px 12px;
+  border: 1px solid;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  font-size: .62rem;
+  font-family: var(--serif-zh);
+  transition: all .2s;
+}
+
+.beam-pick-btn:hover {
+  background: rgba(0, 255, 200, .08);
+}
+
+.beam-cards::-webkit-scrollbar { width: 3px; }
+.beam-cards::-webkit-scrollbar-thumb { background: var(--ink-rim); border-radius: 3px; }

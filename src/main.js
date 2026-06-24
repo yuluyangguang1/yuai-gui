@@ -13,6 +13,7 @@ let fileTree = [];
 
 // ═══ DOM refs (3-column layout) ═══
 const rail = document.getElementById('sidebar');
+if (rail) rail.classList.add('rail-stars');
 const wsBody = document.getElementById('workspace-body');
 const previewBody = document.getElementById('preview-body');
 const previewTitle = document.getElementById('preview-title');
@@ -25,6 +26,8 @@ async function init() {
   try {
     agents = await invoke('list_agents');
     workspace = localStorage.getItem('yuai_workspace') || null;
+    // Add star field background to app
+    document.querySelector('.app')?.classList.add('bg-stars');
     renderRail();
     renderWorkspaceColumn();
     renderPreviewColumn();
@@ -50,6 +53,7 @@ function renderRail() {
     ${btns}
     <div class="sep"></div>
     <button class="nav-btn active" data-panel="group" title="群聊">合</button>
+    <button class="nav-btn" data-panel="beam" title="并行提问">束</button>
     <button class="nav-btn" data-panel="config" title="配置">器</button>
   `;
 
@@ -81,6 +85,8 @@ function switchChatMode(mode) {
   if (btn) btn.classList.add('active');
   if (mode === 'group') {
     renderGroupChat();
+  } else if (mode === 'beam') {
+    renderBeamChat();
   } else if (mode === 'config') {
     renderConfigPanel();
   }
@@ -131,13 +137,13 @@ function renderWorkspaceColumn() {
 
     <!-- Current work status -->
     <div class="status-section">
-      <div class="section-label">协作器</div>
+      <div class="section-label section-huiwen">协作器</div>
       <div class="task-list">${agentStatusItems}</div>
     </div>
 
     <!-- Next steps / plan -->
     <div class="status-section">
-      <div class="section-label">规划</div>
+      <div class="section-label section-huiwen">规划</div>
       <div class="task-list" id="plan-list">
         <div class="task-item">
           <span class="task-dot" style="background:var(--jade)"></span>
@@ -454,7 +460,12 @@ async function initTerminal(agentId, container) {
     updateAgentStatus(agentId, 'error');
   }
 
-  const ro = new ResizeObserver(() => fitAddon?.fit());
+  const ro = new ResizeObserver(debounce(() => {
+    fitAddon.fit();
+    if (sessions[agentId]?.ptyId) {
+      invoke('pty_resize', { id: sessions[agentId].ptyId, cols: terminal.cols, rows: terminal.rows }).catch(() => {});
+    }
+  }, 50));
   ro.observe(container);
 }
 
@@ -597,7 +608,7 @@ window.sendGroupMessage = async function() {
   await invoke('save_chat_message', { record: { id: null, timestamp: Date.now(), from: 'user', content: msg, msg_type: 'chat', workspace: workspace || '' } }).catch(() => {});
 
   const messages = document.getElementById('group-messages');
-  messages.innerHTML += `
+  messages.insertAdjacentHTML('beforeend', `
     <div class="msg user">
       <div class="avatar user-av">Y</div>
       <div class="bubble">${escapeHtml(msg)}</div>
@@ -623,23 +634,40 @@ window.sendToAgent = function(agentId) {
   const msg = input.value.trim();
   input.value = '';
   if (sessions[agentId]?.ptyId) {
-    invoke('pty_write', { id: sessions[agentId].ptyId, data: msg + '\n' });
+    invoke('pty_write', { id: sessions[agentId].ptyId, data: msg + '\n' }).catch(() => {});
   }
 };
 
+let discussionAborted = false;
+
 async function runDiscussion() {
-  while (true) {
-    const speaker = await invoke('group_next_speaker');
-    if (!speaker) {
-      addSystemMessage(`
-        讨论完毕
-        <div class="actions">
-          <button class="primary" onclick="confirmExecution()">确认执行</button>
-          <button onclick="continueDicussion()">继续讨论</button>
-        </div>
-      `);
-      updateStatus('待确认');
+  discussionAborted = false;
+  let round = 0;
+  const maxRounds = 6;
+
+  while (round < maxRounds) {
+    if (discussionAborted) {
+      addSystemMessage('讨论已手动中断');
+      showDecisionPanel();
       break;
+    }
+
+    const speaker = await invoke('group_next_speaker').catch(() => null);
+    if (!speaker) {
+      showDecisionPanel();
+      break;
+    }
+
+    round++;
+    updateStatus(`讨论中 · 第 ${round} 轮 · ${speaker.agent_id}`);
+
+    // Add abort button on first round
+    if (round === 1) {
+      const msgs = document.getElementById('group-messages');
+      if (msgs) {
+        msgs.insertAdjacentHTML('beforeend', `<div class="system-msg" id="abort-bar"><button onclick="abortDiscussion()" style="background:var(--vermilion-glow);color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:.7rem">中断讨论</button></div>`;
+        msgs.scrollTop = msgs.scrollHeight;
+      }
     }
     const agent = agents.find(a => a.id === speaker.agent_id);
     if (!agent) continue;
@@ -650,7 +678,7 @@ async function runDiscussion() {
 
     updateAgentStatus(speaker.agent_id, 'busy');
     const thinkingId = `thinking-${Date.now()}`;
-    messages.innerHTML += `
+    messages.insertAdjacentHTML('beforeend', `
       <div class="msg" id="${thinkingId}">
         <div class="avatar" style="background:${agent.color}20;color:${agent.color};border-color:${agent.color}40">${agent.glyph}</div>
         <div class="bubble"><div class="name" style="color:${agent.color}">${agent.name}</div><span class="thinking">思考中...</span></div>
@@ -659,15 +687,24 @@ async function runDiscussion() {
     messages.scrollTop = messages.scrollHeight;
     groupMessagesHtml = messages.innerHTML;
 
-    const prompt = await invoke('group_build_prompt', { agentId: speaker.agent_id });
+    const prompt = await invoke('group_build_prompt', { agentId: speaker.agent_id }).catch(() => null);
+    if (!prompt) { addSystemMessage('无法构建 prompt'); continue; }
     if (!sessions[speaker.agent_id]) await spawnAgentForGroup(speaker.agent_id);
 
+    let converged = false;
     if (sessions[speaker.agent_id]?.ptyId) {
       const startTime = Date.now();
-      await invoke('pty_write', { id: sessions[speaker.agent_id].ptyId, data: prompt + '\n' });
-      const response = await captureAgentResponse(speaker.agent_id, 15000);
+      // M1: Clear buffer BEFORE sending prompt to avoid losing fast responses
+      if (!window._agentBuffers) window._agentBuffers = {};
+      window._agentBuffers[speaker.agent_id] = '';
+      await invoke('pty_write', { id: sessions[speaker.agent_id].ptyId, data: prompt + '\n' }).catch(() => {});
+      const timeout = round === 1 ? 30000 : 20000;
+      const response = await captureAgentResponse(speaker.agent_id, timeout);
       const duration = Date.now() - startTime;
-      await invoke('group_agent_response', { agentId: speaker.agent_id, content: response, tokens: null, model: null, durationMs: duration });
+
+      converged = await invoke('group_check_convergence', { message: response }).catch(() => false);
+      // Always record the response (even if converged — for history completeness)
+      await invoke('group_agent_response', { agentId: speaker.agent_id, content: response, tokens: null, model: null, durationMs: duration }).catch(() => {});
 
       const el = document.getElementById(thinkingId);
       if (el) {
@@ -684,6 +721,19 @@ async function runDiscussion() {
     updateAgentStatus(speaker.agent_id, 'ready');
     messages = document.getElementById('group-messages');
     if (messages) { messages.scrollTop = messages.scrollHeight; groupMessagesHtml = messages.innerHTML; }
+
+    // Break if converged
+    if (converged) {
+      addSystemMessage('讨论已收敛');
+      showDecisionPanel();
+      return;
+    }
+  }
+
+  // Reached max rounds
+  if (round >= maxRounds) {
+    addSystemMessage('达到最大讨论轮次');
+    showDecisionPanel();
   }
 }
 
@@ -715,20 +765,61 @@ async function captureAgentResponse(agentId, timeoutMs) {
   if (!window._agentBuffers) window._agentBuffers = {};
   window._agentBuffers[agentId] = '';
   return new Promise(resolve => {
+    // M4: Check abort flag periodically
+    const abortCheck = setInterval(() => {
+      if (discussionAborted) {
+        clearInterval(abortCheck);
+        clearInterval(iv);
+        clearTimeout(timeoutHandle);
+        const buf = window._agentBuffers[agentId] || '';
+        resolve(buf.length > 0 ? cleanAnsi(buf) : '（已中断）');
+      }
+    }, 500);
     let lastLen = 0, stableCount = 0;
     const iv = setInterval(() => {
+      clearInterval(abortCheck); // clear abort check once we have data
       const buf = window._agentBuffers[agentId] || '';
+      // Detect process exit
+      if (buf.includes('[process exited]')) {
+        clearInterval(iv);
+        resolve(cleanAnsi(buf.replace('[process exited]', '').trim()) || '（进程已退出）');
+        return;
+      }
       if (buf.length === lastLen && buf.length > 0) {
         stableCount++;
-        if (stableCount >= 3) { clearInterval(iv); resolve(cleanAnsi(buf)); }
+        // 2 seconds stable = done (was 3)
+        if (stableCount >= 2) { clearInterval(iv); resolve(cleanAnsi(buf)); }
       } else { stableCount = 0; lastLen = buf.length; }
     }, 1000);
-    setTimeout(() => {
+    const timeoutHandle = setTimeout(() => {
       clearInterval(iv);
+      clearInterval(abortCheck);
       const buf = window._agentBuffers[agentId] || '';
       resolve(buf.length > 0 ? cleanAnsi(buf) : '（无响应）');
     }, timeoutMs);
   });
+}
+
+window.abortDiscussion = function() {
+  discussionAborted = true;
+  const bar = document.getElementById('abort-bar');
+  if (bar) bar.remove();
+};
+
+function showDecisionPanel() {
+  // M3: Dedup guard — don't add if already exists
+  const existing = document.querySelector('.decision-panel');
+  if (existing) return;
+  // Remove abort bar
+  const bar = document.getElementById('abort-bar');
+  if (bar) bar.remove();
+  addSystemMessage(`
+    <div class="actions decision-panel">
+      <button class="primary" onclick="confirmExecution()">确认执行</button>
+      <button onclick="continueDiscussion()">继续讨论</button>
+    </div>
+  `);
+  updateStatus('待确认');
 }
 
 window.confirmExecution = async function() {
@@ -739,7 +830,7 @@ window.confirmExecution = async function() {
   } catch (e) { addSystemMessage(`Error: ${e}`); }
 };
 
-window.continueDicussion = function() {
+window.continueDiscussion = function() {
   const input = document.getElementById('group-input');
   if (input) input.focus();
 };
@@ -758,9 +849,173 @@ async function handleCommand(cmd) {
 function addSystemMessage(html) {
   const messages = document.getElementById('group-messages');
   if (messages) {
-    messages.innerHTML += `<div class="system-msg">${html}</div>`;
+    messages.insertAdjacentHTML('beforeend', `<div class="system-msg">${html}</div>`;
     messages.scrollTop = messages.scrollHeight;
     groupMessagesHtml = messages.innerHTML;
+  }
+}
+
+// ═══ Beam Mode: Parallel multi-agent questioning ═══
+let beamMode = false;
+
+function renderBeamChat() {
+  beamMode = true;
+  chatTitle.textContent = '并行提问';
+  rail.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const bb = rail.querySelector('[data-panel="beam"]');
+  if (bb) bb.classList.add('active');
+
+  const activeAgents = agents.filter(a => a.enabled);
+  const agentTags = activeAgents.map(a =>
+    `<span class="beam-agent-tag" data-id="${a.id}" style="color:${a.color};border-color:${a.color}40">${a.glyph} ${a.name}</span>`
+  ).join('');
+
+  chatBody.innerHTML = `
+    <div class="beam-intro system-msg">
+      <div style="font-family:var(--brush);font-size:2rem;color:var(--gold);opacity:.8;line-height:1;margin-bottom:6px">束</div>
+      <div style="font-size:.68rem;color:var(--silver);line-height:1.5">
+        同一问题同时发给所有 Agent，对比各自回答后选择最佳方案
+      </div>
+      <div class="beam-agents" style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">${agentTags}</div>
+    </div>
+    <div class="chat-messages" id="beam-messages"></div>
+    <div class="chat-input">
+      <input type="text" id="beam-input" placeholder="输入问题，同时问所有 Agent...">
+      <button onclick="sendBeamMessage()">并行发送</button>
+    </div>
+  `;
+
+  const input = document.getElementById('beam-input');
+  if (input) input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBeamMessage(); }
+  });
+}
+
+window.sendBeamMessage = async function() {
+  const input = document.getElementById('beam-input');
+  if (!input || !input.value.trim()) return;
+  const question = input.value.trim();
+  input.value = '';
+
+  const activeAgents = agents.filter(a => a.enabled);
+  if (activeAgents.length === 0) { addBeamSystem('没有启用的 Agent'); return; }
+
+  // Show user message
+  const msgs = document.getElementById('beam-messages');
+  msgs.insertAdjacentHTML('beforeend', `<div class="msg user"><div class="avatar user-av">Y</div><div class="bubble">${escapeHtml(question)}</div></div>`;
+
+  // Create thinking placeholders for each agent
+  const thinkingIds = {};
+  activeAgents.forEach(a => {
+    const tid = `beam-thinking-${a.id}-${Date.now()}`;
+    thinkingIds[a.id] = tid;
+    msgs.insertAdjacentHTML('beforeend', `
+      <div class="msg" id="${tid}">
+        <div class="avatar" style="background:${a.color}20;color:${a.color};border-color:${a.color}40">${a.glyph}</div>
+        <div class="bubble"><div class="name" style="color:${a.color}">${a.name}</div><span class="thinking">等待中...</span></div>
+      </div>
+    `;
+  });
+  msgs.scrollTop = msgs.scrollHeight;
+
+  // Spawn all agents if needed, then send in parallel
+  const beamPromises = activeAgents.map(async (agent) => {
+    const tid = thinkingIds[agent.id];
+    const el = document.getElementById(tid);
+
+    try {
+      // Ensure agent is spawned
+      if (!sessions[agent.id]?.ptyId) {
+        if (el) el.querySelector('.thinking').textContent = '启动中...';
+        await spawnAgentForGroup(agent.id);
+      }
+
+      if (!sessions[agent.id]?.ptyId) {
+        if (el) el.querySelector('.thinking').textContent = '启动失败';
+        return { agent: agent.id, response: '（启动失败）', duration: 0 };
+      }
+
+      // Clear buffer and send
+      if (el) el.querySelector('.thinking').textContent = '思考中...';
+      window._agentBuffers[agent.id] = '';
+      const prompt = `请简要回答以下问题（不超过200字）：\n${question}`;
+      await invoke('pty_write', { id: sessions[agent.id].ptyId, data: prompt + '\n' });
+
+      const startTime = Date.now();
+      const response = await captureAgentResponse(agent.id, 25000);
+      const duration = Date.now() - startTime;
+
+      // Update UI
+      if (el) {
+        el.innerHTML = `
+          <div class="avatar" style="background:${agent.color}20;color:${agent.color};border-color:${agent.color}40">${agent.glyph}</div>
+          <div class="bubble">
+            <div class="name" style="color:${agent.color}">${agent.name}</div>
+            ${escapeHtml(response)}
+            <div class="meta">${(duration/1000).toFixed(1)}s</div>
+          </div>
+        `;
+      }
+
+      return { agent: agent.id, response, duration };
+    } catch (e) {
+      if (el) {
+        const thinking = el.querySelector('.thinking');
+        if (thinking) thinking.textContent = '错误: ' + e;
+        else el.insertAdjacentHTML('beforeend', `<span style="color:var(--vermilion-glow)">错误: ${e}</span>`;
+      }
+      return { agent: agent.id, response: String(e), duration: 0 };
+    }
+  });
+
+  const results = await Promise.allSettled(beamPromises);
+  const settled = results.map(r => r.status === 'fulfilled' ? r.value : { agent: '?', response: 'error', duration: 0 });
+
+  // Show comparison panel
+  showBeamComparison(question, settled);
+};
+
+function showBeamComparison(question, results) {
+  const msgs = document.getElementById('beam-messages');
+  if (!msgs) return;
+
+  const cards = results.map(r => {
+    const agent = agents.find(a => a.id === r.agent);
+    const color = agent?.color || '#888';
+    return `
+      <div class="beam-card" data-agent="${r.agent}" style="border-color:${color}40">
+        <div class="beam-card-header" style="color:${color}">
+          <span class="beam-card-glyph">${agent?.glyph || r.agent[0]}</span>
+          <span class="beam-card-name">${agent?.name || r.agent}</span>
+          <span class="beam-card-time">${(r.duration/1000).toFixed(1)}s</span>
+        </div>
+        <div class="beam-card-body">${escapeHtml(r.response).substring(0, 500)}</div>
+        <button class="beam-pick-btn" onclick="pickBeamResponse('${r.agent}')" style="color:${color};border-color:${color}60">选择此方案</button>
+      </div>
+    `;
+  }).join('');
+
+  msgs.insertAdjacentHTML('beforeend', `
+    <div class="beam-comparison">
+      <div class="beam-comparison-title">对比结果</div>
+      <div class="beam-cards">${cards}</div>
+    </div>
+  `;
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+window.pickBeamResponse = function(agentId) {
+  const agent = agents.find(a => a.id === agentId);
+  addBeamSystem(`已选择 ${agent?.name || agentId} 的方案，可继续在群聊中讨论`);
+  // Switch to group chat mode
+  setTimeout(() => switchChatMode('group'), 800);
+};
+
+function addBeamSystem(html) {
+  const msgs = document.getElementById('beam-messages');
+  if (msgs) {
+    msgs.insertAdjacentHTML('beforeend', `<div class="system-msg">${html}</div>`;
+    msgs.scrollTop = msgs.scrollHeight;
   }
 }
 
@@ -919,18 +1174,39 @@ function shortenPath(p) {
 }
 
 function escapeHtml(str) {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  if (typeof str !== 'string') return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// Safe attribute escaping for onclick handlers etc.
+function escapeAttr(str) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/'/g, "\'").replace(/"/g, '&quot;').replace(/</g, '&lt;');
 }
 
 function cleanAnsi(str) {
   return str.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
     .replace(/\x1b\][^\x07]*\x07/g, '')
+    .replace(/\x1b\[[?][0-9;]*[a-zA-Z]/g, '')
     .replace(/\r/g, '')
-    .split('\n').filter(l => l.trim().length > 0).join('\n').trim();
+    .split('\n')
+    .filter(l => {
+      const t = l.trim();
+      if (!t) return false;
+      // Filter spinner frames
+      if (/^[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏◐◓◑◒|/\\-]+$/.test(t)) return false;
+      // Filter box drawing borders
+      if (/^[╭╰╮╯─│┌└┐┘━┃]+$/u.test(t)) return false;
+      // Filter progress bars
+      if (/^[█░▒▓▏▎▍▌▋▊▉]+$/.test(t)) return false;
+      return true;
+    })
+    .join('\n').trim();
 }
 
 function updateStatus(text) { if (statusBar) statusBar.textContent = text; }
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
 
 // ═══ Start ═══
 init();
