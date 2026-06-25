@@ -176,6 +176,7 @@ for plat in "${PLATFORMS[@]}"; do
     fetch_from_portable "yuluyangguang1/claude-portable"   claude   "$plat" || true
     fetch_from_portable "yuluyangguang1/openclaw-portable" openclaw "$plat" || true
     fetch_from_portable "yuluyangguang1/hermes-portable"   hermes   "$plat" || true
+    fetch_from_portable "yuluyangguang1/openhuman-portable" openhuman "$plat" || true
 done
 
 echo ""

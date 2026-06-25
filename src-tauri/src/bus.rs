@@ -60,7 +60,7 @@ impl Default for GroupChat {
             messages: Vec::new(),
             phase: ChatPhase::Idle,
             participants: vec![
-                "claude".into(), "codex".into(), "openclaw".into(), "hermes".into()
+                "claude".into(), "codex".into(), "openclaw".into(), "hermes".into(), "openhuman".into()
             ],
             speaking_order: VecDeque::new(),
             current_speaker: None,
@@ -324,14 +324,158 @@ pub fn new_group_chat() -> SharedGroupChat {
 
 // ─── Helpers ───
 
-fn extract_mentions(text: &str, participants: &[String]) -> Vec<String> {
-    let mut mentions = Vec::new();
-    for p in participants {
-        if text.contains(&format!("@{}", p)) {
-            mentions.push(p.clone());
+/// Characters that are valid before an @mention boundary.
+/// Includes whitespace, line starts, and CJK punctuation.
+const BEFORE_BOUNDARY: &[char] = &[
+    ' ', '\t', '\n', '\r',         // whitespace
+    '，', '。', '、', '；', '：',  // CJK punctuation
+    '？', '！',                     // CJK question/exclamation
+    '（', '）', '【', '】',         // CJK brackets
+    '「', '」', '『', '』',         // CJK quotes
+    '《', '》',                     // CJK angle quotes
+    '…', '—', '–',                 // ellipsis, dashes
+    '"', '\'', '(', ')', '[', ']', // ASCII brackets/quotes
+    '{', '}', '<', '>',            // more brackets
+    ',', '.', ';', ':', '!', '?',  // ASCII punctuation
+    '/', '\\', '|',                // path separators
+];
+
+/// Characters that are valid after an @mention boundary (end of name).
+const AFTER_BOUNDARY: &[char] = &[
+    ' ', '\t', '\n', '\r',
+    '，', '。', '、', '；', '：',
+    '？', '！',
+    '（', '）', '【', '】',
+    '「', '」', '『', '』',
+    '《', '》',
+    '…', '—', '–',
+    '"', '\'', '(', ')', '[', ']',
+    '{', '}', '<', '>', ',', '.', ';', ':', '!', '?',
+    '/', '\\', '|',
+    '\0',  // end of string sentinel
+];
+
+/// Check if a character is a valid boundary character before an @mention.
+fn is_before_boundary(ch: char) -> bool {
+    BEFORE_BOUNDARY.contains(&ch)
+}
+
+/// Check if a character is a valid boundary character after an @mention.
+fn is_after_boundary(ch: char) -> bool {
+    AFTER_BOUNDARY.contains(&ch)
+}
+
+/// Maximum mention nesting depth to prevent infinite loops.
+const MAX_MENTION_DEPTH: u32 = 4;
+
+/// A detected mention range in text.
+#[derive(Debug, Clone)]
+pub struct MentionRange {
+    pub start: usize,       // byte offset of '@'
+    pub end: usize,         // byte offset after the name
+    pub target: String,     // the name after '@'
+}
+
+/// Find all @mention ranges in text with proper boundary checking.
+/// Uses byte offsets for slicing.
+pub fn find_mention_ranges(text: &str) -> Vec<MentionRange> {
+    let mut ranges = Vec::new();
+    let chars: Vec<(usize, char)> = text.char_indices().collect();
+
+    for i in 0..chars.len() {
+        let (byte_idx, ch) = chars[i];
+        if ch != '@' {
+            continue;
+        }
+
+        // Check before boundary: must be at start of string or preceded by boundary char
+        if i > 0 {
+            let (_, prev_ch) = chars[i - 1];
+            if !is_before_boundary(prev_ch) {
+                continue; // no valid boundary before @
+            }
+        }
+
+        // Collect the name after @
+        let name_start = i + 1;
+        if name_start >= chars.len() {
+            continue;
+        }
+
+        let mut name_end = name_start;
+        while name_end < chars.len() {
+            let (_, ch) = chars[name_end];
+            if is_after_boundary(ch) {
+                break;
+            }
+            name_end += 1;
+        }
+
+        if name_end == name_start {
+            continue; // empty name
+        }
+
+        // Build the name string
+        let name: String = chars[name_start..name_end]
+            .iter()
+            .map(|(_, c)| *c)
+            .collect();
+
+        let end_byte = if name_end < chars.len() {
+            chars[name_end].0
+        } else {
+            text.len()
+        };
+
+        ranges.push(MentionRange {
+            start: byte_idx,
+            end: end_byte,
+            target: name,
+        });
+    }
+
+    ranges
+}
+
+/// Resolve mention targets from text, filtering against known participants.
+/// Supports "@all" to mention all participants.
+/// Tracks mention depth to prevent infinite loops (max 4).
+pub fn resolve_mention_targets(
+    text: &str,
+    participants: &[String],
+    current_depth: u32,
+) -> Vec<String> {
+    if current_depth >= MAX_MENTION_DEPTH {
+        return Vec::new(); // prevent infinite loop
+    }
+
+    let ranges = find_mention_ranges(text);
+    let mut targets = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+
+    for range in &ranges {
+        let name = range.target.to_lowercase();
+
+        if name == "all" {
+            // @all mentions everyone
+            for p in participants {
+                if seen.insert(p.clone()) {
+                    targets.push(p.clone());
+                }
+            }
+        } else if participants.iter().any(|p| p.to_lowercase() == name) {
+            if seen.insert(range.target.clone()) {
+                targets.push(range.target.clone());
+            }
         }
     }
-    mentions
+
+    targets
+}
+
+/// Updated extract_mentions that uses proper boundary detection.
+fn extract_mentions(text: &str, participants: &[String]) -> Vec<String> {
+    resolve_mention_targets(text, participants, 0)
 }
 
 fn now_ms() -> u64 {
@@ -371,6 +515,7 @@ fn specialty_score(agent_id: &str, content: &str) -> f32 {
         "codex" => &[("原型", 1.0), ("快速", 0.8), ("测试", 1.0), ("demo", 1.0), ("实验", 1.0), ("尝试", 0.8), ("prototype", 1.0), ("quick", 0.8), ("test", 1.0), ("experiment", 1.0), ("try", 0.8), ("hack", 0.8)],
         "openclaw" => &[("内容", 1.0), ("文案", 1.0), ("运营", 1.0), ("文章", 1.0), ("发布", 0.8), ("推广", 0.8), ("content", 1.0), ("write", 1.0), ("article", 1.0), ("publish", 0.8), ("copy", 0.8), ("marketing", 0.8)],
         "hermes" => &[("记忆", 1.0), ("学习", 1.0), ("任务", 0.8), ("分析", 1.0), ("研究", 1.0), ("总结", 1.0), ("整理", 0.8), ("memory", 1.0), ("learn", 1.0), ("task", 0.8), ("analyze", 1.0), ("research", 1.0), ("summarize", 1.0), ("organize", 0.8)],
+        "openhuman" => &[("人机", 1.0), ("协作", 1.0), ("交互", 1.0), ("体验", 0.8), ("设计", 0.8), ("用户", 0.8), ("human", 1.0), ("collaborate", 1.0), ("interact", 1.0), ("interface", 0.8), ("design", 0.8), ("ux", 0.8)],
         _ => &[],
     };
     keywords.iter()

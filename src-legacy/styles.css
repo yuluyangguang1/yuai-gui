@@ -9,30 +9,37 @@
 *{margin:0;padding:0;box-sizing:border-box}
 
 :root{
-  /* ─── Ink palette ─── */
-  --ink-black:    #02100f;
-  --ink-deep:     #051b1a;
-  --ink-stone:    #082322;
-  --ink-rim:      #0c2e2c;
+  /* ═══════════════════════════════════════════════
+     青瓷墨玉 — 宋瓷温润 · 墨玉深邃 · 金箔点缀
+     色源: 故宫色谱 · 青瓷釉色 · 传统矿物色
+     ═══════════════════════════════════════════════ */
 
-  /* ─── Pigments ─── */
-  --jade:         #00ffc8;
-  --jade-soft:    #6effdf;
-  --jade-deep:    #00b894;
-  --vermilion:    #c8442a;
-  --vermilion-glow:#e85a3a;
-  --gold:         #d4af6a;
-  --bone:         #f0e8d6;
-  --bone-dim:     #b8ad9a;
-  --silver:       #6e8a82;
-  --whisper:      rgba(240, 232, 214, .42);
-  --shadow-deep:  rgba(0, 0, 0, .55);
+  /* ─── 墨玉基底 (Jade Black) ─── */
+  --ink-black:    #0b1a1a;   /* 墨玉 — 深沉温润的墨绿黑 */
+  --ink-deep:     #0f2626;   /* 玄青 — 墨玉深处 */
+  --ink-stone:    #143030;   /* 黛绿 — 青瓷暗面 */
+  --ink-rim:      #1a3c3c;   /* 苍绿 — 边缘过渡 */
 
-  /* ─── Borders ─── */
-  --hairline:     rgba(240, 232, 214, .08);
-  --hairline-warm:rgba(212, 175, 106, .18);
-  --hairline-jade:rgba(0, 255, 200, .22);
-  --hover:        rgba(240, 232, 214, .04);
+  /* ─── 青瓷釉色 (Celadon) ─── */
+  --jade:         #5ccfb8;   /* 青瓷 — 宋瓷温润的青绿 */
+  --jade-soft:    #8fdfca;   /* 粉青 — 淡雅柔和 */
+  --jade-deep:    #3aaf96;   /* 梅子青 — 深沉翡翠 */
+
+  /* ─── 矿物暖色 (Mineral Warm) ─── */
+  --vermilion:    #c8442a;   /* 朱砂 — 传统矿物红 */
+  --vermilion-glow:#e85a3a;  /* 银朱 — 明亮朱砂 */
+  --gold:         #c9a85c;   /* 赤金 — 金箔温润 */
+  --bone:         #e8ddd0;   /* 象牙 — 温润米白 */
+  --bone-dim:     #a89888;   /* 银鼠 — 暖灰 */
+  --silver:       #7a8f88;   /* 青灰 — 灰绿调 */
+  --whisper:      rgba(232, 221, 208, .38);
+  --shadow-deep:  rgba(0, 0, 0, .50);
+
+  /* ─── 边界 (Boundaries) ─── */
+  --hairline:     rgba(232, 221, 208, .08);
+  --hairline-warm:rgba(201, 168, 92, .18);
+  --hairline-jade:rgba(92, 207, 184, .20);
+  --hover:        rgba(232, 221, 208, .04);
 
   /* ─── Type system ─── */
   --serif-zh:     'Noto Serif SC', 'LXGW WenKai', Georgia, serif;
@@ -48,6 +55,191 @@
   --col-header-h: 38px;
 }
 
+/* ═══════════════════════════════════════════════
+   白天模式 — 暖纸书卷
+   取色: 宣纸 #faf6f0 · 墨色 #2c2820 · 铜绿 #2a8f7a
+   ═══════════════════════════════════════════════ */
+[data-theme="light"] {
+  --ink-black:    #faf6f0;
+  --ink-deep:     #f0ebe2;
+  --ink-stone:    #e8e2d6;
+  --ink-rim:      #ddd5c5;
+
+  --jade:         #2a8f7a;
+  --jade-soft:    #3aaf96;
+  --jade-deep:    #1a7a66;
+  --vermilion:    #c8442a;
+  --vermilion-glow:#b03820;
+  --gold:         #8a6a2a;
+  --bone:         #3a3530;
+  --bone-dim:     #7a7060;
+  --silver:       #9a9080;
+  --whisper:      rgba(58, 53, 48, .30);
+  --shadow-deep:  rgba(0, 0, 0, .08);
+
+  --hairline:     rgba(58, 53, 48, .10);
+  --hairline-warm:rgba(138, 106, 42, .18);
+  --hairline-jade:rgba(42, 143, 122, .18);
+  --hover:        rgba(58, 53, 48, .04);
+}
+
+[data-theme="light"] ::selection { background: #2a8f7a; color: #fff; }
+
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(58, 53, 48, .12); }
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(58, 53, 48, .20); }
+
+/* 主背景 — 宣纸底 */
+[data-theme="light"] .app {
+  background:
+    radial-gradient(ellipse 1200px 800px at 30% 20%, rgba(232, 226, 214, .5) 0%, transparent 50%),
+    radial-gradient(ellipse 800px 600px at 75% 85%, rgba(221, 213, 197, .3) 0%, transparent 50%),
+    #faf6f0;
+}
+
+/* 去掉暗色光晕 */
+[data-theme="light"] .bg-glow {
+  background:
+    radial-gradient(circle 600px at 20% 15%, rgba(42, 143, 122, .04) 0%, transparent 60%),
+    radial-gradient(circle 400px at 85% 85%, rgba(138, 106, 42, .03) 0%, transparent 60%);
+}
+
+/* 去掉噪点纹理 */
+[data-theme="light"] .bg-grain { opacity: .10; }
+
+/* 星宿纹隐藏 */
+[data-theme="light"] .bg-stars { background-image: none; }
+[data-theme="light"] .rail-stars::after { opacity: 0; }
+
+/* 标题栏 — 宣纸色 */
+[data-theme="light"] .titlebar {
+  background: linear-gradient(180deg, #f0ebe2, #e8e2d6);
+  border-bottom: 1px solid rgba(58, 53, 48, .10);
+}
+[data-theme="light"] .titlebar .seal {
+  background: linear-gradient(180deg, #c8442a, #a03020);
+  box-shadow: 0 0 6px rgba(200, 68, 42, .3);
+}
+[data-theme="light"] .titlebar .brand { color: #3a3530; }
+[data-theme="light"] .titlebar .title-text { color: #7a7060; }
+[data-theme="light"] .titlebar .status-text { color: #9a9080; }
+[data-theme="light"] .theme-toggle { color: #7a7060; }
+[data-theme="light"] .theme-toggle:hover { color: #8a6a2a; }
+
+/* 导航栏 — 浅灰底 */
+[data-theme="light"] #sidebar {
+  background: #f0ebe2;
+  border-right: 1px solid rgba(58, 53, 48, .08);
+}
+[data-theme="light"] .agent-btn { color: #7a7060; }
+[data-theme="light"] .agent-btn:hover { color: #3a3530; background: rgba(58, 53, 48, .04); }
+[data-theme="light"] .agent-btn.active { color: var(--jade); }
+[data-theme="light"] .nav-btn { color: #9a9080; }
+[data-theme="light"] .nav-btn.active { color: #3a3530; }
+
+/* 面板头 */
+[data-theme="light"] .col-header {
+  background: #f0ebe2;
+  border-bottom: 1px solid rgba(58, 53, 48, .08);
+  color: #3a3530;
+}
+
+/* 工作区 */
+[data-theme="light"] .workspace-empty { color: #9a9080; }
+[data-theme="light"] .workspace-btn {
+  border-color: rgba(42, 143, 122, .3);
+  color: #2a8f7a;
+}
+[data-theme="light"] .workspace-btn:hover { background: rgba(42, 143, 122, .06); }
+
+/* 文件树 */
+[data-theme="light"] .tree-node { color: #7a7060; }
+[data-theme="light"] .tree-node:hover { background: rgba(58, 53, 48, .04); color: #3a3530; }
+[data-theme="light"] .tree-node.selected { background: rgba(42, 143, 122, .08); color: #2a8f7a; }
+
+/* 预览面板 */
+[data-theme="light"] .preview-empty { color: #9a9080; }
+[data-theme="light"] .code-preview { background: #f5f0e8; }
+[data-theme="light"] .code-content { color: #3a3530; }
+[data-theme="light"] .code-meta { color: #9a9080; border-bottom-color: rgba(58, 53, 48, .08); }
+
+/* 聊天区 */
+[data-theme="light"] .chat-input {
+  background: #f0ebe2;
+  border-top: 1px solid rgba(58, 53, 48, .08);
+}
+[data-theme="light"] .chat-input input {
+  background: #faf6f0;
+  border: 1px solid rgba(58, 53, 48, .12);
+  color: #3a3530;
+}
+[data-theme="light"] .chat-input button {
+  background: #2a8f7a;
+  color: #fff;
+}
+[data-theme="light"] .msg .bubble {
+  background: #f0ebe2;
+  color: #3a3530;
+}
+[data-theme="light"] .msg.user .bubble {
+  background: #2a8f7a;
+  color: #fff;
+}
+[data-theme="light"] .system-msg { color: #9a9080; }
+
+/* 终端 — 浅色主题 */
+[data-theme="light"] .xterm { background: #faf6f0 !important; }
+[data-theme="light"] .xterm .xterm-viewport { background: #faf6f0 !important; }
+
+/* 任务列表 */
+[data-theme="light"] .task-item { color: #7a7060; }
+[data-theme="light"] .task-name { color: #3a3530; }
+[data-theme="light"] .section-label { color: #9a9080; }
+
+/* 状态指示 */
+[data-theme="light"] .status-on { color: #2a8f7a; }
+[data-theme="light"] .status-off { color: #9a9080; }
+
+/* 配置面板 */
+[data-theme="light"] .config-panel { color: #3a3530; }
+[data-theme="light"] .config-agent { border-color: rgba(58, 53, 48, .08); }
+[data-theme="light"] .cfg-url, [data-theme="light"] .cfg-key, [data-theme="light"] .cfg-model {
+  background: #faf6f0;
+  border: 1px solid rgba(58, 53, 48, .12);
+  color: #3a3530;
+}
+[data-theme="light"] .cfg-save {
+  border-color: rgba(42, 143, 122, .3);
+  color: #2a8f7a;
+}
+
+/* Diff 面板 */
+[data-theme="light"] .diff-content { background: #f5f0e8; }
+[data-theme="light"] .diff-add { background: rgba(42, 143, 122, .10); color: #1a7a66; }
+[data-theme="light"] .diff-del { background: rgba(200, 68, 42, .08); color: #a03020; }
+[data-theme="light"] .diff-file-item { border-color: rgba(58, 53, 48, .06); }
+
+/* Beam 模式 */
+[data-theme="light"] .beam-card {
+  background: #f0ebe2;
+  border-color: rgba(58, 53, 48, .10);
+}
+[data-theme="light"] .beam-card-body { color: #3a3530; }
+[data-theme="light"] .beam-pick-btn {
+  border-color: rgba(42, 143, 122, .3);
+  color: #2a8f7a;
+}
+
+/* 回纹装饰线调淡 */
+[data-theme="light"] .section-huiwen::after {
+  background: repeating-linear-gradient(
+    90deg,
+    #8a6a2a 0px, #8a6a2a 6px,
+    transparent 6px, transparent 10px,
+    #8a6a2a 10px, #8a6a2a 14px,
+    transparent 14px, transparent 18px
+  );
+  opacity: .15;
+}
 html, body, .app { height: 100%; overflow: hidden; }
 
 body {
@@ -63,8 +255,8 @@ body {
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(240, 232, 214, .08); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(240, 232, 214, .16); }
+::-webkit-scrollbar-thumb { background: rgba(232, 221, 208, .10); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(232, 221, 208, .18); }
 
 /* ═══ Atmospheric background ═══ */
 .app {
@@ -72,8 +264,8 @@ body {
   display: flex;
   flex-direction: column;
   background:
-    radial-gradient(ellipse 1400px 900px at 25% 18%, var(--ink-stone) 0%, transparent 55%),
-    radial-gradient(ellipse 900px 700px at 80% 92%, var(--ink-rim) 0%, transparent 65%),
+    radial-gradient(ellipse 1400px 900px at 25% 18%, rgba(20, 48, 48, .5) 0%, transparent 55%),
+    radial-gradient(ellipse 900px 700px at 80% 92%, rgba(26, 60, 60, .35) 0%, transparent 65%),
     var(--ink-black);
   isolation: isolate;
 }
@@ -83,8 +275,8 @@ body {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle 700px at 18% 10%, rgba(0, 255, 200, .04) 0%, transparent 70%),
-    radial-gradient(circle 500px at 88% 90%, rgba(200, 68, 42, .03) 0%, transparent 70%);
+    radial-gradient(circle 700px at 18% 10%, rgba(0, 255, 200, .06) 0%, transparent 70%),
+    radial-gradient(circle 500px at 88% 90%, rgba(200, 68, 42, .04) 0%, transparent 70%);
   z-index: 0;
 }
 
@@ -109,12 +301,12 @@ body {
   background-image:
     radial-gradient(1px 1px at 10% 20%, var(--jade) 0%, transparent 100%),
     radial-gradient(1px 1px at 30% 60%, var(--jade) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 50% 10%, var(--jade-soft) 0%, transparent 100%),
+    radial-gradient(1.2px 1.2px at 50% 10%, var(--jade-soft) 0%, transparent 100%),
     radial-gradient(1px 1px at 70% 40%, var(--jade) 0%, transparent 100%),
     radial-gradient(1px 1px at 90% 80%, var(--jade) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 20% 90%, var(--jade-soft) 0%, transparent 100%),
-    radial-gradient(1px 1px at 80% 15%, var(--jade) 0%, transparent 100%),
-    radial-gradient(1px 1px at 45% 45%, var(--jade) 0%, transparent 100%),
+    radial-gradient(1.2px 1.2px at 20% 90%, var(--jade-soft) 0%, transparent 100%),
+    radial-gradient(0.8px 0.8px at 80% 15%, var(--jade) 0%, transparent 100%),
+    radial-gradient(0.8px 0.8px at 45% 45%, var(--jade) 0%, transparent 100%),
     radial-gradient(0.8px 0.8px at 15% 75%, var(--gold) 0%, transparent 100%),
     radial-gradient(0.8px 0.8px at 65% 25%, var(--gold) 0%, transparent 100%);
   background-size: 200px 200px;
@@ -185,11 +377,11 @@ body {
   inset: 0;
   pointer-events: none;
   background-image:
-    radial-gradient(0.8px 0.8px at 20% 15%, var(--jade) 0%, transparent 100%),
-    radial-gradient(0.6px 0.6px at 60% 45%, var(--jade) 0%, transparent 100%),
-    radial-gradient(1px 1px at 40% 75%, var(--jade-soft) 0%, transparent 100%),
-    radial-gradient(0.6px 0.6px at 80% 85%, var(--gold) 0%, transparent 100%),
-    radial-gradient(0.8px 0.8px at 30% 55%, var(--jade) 0%, transparent 100%);
+    radial-gradient(0.7px 0.7px at 20% 15%, var(--jade) 0%, transparent 100%),
+    radial-gradient(0.5px 0.5px at 60% 45%, var(--jade) 0%, transparent 100%),
+    radial-gradient(0.8px 0.8px at 40% 75%, var(--jade-soft) 0%, transparent 100%),
+    radial-gradient(0.5px 0.5px at 80% 85%, var(--gold) 0%, transparent 100%),
+    radial-gradient(0.7px 0.7px at 30% 55%, var(--jade) 0%, transparent 100%);
   background-size: 56px 100px;
   opacity: 0.25;
   z-index: 0;
@@ -278,7 +470,7 @@ body {
   gap: 14px;
   user-select: none;
   -webkit-app-region: drag;
-  background: linear-gradient(180deg, rgba(8, 35, 34, .85), rgba(5, 27, 26, .85));
+  background: linear-gradient(180deg, rgba(20, 48, 48, .88), rgba(15, 38, 38, .88));
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--hairline);
   animation: slideDown .7s cubic-bezier(.2, .9, .3, 1) both;
@@ -289,7 +481,7 @@ body {
   height: 22px;
   background: linear-gradient(180deg, var(--vermilion-glow), var(--vermilion));
   border-radius: 1px;
-  box-shadow: 0 0 8px rgba(200, 68, 42, .55), 0 0 1px rgba(232, 90, 58, .8);
+  box-shadow: 0 0 10px rgba(200, 68, 42, .45), 0 0 2px rgba(232, 90, 58, .6);
   flex-shrink: 0;
 }
 
@@ -316,6 +508,17 @@ body {
   letter-spacing: .42em;
   color: var(--bone-dim);
 }
+
+.theme-toggle {
+  cursor: pointer;
+  font-size: .85rem;
+  opacity: .5;
+  transition: opacity .2s, transform .3s;
+  -webkit-app-region: no-drag;
+  user-select: none;
+  line-height: 1;
+}
+.theme-toggle:hover { opacity: 1; transform: rotate(20deg); }
 
 .titlebar .status-text {
   margin-left: auto;

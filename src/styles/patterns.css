@@ -1,0 +1,102 @@
+/* ══════════════════════════════════════════════
+   Chinese Traditional Patterns
+   ══════════════════════════════════════════════ */
+
+/* Star field background (点缀星空) */
+.pattern-starfield {
+  position: relative;
+}
+.pattern-starfield::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1px 1px at 10% 20%, var(--accent) 0.5px, transparent 1px),
+    radial-gradient(1px 1px at 30% 60%, var(--gold) 0.5px, transparent 1px),
+    radial-gradient(1px 1px at 50% 10%, var(--accent) 0.5px, transparent 1px),
+    radial-gradient(1px 1px at 70% 80%, var(--gold) 0.5px, transparent 1px),
+    radial-gradient(1px 1px at 90% 40%, var(--accent) 0.5px, transparent 1px),
+    radial-gradient(1px 1px at 15% 90%, var(--gold) 0.5px, transparent 1px),
+    radial-gradient(1px 1px at 85% 15%, var(--accent) 0.5px, transparent 1px);
+  opacity: 0.15;
+  z-index: 0;
+}
+
+/* Cloud motif (祥云纹) via SVG data URI */
+.pattern-cloud {
+  position: relative;
+}
+.pattern-cloud::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='80'%3E%3Cpath d='M20 60 Q10 40 30 30 Q20 10 50 15 Q60 0 80 15 Q100 5 100 30 Q120 30 110 50 Q120 70 90 65 Q80 80 50 70 Q30 80 20 60Z' fill='none' stroke='%235ccfb8' stroke-width='1'/%3E%3C/svg%3E");
+  background-size: 120px 80px;
+  z-index: 0;
+}
+
+/* Key fret / 回纹 border decoration */
+.pattern-keyfret {
+  border-image: repeating-linear-gradient(
+    90deg,
+    var(--gold-muted) 0px,
+    var(--gold-muted) 4px,
+    transparent 4px,
+    transparent 8px,
+    var(--gold-muted) 8px,
+    var(--gold-muted) 12px,
+    transparent 12px,
+    transparent 16px
+  ) 1;
+}
+
+/* Seal stamp effect (印章) */
+.seal-stamp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--gold);
+  border-radius: 3px;
+  font-family: var(--font-brush);
+  font-size: 16px;
+  color: var(--gold);
+  line-height: 1;
+  transform: rotate(-3deg);
+  position: relative;
+}
+.seal-stamp::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 3px;
+  background: var(--gold);
+  opacity: 0.06;
+}
+
+/* Horizontal divider with Chinese motif */
+.divider-chinese {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+.divider-chinese::before,
+.divider-chinese::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--border) 20%,
+    var(--border) 80%,
+    transparent
+  );
+}

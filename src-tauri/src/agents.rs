@@ -145,5 +145,17 @@ fn default_agents() -> Vec<AgentDef> {
             enabled: true,
             in_group: true,
         },
+        AgentDef {
+            id: "openhuman".into(),
+            name: "openhuman".into(),
+            chinese_name: "莲".into(),
+            glyph: "莲".into(),
+            color: "#64b5f6".into(),
+            specialty: "人机协作、开放人类智能".into(),
+            binary: "bundle/openhuman/{platform}/openhuman".into(),
+            config_type: "openai_env".into(),
+            enabled: true,
+            in_group: true,
+        },
     ]
 }

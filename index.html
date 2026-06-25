@@ -1,66 +1,18 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Yuai · 与 AI · 同在</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;700;900&family=LXGW+WenKai:wght@400;700&family=Ma+Shan+Zheng&family=JetBrains+Mono:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/src/styles.css">
-</head>
-<body>
-<div class="app">
-  <!-- Background atmospherics -->
-  <div class="bg-grain" aria-hidden="true"></div>
-  <div class="bg-glow" aria-hidden="true"></div>
-
-  <div class="titlebar">
-    <span class="seal" aria-hidden="true"></span>
-    <span class="brand">yu<span class="dot">.</span>ai</span>
-    <span class="title-divider" aria-hidden="true"></span>
-    <span id="status-bar" class="status-text">加载中<span class="dots">...</span></span>
-  </div>
-
-  <div class="layout">
-    <!-- Rail: agent switcher + nav (very narrow) -->
-    <aside class="rail" id="sidebar"></aside>
-
-    <!-- Column 1: Status + Plan (file tree collapsed at top) -->
-    <aside class="col-workspace" id="col-workspace">
-      <div class="col-header">
-        <span class="col-title">状态</span>
-        <button class="col-action" id="ws-switch" onclick="selectWorkspace()" title="切换工作区">⇆</button>
-      </div>
-      <div class="col-body" id="workspace-body">
-        <!-- collapsible file tree + task status rendered here -->
-      </div>
-    </aside>
-
-    <!-- Column 2: Artifact preview -->
-    <main class="col-preview" id="col-preview">
-      <div class="col-header">
-        <span class="col-title" id="preview-title">预览</span>
-        <div class="preview-tabs" id="preview-tabs">
-          <button class="preview-mode-tab active" data-mode="code">代码</button>
-          <button class="preview-mode-tab" data-mode="diff">变更</button>
-          <button class="preview-mode-tab" data-mode="web">网页</button>
-        </div>
-      </div>
-      <div class="col-body" id="preview-body">
-        <!-- code / diff / web preview rendered here -->
-      </div>
-    </main>
-
-    <!-- Column 3: Chat -->
-    <aside class="col-chat" id="col-chat">
-      <div class="col-header">
-        <span class="col-title" id="chat-title">群聊</span>
-      </div>
-      <div class="col-body" id="chat-body">
-        <!-- chat panel rendered here -->
-      </div>
-    </aside>
-  </div>
-</div>
-<script type="module" src="/src/main.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>語AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=LXGW+WenKai:wght@300;400;700&family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
 </html>

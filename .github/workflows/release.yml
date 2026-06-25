@@ -233,6 +233,41 @@ jobs:
             rm -rf "$TMP"
           done
 
+      - name: Fetch openhuman (bash)
+        if: runner.os != 'Windows'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          PLAT="${{ matrix.label }}"
+          TAG=$(curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json"             https://api.github.com/repos/yuluyangguang1/openhuman-portable/releases/latest | jq -r '.tag_name // empty' || echo "")
+          [ -z "$TAG" ] && { echo "  [warn] openhuman release not found"; exit 0; }
+          ASSET="openhuman-portable-${PLAT}.zip"
+          URL="https://github.com/yuluyangguang1/openhuman-portable/releases/download/$TAG/$ASSET"
+          echo "  [fetch] openhuman/$PLAT ($TAG)"
+          TMP=$(mktemp -d)
+          curl -fsSL --retry 3 --retry-delay 5 -o "$TMP/openhuman.zip" "$URL" || { echo "  [warn] openhuman download failed"; exit 0; }
+          mkdir -p "$TMP/extracted"
+          unzip -qo "$TMP/openhuman.zip" -d "$TMP/extracted" 2>/dev/null || true
+          FOUND=$(find "$TMP/extracted" "$TMP" -type f -name 'openhuman' ! -name '*.tar*' ! -name '*.zip' 2>/dev/null | head -1)
+          if [ -n "$FOUND" ]; then
+            mkdir -p "bundle/openhuman/$PLAT"
+            cp "$FOUND" "bundle/openhuman/$PLAT/openhuman"
+            chmod +x "bundle/openhuman/$PLAT/openhuman"
+            echo "    installed: bundle/openhuman/$PLAT/openhuman"
+          else
+            DIST_DIR=$(find "$TMP/extracted" "$TMP" -maxdepth 3 -type d -name '*[Oo]pen*[Hh]uman*' 2>/dev/null | head -1)
+            if [ -n "$DIST_DIR" ]; then
+              mkdir -p "bundle/openhuman/$PLAT"
+              cp -R "$DIST_DIR" "bundle/openhuman/$PLAT/"
+              echo "    installed directory"
+            else
+              echo "  [warn] openhuman not found in archive"
+            fi
+          fi
+          rm -rf "$TMP"
+
       # ────────────────────────────────────────────────
       # Assemble release package
       # ────────────────────────────────────────────────
@@ -254,7 +289,7 @@ jobs:
           find "src-tauri/target/${{ matrix.target }}/release/bundle/dmg" -name '*.dmg' -exec cp {} "$DIST/" \; 2>/dev/null || true
 
           # Copy all bundled agents
-          for agent in codex cc-switch claude openclaw hermes; do
+          for agent in codex cc-switch claude openclaw hermes openhuman; do
             [ -d "bundle/$agent" ] && cp -R "bundle/$agent" "$DIST/bundle/" && echo "  bundled: $agent"
           done
 
@@ -320,7 +355,7 @@ jobs:
           if (Test-Path $rawExe) { Copy-Item $rawExe "$dist/Yuai.exe" -Force }
 
           # Copy all bundled agents
-          foreach ($agent in @('codex','cc-switch','claude','openclaw','hermes')) {
+          foreach ($agent in @('codex','cc-switch','claude','openclaw','hermes','openhuman')) {
             if (Test-Path "bundle/$agent") {
               Copy-Item -Recurse "bundle/$agent" "$dist/bundle/" -Force
               Write-Host "  bundled: $agent"
@@ -399,6 +434,7 @@ jobs:
             - Claude CLI（Anthropic 官方）
             - OpenClaw CLI
             - Hermes CLI
+            - OpenHuman CLI
             - CC-Switch 配置管理
 
             ### 首次使用

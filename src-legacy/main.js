@@ -28,6 +28,8 @@ async function init() {
     workspace = localStorage.getItem('yuai_workspace') || null;
     // Add star field background to app
     document.querySelector('.app')?.classList.add('bg-stars');
+    // Bind theme toggle
+    document.getElementById('theme-toggle')?.addEventListener('click', toggleTheme);
     renderRail();
     renderWorkspaceColumn();
     renderPreviewColumn();
@@ -472,14 +474,14 @@ async function initTerminal(agentId, container) {
 function createTerminal() {
   return new Terminal({
     theme: {
-      background: '#02100f',
-      foreground: '#f0e8d6',
-      cursor: '#00ffc8',
-      cursorAccent: '#02100f',
-      selectionBackground: '#00ffc840',
-      black: '#02100f', brightBlack: '#6e8a82',
-      green: '#00ffc8', brightGreen: '#50c878',
-      red: '#e85a3a', yellow: '#d4af6a',
+      background: '#0b1a1a',
+      foreground: '#e8ddd0',
+      cursor: '#5ccfb8',
+      cursorAccent: '#0b1a1a',
+      selectionBackground: '#5ccfb840',
+      black: '#0b1a1a', brightBlack: '#7a8f88',
+      green: '#5ccfb8', brightGreen: '#8fdfca',
+      red: '#e85a3a', yellow: '#c9a85c',
       blue: '#4285f4', magenta: '#a064ff',
     },
     fontFamily: "'JetBrains Mono', 'Menlo', monospace",
@@ -613,7 +615,7 @@ window.sendGroupMessage = async function() {
       <div class="avatar user-av">Y</div>
       <div class="bubble">${escapeHtml(msg)}</div>
     </div>
-  `;
+  `);
   messages.scrollTop = messages.scrollHeight;
   groupMessagesHtml = messages.innerHTML;
 
@@ -665,7 +667,7 @@ async function runDiscussion() {
     if (round === 1) {
       const msgs = document.getElementById('group-messages');
       if (msgs) {
-        msgs.insertAdjacentHTML('beforeend', `<div class="system-msg" id="abort-bar"><button onclick="abortDiscussion()" style="background:var(--vermilion-glow);color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:.7rem">中断讨论</button></div>`;
+        msgs.insertAdjacentHTML('beforeend', `<div class="system-msg" id="abort-bar"><button onclick="abortDiscussion()" style="background:var(--vermilion-glow);color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:.7rem">中断讨论</button></div>`);
         msgs.scrollTop = msgs.scrollHeight;
       }
     }
@@ -683,7 +685,7 @@ async function runDiscussion() {
         <div class="avatar" style="background:${agent.color}20;color:${agent.color};border-color:${agent.color}40">${agent.glyph}</div>
         <div class="bubble"><div class="name" style="color:${agent.color}">${agent.name}</div><span class="thinking">思考中...</span></div>
       </div>
-    `;
+    `);
     messages.scrollTop = messages.scrollHeight;
     groupMessagesHtml = messages.innerHTML;
 
@@ -849,7 +851,7 @@ async function handleCommand(cmd) {
 function addSystemMessage(html) {
   const messages = document.getElementById('group-messages');
   if (messages) {
-    messages.insertAdjacentHTML('beforeend', `<div class="system-msg">${html}</div>`;
+    messages.insertAdjacentHTML('beforeend', `<div class="system-msg">${html}</div>`);
     messages.scrollTop = messages.scrollHeight;
     groupMessagesHtml = messages.innerHTML;
   }
@@ -902,7 +904,7 @@ window.sendBeamMessage = async function() {
 
   // Show user message
   const msgs = document.getElementById('beam-messages');
-  msgs.insertAdjacentHTML('beforeend', `<div class="msg user"><div class="avatar user-av">Y</div><div class="bubble">${escapeHtml(question)}</div></div>`;
+  msgs.insertAdjacentHTML('beforeend', `<div class="msg user"><div class="avatar user-av">Y</div><div class="bubble">${escapeHtml(question)}</div></div>`);
 
   // Create thinking placeholders for each agent
   const thinkingIds = {};
@@ -914,7 +916,7 @@ window.sendBeamMessage = async function() {
         <div class="avatar" style="background:${a.color}20;color:${a.color};border-color:${a.color}40">${a.glyph}</div>
         <div class="bubble"><div class="name" style="color:${a.color}">${a.name}</div><span class="thinking">等待中...</span></div>
       </div>
-    `;
+    `);
   });
   msgs.scrollTop = msgs.scrollHeight;
 
@@ -962,7 +964,7 @@ window.sendBeamMessage = async function() {
       if (el) {
         const thinking = el.querySelector('.thinking');
         if (thinking) thinking.textContent = '错误: ' + e;
-        else el.insertAdjacentHTML('beforeend', `<span style="color:var(--vermilion-glow)">错误: ${e}</span>`;
+        else el.insertAdjacentHTML('beforeend', `<span style="color:var(--vermilion-glow)">错误: ${e}</span>`);
       }
       return { agent: agent.id, response: String(e), duration: 0 };
     }
@@ -1000,7 +1002,7 @@ function showBeamComparison(question, results) {
       <div class="beam-comparison-title">对比结果</div>
       <div class="beam-cards">${cards}</div>
     </div>
-  `;
+  `);
   msgs.scrollTop = msgs.scrollHeight;
 }
 
@@ -1014,7 +1016,7 @@ window.pickBeamResponse = function(agentId) {
 function addBeamSystem(html) {
   const msgs = document.getElementById('beam-messages');
   if (msgs) {
-    msgs.insertAdjacentHTML('beforeend', `<div class="system-msg">${html}</div>`;
+    msgs.insertAdjacentHTML('beforeend', `<div class="system-msg">${html}</div>`);
     msgs.scrollTop = msgs.scrollHeight;
   }
 }
@@ -1207,6 +1209,47 @@ function cleanAnsi(str) {
 function updateStatus(text) { if (statusBar) statusBar.textContent = text; }
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+
+// ═══ Theme toggle ═══
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = theme === 'light' ? '☀' : '☽';
+  localStorage.setItem('yuai_theme', theme);
+}
+
+window.toggleTheme = function() {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  // Update all terminal themes
+  const lightTheme = {
+    background: '#faf6f0', foreground: '#3a3530', cursor: '#2a8f7a',
+    cursorAccent: '#faf6f0', selectionBackground: '#2a8f7a30',
+    black: '#faf6f0', brightBlack: '#9a9080',
+    green: '#2a8f7a', brightGreen: '#3aaf96',
+    red: '#c8442a', yellow: '#8a6a2a',
+    blue: '#3a7ab5', magenta: '#8a5aaf',
+  };
+  const darkTheme = {
+    background: '#0b1a1a', foreground: '#e8ddd0', cursor: '#5ccfb8',
+    cursorAccent: '#0b1a1a', selectionBackground: '#5ccfb840',
+    black: '#0b1a1a', brightBlack: '#7a8f88',
+    green: '#5ccfb8', brightGreen: '#8fdfca',
+    red: '#e85a3a', yellow: '#c9a85c',
+    blue: '#4285f4', magenta: '#a064ff',
+  };
+  const theme = next === 'light' ? lightTheme : darkTheme;
+  Object.values(sessions).forEach(s => {
+    if (s.terminal) s.terminal.options.theme = theme;
+  });
+};
+
+// Apply saved theme on load
+(function() {
+  const saved = localStorage.getItem('yuai_theme') || 'dark';
+  applyTheme(saved);
+})();
 
 // ═══ Start ═══
 init();
