@@ -185,7 +185,7 @@ function handleDragEnter(e: DragEvent) {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--ink-muted, #888);
+  color: var(--text-muted, #888);
   opacity: 0.7;
 }
 
@@ -204,7 +204,7 @@ function handleDragEnter(e: DragEvent) {
   padding: 3px 12px 3px 20px;
   cursor: pointer;
   font-size: 12px;
-  color: var(--ink-muted, #aaa);
+  color: var(--text-muted, #aaa);
   transition: background 0.1s;
 }
 
@@ -234,7 +234,7 @@ function handleDragEnter(e: DragEvent) {
   border: none;
   cursor: pointer;
   font-size: 12px;
-  color: var(--ink-muted, #666);
+  color: var(--text-muted, #666);
   padding: 0 2px;
   opacity: 0;
   transition: opacity 0.15s, color 0.15s;

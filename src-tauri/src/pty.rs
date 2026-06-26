@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
 use std::thread;
+use std::process::Command as StdCommand;
 
 use portable_pty::{native_pty_system, CommandBuilder, PtySize, MasterPty};
 use tauri::ipc::Channel;
@@ -16,6 +17,7 @@ pub struct PtySession {
     writer: Arc<Mutex<Box<dyn Write + Send>>>,
     killer: Mutex<Box<dyn portable_pty::ChildKiller + Send + Sync>>,
     master: Mutex<Box<dyn MasterPty + Send>>,
+    pid: u32,
 }
 
 pub struct AppState {
@@ -91,12 +93,13 @@ pub fn pty_spawn(
         .map_err(|e| format!("spawn failed: {}", e))?;
 
     let id = state.next_id.fetch_add(1, Ordering::Relaxed);
+    let pid = child.process_id().unwrap_or(0);
 
     let writer = Arc::new(Mutex::new(pair.master.take_writer().map_err(|e| e.to_string())?));
     let killer = Mutex::new(child.clone_killer());
     let master = Mutex::new(pair.master);
 
-    let session = Arc::new(PtySession { writer, killer, master });
+    let session = Arc::new(PtySession { writer, killer, master, pid });
     // Clone Arc BEFORE inserting — avoids TOCTOU race (H4)
     // M6: try_clone_reader before inserting so failure doesn't orphan session
     let mut reader = session.master.lock().unwrap().try_clone_reader().map_err(|e| e.to_string())?;
@@ -254,15 +257,17 @@ pub fn spawn_agent(
             }
         }
     }
-
-    let child = pair.slave.spawn_command(command)
-        .map_err(|e| format!("spawn agent {}: {}", agent_id, e))?;
-
+    let child = pair
+        .slave
+        .spawn_command(command)
+        .map_err(|e| format!("spawn failed: {}", e))?;
     let id = state.next_id.fetch_add(1, Ordering::Relaxed);
+    let pid = child.process_id().unwrap_or(0);
     let writer = Arc::new(Mutex::new(pair.master.take_writer().map_err(|e| e.to_string())?));
     let killer = Mutex::new(child.clone_killer());
     let master = Mutex::new(pair.master);
-    let session = Arc::new(PtySession { writer, killer, master });
+    let session = Arc::new(PtySession { writer, killer, master, pid });
+    // Clone Arc BEFORE inserting — avoids TOCTOU race (H4)
     // H4+M6: Clone reader BEFORE inserting, clone Arc for insert
     let mut reader = session.master.lock().unwrap().try_clone_reader().map_err(|e| e.to_string())?;
     state.sessions.write().unwrap().insert(id, session.clone());
@@ -291,4 +296,77 @@ pub fn spawn_agent(
 
     log::info!("spawn_agent id={} agent={} binary={}", id, agent_id, binary_path.display());
     Ok(id)
+}
+
+/// Get the current working directory of a PTY session's child process.
+/// On Unix, uses /proc/PID/cwd symlink or lsof as fallback.
+/// On Windows, uses PowerShell Get-Process.
+#[tauri::command]
+pub fn pty_cwd(state: tauri::State<AppState>, id: u32) -> Result<String, String> {
+    let sessions = state.sessions.read().unwrap();
+    let session = sessions.get(&id).ok_or("session not found")?;
+    let pid = session.pid;
+    drop(sessions);
+
+    if pid == 0 {
+        return Ok(String::new());
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        // On macOS, use lsof to find the cwd
+        let output = StdCommand::new("lsof")
+            .args(["-a", "-p", &pid.to_string(), "-d", "cwd", "-Fn"])
+            .output();
+        match output {
+            Ok(out) if out.status.success() => {
+                let text = String::from_utf8_lossy(&out.stdout);
+                // lsof -Fn output: lines prefixed with 'n' are the cwd path
+                for line in text.lines() {
+                    if let Some(path) = line.strip_prefix('n') {
+                        return Ok(path.to_string());
+                    }
+                }
+                Ok(String::new())
+            }
+            _ => Ok(String::new()),
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        // On Linux, read /proc/PID/cwd symlink
+        let cwd_link = format!("/proc/{}/cwd", pid);
+        match std::fs::read_link(&cwd_link) {
+            Ok(path) => Ok(path.to_string_lossy().to_string()),
+            Err(_) => Ok(String::new()),
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        // On Windows, use PowerShell to get process working directory
+        let output = StdCommand::new("powershell")
+            .args([
+                "-NoProfile",
+                "-Command",
+                &format!(
+                    "(Get-Process -Id {}).Path | ForEach-Object {{ $_.DirectoryName }}",
+                    pid
+                ),
+            ])
+            .output();
+        match output {
+            Ok(out) if out.status.success() => {
+                Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
+            }
+            _ => Ok(String::new()),
+        }
+    }
+
+    // Fallback for other platforms
+    #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+    {
+        Ok(String::new())
+    }
 }

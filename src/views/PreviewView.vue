@@ -15,8 +15,9 @@
         v-if="isCode"
         :modelValue="workspace.currentFileContent"
         :language="monacoLanguage"
-        :readOnly="true"
+        :readOnly="false"
         :theme="editorTheme"
+        :filePath="workspace.currentFile"
       />
 
       <!-- Markdown: rendered + source toggle -->

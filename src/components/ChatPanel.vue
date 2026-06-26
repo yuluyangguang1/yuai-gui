@@ -29,7 +29,21 @@
         </div>
       </template>
 
-      <div v-else class="chat-empty">
+      <!-- Streaming message bubble -->
+      <div
+        v-if="chatStore.streamingMessage"
+        class="chat-message assistant streaming"
+      >
+        <span class="chat-msg-meta">
+          {{ getAgentGlyph(chatStore.streamingMessage.agentId) }}
+          · <span class="typing-indicator">输入中...</span>
+        </span>
+        <div class="chat-msg-bubble streaming-bubble">
+          {{ chatStore.streamingMessage.content }}<span class="cursor-blink">▌</span>
+        </div>
+      </div>
+
+      <div v-else-if="chatStore.messages.length === 0" class="chat-empty">
         <span class="chat-empty-glyph">{{ agentsStore.activeAgent.glyph }}</span>
         <span class="chat-empty-hint">
           与 {{ agentsStore.activeAgent.chinese_name }}（{{ agentsStore.activeAgent.specialty }}）对话
@@ -54,6 +68,20 @@
         <span class="mention-glyph" :style="{ color: agent.color }">{{ agent.glyph }}</span>
         <span class="mention-name">{{ agent.name }}</span>
         <span class="mention-chinese">{{ agent.chinese_name }}</span>
+      </div>
+    </div>
+
+    <!-- Abort button during discussion -->
+    <div v-if="chatStore.phase !== 'idle' && chatStore.round > 0" class="abort-bar">
+      <button class="abort-btn" @click="chatStore.abortDiscussion">中断讨论</button>
+    </div>
+
+    <!-- Decision panel after discussion -->
+    <div v-if="chatStore.showDecision" class="decision-panel">
+      <div class="decision-title">讨论完成 · 第 {{ chatStore.round }} 轮</div>
+      <div class="decision-actions">
+        <button class="decision-btn confirm" @click="chatStore.confirmExecution">确认执行</button>
+        <button class="decision-btn reject" @click="chatStore.rejectExecution">取消</button>
       </div>
     </div>
 
@@ -124,6 +152,11 @@ const phaseText = computed(() => {
     default: return "";
   }
 });
+
+function getAgentGlyph(agentId: string): string {
+  const agent = agentsStore.agents.find(a => a.id === agentId);
+  return agent?.glyph ?? agentId;
+}
 
 function formatTime(ts: number): string {
   const d = new Date(ts);
@@ -259,13 +292,308 @@ onUnmounted(() => {
 async function handleSend() {
   if (mentionDropdown.visible) return;
   await chatStore.sendMessage();
-  // Persist the last user message
-  const lastMsg = chatStore.messages[chatStore.messages.length - 1];
-  if (lastMsg && workspaceStore.path) {
-    chatStore.persistMessage(lastMsg, workspaceStore.path);
-  }
   scrollToBottom();
 }
 
+// Auto-scroll when messages change
 watch(() => chatStore.messages.length, scrollToBottom);
+
+// Auto-scroll when streaming message updates
+watch(
+  () => chatStore.streamingMessage?.content,
+  () => { scrollToBottom(); },
+  { flush: "post" },
+);
 </script>
+
+<style scoped>
+.chat-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.chat-agent-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.chat-agent-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.chat-phase {
+  font-size: 11px;
+  color: var(--text-muted, #888);
+  margin-left: auto;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chat-message {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chat-msg-meta {
+  font-size: 11px;
+  color: var(--text-muted, #888);
+}
+
+.chat-msg-bubble {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.chat-message.user .chat-msg-bubble {
+  background: rgba(224, 176, 255, 0.12);
+  align-self: flex-end;
+  max-width: 80%;
+}
+
+.chat-message.assistant .chat-msg-bubble {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.chat-message.system .chat-msg-bubble {
+  background: rgba(255, 165, 0, 0.08);
+  color: var(--text-muted, #888);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* Streaming message styles */
+.streaming-bubble {
+  border: 1px solid rgba(224, 176, 255, 0.2);
+  background: rgba(224, 176, 255, 0.06);
+}
+
+.typing-indicator {
+  color: var(--gold, #e0b0ff);
+  font-size: 11px;
+  animation: typingPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes typingPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.cursor-blink {
+  color: var(--gold, #e0b0ff);
+  animation: cursorBlink 0.8s step-end infinite;
+  margin-left: 1px;
+}
+
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.chat-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-muted, #888);
+}
+
+.chat-empty-glyph {
+  font-size: 32px;
+  opacity: 0.5;
+}
+
+.chat-empty-hint {
+  font-size: 13px;
+}
+
+/* @Mention dropdown */
+.mention-dropdown {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.mention-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.mention-item:hover,
+.mention-item.active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.mention-glyph {
+  font-size: 14px;
+}
+
+.mention-name {
+  font-weight: 500;
+}
+
+.mention-chinese {
+  color: var(--text-muted, #888);
+  font-size: 12px;
+}
+
+/* Input area */
+.chat-input-area {
+  padding: 8px 12px;
+  border-top: 1px solid var(--border-light);
+}
+
+.chat-input-wrapper {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.chat-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  resize: none;
+  outline: none;
+  min-height: 36px;
+  max-height: 120px;
+}
+
+.chat-input:focus {
+  border-color: var(--gold, #e0b0ff);
+}
+
+.chat-send-btn {
+  background: var(--gold, #e0b0ff);
+  color: #1a1a2e;
+  border: none;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s;
+}
+
+.chat-send-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.chat-send-btn:not(:disabled):hover {
+  opacity: 0.85;
+}
+
+/* Abort bar */
+.abort-bar {
+  display: flex;
+  justify-content: center;
+  padding: 8px 12px;
+}
+
+.abort-btn {
+  background: rgba(255, 80, 80, 0.15);
+  color: #ff6464;
+  border: 1px solid rgba(255, 80, 80, 0.3);
+  border-radius: 6px;
+  padding: 6px 20px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.abort-btn:hover {
+  background: rgba(255, 80, 80, 0.25);
+}
+
+/* Decision panel */
+.decision-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--border-light);
+}
+
+.decision-title {
+  font-size: .78rem;
+  color: var(--text-muted);
+}
+
+.decision-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.decision-btn {
+  border: none;
+  border-radius: 6px;
+  padding: 8px 20px;
+  font-size: .78rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.decision-btn.confirm {
+  background: var(--gold, #e0b0ff);
+  color: #1a1a2e;
+}
+
+.decision-btn.confirm:hover {
+  opacity: 0.85;
+}
+
+.decision-btn.reject {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted, #888);
+  border: 1px solid var(--border);
+}
+
+.decision-btn.reject:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+</style>

@@ -97,6 +97,71 @@ pub fn get_home_dir() -> Result<String, String> {
 }
 
 /// Copy a file into the workspace directory.
+
+/// Result of a write_file_content operation.
+#[derive(Debug, Serialize)]
+pub struct WriteFileResult {
+    pub conflict: bool,
+    pub mtime: u64,
+}
+
+/// Write file content atomically (temp + rename) with mtime conflict check.
+#[tauri::command]
+pub fn write_file_content(
+    path: String,
+    content: String,
+    expected_mtime: u64,
+) -> Result<WriteFileResult, String> {
+    let p = std::path::Path::new(&path);
+
+    // Read current mtime if file exists
+    if p.exists() && expected_mtime > 0 {
+        let meta = std::fs::metadata(p).map_err(|e| e.to_string())?;
+        let current_mtime = meta
+            .modified()
+            .ok()
+            .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+            .map(|d| d.as_secs())
+            .unwrap_or(0);
+
+        if current_mtime != expected_mtime {
+            return Ok(WriteFileResult {
+                conflict: true,
+                mtime: current_mtime,
+            });
+        }
+    }
+
+    // Atomic write: write to temp file, then rename
+    let parent = p.parent().ok_or("no parent directory")?;
+    let tmp_path = parent.join(format!(
+        ".yuai_tmp_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+    ));
+    std::fs::write(&tmp_path, &content).map_err(|e| format!("write error: {}", e))?;
+    std::fs::rename(&tmp_path, p).map_err(|e| {
+        // Clean up temp file on rename failure
+        let _ = std::fs::remove_file(&tmp_path);
+        format!("rename error: {}", e)
+    })?;
+
+    // Read back the new mtime
+    let new_meta = std::fs::metadata(p).map_err(|e| e.to_string())?;
+    let new_mtime = new_meta
+        .modified()
+        .ok()
+        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+
+    Ok(WriteFileResult {
+        conflict: false,
+        mtime: new_mtime,
+    })
+}
 #[tauri::command]
 pub fn copy_file_to_workspace(src_path: String, dest_dir: String) -> Result<String, String> {
     let src = std::path::Path::new(&src_path);

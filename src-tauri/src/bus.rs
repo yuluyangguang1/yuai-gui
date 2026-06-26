@@ -132,7 +132,6 @@ impl GroupChat {
         }
         {
             self.current_speaker = None;
-            self.current_speaker = None;
             self.phase = ChatPhase::WaitingConfirm;
             None
         }

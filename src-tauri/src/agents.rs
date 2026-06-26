@@ -8,6 +8,16 @@ pub fn bundle_root(app: &tauri::AppHandle) -> PathBuf {
     // In production: same directory as the executable
     if let Ok(exe) = std::env::current_exe() {
         if let Some(p) = exe.parent() {
+            // In dev mode, also check project root (where bundle/ actually is)
+            #[cfg(debug_assertions)]
+            {
+                let project_root = p.ancestors().find(|a| a.join("Cargo.toml").exists());
+                if let Some(pr) = project_root {
+                    if pr.join("bundle").exists() {
+                        return pr.to_path_buf();
+                    }
+                }
+            }
             return p.to_path_buf();
         }
     }

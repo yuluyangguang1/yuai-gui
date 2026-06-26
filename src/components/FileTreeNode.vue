@@ -50,6 +50,9 @@ import type { FileNode } from "../stores/workspace";
 import { useWorkspaceStore } from "../stores/workspace";
 import { invoke } from "@tauri-apps/api/core";
 
+// Module-level thumbnail cache to avoid re-fetching across component instances
+const thumbnailCache = new Map<string, string | null>();
+
 const props = defineProps<{
   node: FileNode;
   depth: number;
@@ -91,15 +94,22 @@ const thumbnailFailed = ref(false);
 // Fetch thumbnail for image files
 onMounted(async () => {
   if (!isImageFile.value || thumbnailFailed.value) return;
+  // Check cache first
+  if (thumbnailCache.has(props.node.path)) {
+    thumbnailUrl.value = thumbnailCache.get(props.node.path) ?? null;
+    if (!thumbnailUrl.value) thumbnailFailed.value = true;
+    return;
+  }
   try {
     const thumb = await invoke<string | null>("get_thumbnail", {
       path: props.node.path,
-      width: 24,
+      width: 32,
     });
-    if (thumb) {
-      thumbnailUrl.value = thumb;
-    }
+    thumbnailCache.set(props.node.path, thumb);
+    if (thumb) thumbnailUrl.value = thumb;
+    else thumbnailFailed.value = true;
   } catch {
+    thumbnailCache.set(props.node.path, null);
     // Silently fail, fall back to icon
   }
 });
@@ -109,15 +119,22 @@ watch(() => props.node.path, async (newPath) => {
   if (!isImageFile.value || thumbnailFailed.value) return;
   thumbnailUrl.value = null;
   thumbnailFailed.value = false;
+  // Check cache first
+  if (thumbnailCache.has(newPath)) {
+    thumbnailUrl.value = thumbnailCache.get(newPath) ?? null;
+    if (!thumbnailUrl.value) thumbnailFailed.value = true;
+    return;
+  }
   try {
     const thumb = await invoke<string | null>("get_thumbnail", {
       path: newPath,
-      width: 24,
+      width: 32,
     });
-    if (thumb) {
-      thumbnailUrl.value = thumb;
-    }
+    thumbnailCache.set(newPath, thumb);
+    if (thumb) thumbnailUrl.value = thumb;
+    else thumbnailFailed.value = true;
   } catch {
+    thumbnailCache.set(newPath, null);
     // Silently fail
   }
 });
@@ -169,7 +186,7 @@ function handleClick() {
   border: none;
   cursor: pointer;
   font-size: 11px;
-  color: var(--ink-muted, #666);
+  color: var(--text-muted, #666);
   padding: 0 2px;
   margin-left: auto;
   opacity: 0;

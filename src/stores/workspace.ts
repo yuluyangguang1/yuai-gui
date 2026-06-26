@@ -86,6 +86,19 @@ export const useWorkspaceStore = defineStore("workspace", () => {
   // Initialize favorites and recent from localStorage
   loadFavoritesAndRecent();
 
+  // Auto-open home directory as workspace on first load
+  async function initWorkspace() {
+    if (path.value) return; // already set
+    try {
+      const home = await invoke<string>("get_home_dir").catch(() => "");
+      if (home) {
+        await openWorkspace(home);
+      }
+    } catch {
+      // ignore — user can open workspace manually
+    }
+  }
+
   // Change Inbox: track timestamps per file and history entries
   const changeTimestamps = ref<Map<string, number>>(new Map());
   interface ChangeEntry {
@@ -362,5 +375,6 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     toggleFavorite,
     isFavorite,
     addRecent,
+    initWorkspace,
   };
 });

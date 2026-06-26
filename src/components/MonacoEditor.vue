@@ -5,6 +5,9 @@
     </div>
     <div v-show="monacoLoaded" ref="editorRef" class="monaco-container"></div>
     <div class="monaco-toolbar" v-if="monacoLoaded">
+      <span class="save-status" :class="saveStatusClass">
+        {{ saveStatusText }}
+      </span>
       <button
         class="monaco-btn"
         :class="{ active: wordWrap }"
@@ -18,13 +21,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch, nextTick } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from "vue";
+import { useAutoSave } from "../composables/useAutoSave";
 
 const props = defineProps<{
   modelValue: string;
   language?: string;
   readOnly?: boolean;
   theme?: "dark" | "light";
+  filePath?: string;
 }>();
 
 const emit = defineEmits<{
@@ -36,9 +41,42 @@ const wrapperRef = ref<HTMLElement | null>(null);
 const monacoLoaded = ref(false);
 const wordWrap = ref(false);
 
+// Auto-save composable (only active when not readOnly)
+const autoSave = props.readOnly ? null : useAutoSave();
+
 let editor: any = null;
 let monaco: any = null;
-let saveTimer: ReturnType<typeof setTimeout> | null = null;
+
+// Save status display
+const saveStatusClass = computed(() => {
+  if (!autoSave) return "";
+  switch (autoSave.saveStatus.value) {
+    case "saved": return "status-saved";
+    case "saving": return "status-saving";
+    case "dirty": return "status-dirty";
+    case "conflict": return "status-conflict";
+    case "error": return "status-error";
+    default: return "";
+  }
+});
+
+const saveStatusText = computed(() => {
+  if (!autoSave) return "";
+  switch (autoSave.saveStatus.value) {
+    case "saved":
+      if (autoSave.lastSaved.value) {
+        const d = new Date(autoSave.lastSaved.value);
+        const time = `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}:${d.getSeconds().toString().padStart(2, "0")}`;
+        return `已保存 ${time}`;
+      }
+      return "已保存";
+    case "saving": return "保存中...";
+    case "dirty": return "未保存";
+    case "conflict": return "冲突 — 文件已被修改";
+    case "error": return "保存失败";
+    default: return "";
+  }
+});
 
 // Map file extensions to Monaco language IDs
 const langMap: Record<string, string> = {
@@ -171,17 +209,27 @@ async function initMonaco() {
       padding: { top: 8 },
     });
 
+    // Set auto-save baseline on initial load
+    if (autoSave && props.filePath) {
+      autoSave.setBaseline(props.modelValue, 0);
+    }
+
     // Listen for changes (for auto-save)
-    if (!props.readOnly) {
+    if (!props.readOnly && autoSave) {
       editor.onDidChangeModelContent(() => {
         const value = editor.getValue();
         emit("update:modelValue", value);
 
-        if (saveTimer) clearTimeout(saveTimer);
-        saveTimer = setTimeout(async () => {
-          // Auto-save could be implemented here
-          // For now just emit the value
-        }, 800);
+        if (props.filePath) {
+          autoSave.queueSave(() => editor.getValue(), props.filePath);
+        }
+      });
+
+      // Ctrl+S / Cmd+S immediate save
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+        if (props.filePath) {
+          autoSave.flush(() => editor.getValue(), props.filePath);
+        }
       });
     }
 
@@ -207,7 +255,21 @@ watch(
       const currentValue = editor.getValue();
       if (currentValue !== newVal) {
         editor.setValue(newVal || "");
+        // Reset baseline when external value changes (e.g., file reload)
+        if (autoSave && props.filePath) {
+          autoSave.setBaseline(newVal || "", 0);
+        }
       }
+    }
+  }
+);
+
+// Watch for file path changes — reset baseline
+watch(
+  () => props.filePath,
+  () => {
+    if (autoSave && props.modelValue) {
+      autoSave.setBaseline(props.modelValue, 0);
     }
   }
 );
@@ -228,7 +290,6 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
-  if (saveTimer) clearTimeout(saveTimer);
   if (editor) {
     editor.dispose();
     editor = null;
@@ -274,13 +335,14 @@ onBeforeUnmount(() => {
   z-index: 10;
   display: flex;
   gap: 4px;
+  align-items: center;
 }
 
 .monaco-btn {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 4px;
-  color: var(--ink-muted, #888);
+  color: var(--text-muted, #888);
   cursor: pointer;
   padding: 2px 8px;
   font-size: 14px;
@@ -296,5 +358,44 @@ onBeforeUnmount(() => {
   background: rgba(224, 176, 255, 0.15);
   color: var(--gold, #e0b0ff);
   border-color: rgba(224, 176, 255, 0.3);
+}
+
+.save-status {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.status-saved {
+  color: #50c878;
+  background: rgba(80, 200, 120, 0.1);
+}
+
+.status-saving {
+  color: #e0b0ff;
+  background: rgba(224, 176, 255, 0.1);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.status-dirty {
+  color: #ffa500;
+  background: rgba(255, 165, 0, 0.1);
+}
+
+.status-conflict {
+  color: #ff6464;
+  background: rgba(255, 100, 100, 0.15);
+}
+
+.status-error {
+  color: #ff6464;
+  background: rgba(255, 100, 100, 0.1);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 </style>

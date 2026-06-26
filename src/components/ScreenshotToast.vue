@@ -192,7 +192,7 @@ onUnmounted(() => {
 .screenshot-toast-close {
   background: none;
   border: none;
-  color: var(--ink-muted, #666);
+  color: var(--text-muted, #666);
   cursor: pointer;
   font-size: 18px;
   line-height: 1;
@@ -241,7 +241,7 @@ onUnmounted(() => {
 
 .screenshot-size {
   font-size: 11px;
-  color: var(--ink-muted, #888);
+  color: var(--text-muted, #888);
 }
 
 .screenshot-toast-actions {

@@ -29,7 +29,7 @@
               @close="activeTerminalAgent = null"
             />
             <div v-else class="terminal-select">
-              <div style="font-family:var(--brush);font-size:2rem;color:var(--jade);opacity:.5;margin-bottom:12px">端</div>
+              <div style="font-family:var(--font-brush);font-size:2rem;color:var(--jade);opacity:.5;margin-bottom:12px">端</div>
               <p style="color:var(--silver);font-size:.72rem;margin-bottom:16px">选择一个 Agent 启动终端</p>
               <div class="terminal-agent-grid">
                 <button
@@ -39,7 +39,7 @@
                   :style="{ borderColor: agent.color + '40', color: agent.color }"
                   @click="activeTerminalAgent = agent.id; previewMode = 'terminal'"
                 >
-                  <span style="font-family:var(--brush);font-size:1.5rem">{{ agent.glyph }}</span>
+                  <span style="font-family:var(--font-brush);font-size:1.5rem">{{ agent.glyph }}</span>
                   <span style="font-size:.62rem">{{ agent.name }}</span>
                 </button>
               </div>
@@ -47,6 +47,7 @@
           </div>
           <SessionReplay v-else-if="previewMode === 'replay'" />
           <DiskUsage v-else-if="previewMode === 'disk'" />
+          <WechatPanel v-else-if="previewMode === 'wechat'" />
           <OrganizePanel v-else-if="previewMode === 'organize'" />
           <SettingsPanel v-else-if="previewMode === 'settings'" />
         </div>
@@ -72,6 +73,7 @@ import DiffViewer from "./components/DiffViewer.vue";
 import SettingsPanel from "./components/SettingsPanel.vue";
 import Terminal from "./components/Terminal.vue";
 import OrganizePanel from "./components/OrganizePanel.vue";
+import WechatPanel from "./components/WechatPanel.vue";
 import SessionReplay from "./components/SessionReplay.vue";
 import DiskUsage from "./components/DiskUsage.vue";
 import CommandPalette from "./components/CommandPalette.vue";
@@ -89,7 +91,7 @@ const updateStore = useUpdateStore();
 
 const commandPalette = ref<InstanceType<typeof CommandPalette> | null>(null);
 
-const previewMode = ref<'code' | 'diff' | 'terminal' | 'settings' | 'organize' | 'replay' | 'disk'>('code');
+const previewMode = ref<'code' | 'diff' | 'terminal' | 'wechat' | 'organize' | 'settings'>('code');
 const activeTerminalAgent = ref<string | null>(null);
 const previewTabs = [
   { id: 'code' as const, label: '代码' },
@@ -97,6 +99,7 @@ const previewTabs = [
   { id: 'terminal' as const, label: '终端' },
   { id: 'replay' as const, label: '回放' },
   { id: 'disk' as const, label: '磁盘' },
+  { id: 'wechat' as const, label: '微信' },
   { id: 'organize' as const, label: '整理' },
   { id: 'settings' as const, label: '配置' },
 ];
@@ -139,6 +142,8 @@ useKeyboard({
 
 onMounted(async () => {
   await agentsStore.loadAgents();
+  // Initialize workspace with home directory
+  workspaceStore.initWorkspace();
   // Start auto-update check on app startup
   updateStore.startAutoCheck();
 });

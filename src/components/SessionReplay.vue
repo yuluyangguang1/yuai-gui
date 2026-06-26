@@ -288,7 +288,7 @@ onBeforeUnmount(() => {
 .replay-title {
   font-size: 0.72rem;
   color: var(--jade, #5ccfb8);
-  font-family: var(--brush);
+  font-family: var(--font-brush);
 }
 
 .replay-refresh {
