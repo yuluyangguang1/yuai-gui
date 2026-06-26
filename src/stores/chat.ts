@@ -395,6 +395,27 @@ export const useChatStore = defineStore("chat", () => {
     } catch (e) { console.error('persistMessage:', e); }
   }
 
+  // Get current group chat phase
+  async function getPhase() {
+    try {
+      return await invoke('group_get_phase');
+    } catch { return 'idle'; }
+  }
+
+  // Get all messages from group chat
+  async function getMessages() {
+    try {
+      return await invoke('group_get_messages');
+    } catch { return []; }
+  }
+
+  // Get next executor
+  async function getNextExecutor() {
+    try {
+      return await invoke('group_next_executor');
+    } catch { return null; }
+  }
+
   return {
     phase,
     round,
