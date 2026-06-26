@@ -9,6 +9,9 @@
       <span class="terminal-agent-indicator" :style="{ background: agentColor }" />
       <span class="terminal-agent-glyph">{{ agentGlyph }}</span>
       <span class="terminal-agent-name">{{ agentName }}</span>
+      <span v-if="currentCwd" class="terminal-cwd" :title="currentCwd">
+        {{ shortCwd }}
+      </span>
       <span class="terminal-spacer" />
       <button
         class="terminal-follow-btn"
@@ -58,12 +61,22 @@ const settings = useSettingsStore();
 const workspace = useWorkspaceStore();
 const terminalEl = ref<HTMLElement | null>(null);
 const isDragOver = ref(false);
+const currentCwd = ref<string>(props.cwd ?? "");
+
+const shortCwd = computed(() => {
+  const cwd = currentCwd.value;
+  if (!cwd) return "";
+  const parts = cwd.split("/").filter(Boolean);
+  if (parts.length <= 2) return cwd;
+  return "…/" + parts.slice(-2).join("/");
+});
 
 let terminal: Terminal | null = null;
 let fitAddon: FitAddon | null = null;
 let ptyId: number | null = null;
 let resizeTimer: ReturnType<typeof setTimeout> | null = null;
 let resizeObserver: ResizeObserver | null = null;
+let cwdPollTimer: ReturnType<typeof setInterval> | null = null;
 
 // ── Follow Mode ──
 const isFollowing = computed(() => workspace.followedAgentId === props.agentId);
@@ -234,6 +247,9 @@ async function spawnTerminal() {
       rows,
       onData: on_data,
     });
+
+    // Start CWD polling
+    startCwdPolling();
   } catch (e) {
     terminal.writeln(`\r\n\x1b[31m[错误] 无法启动代理 ${props.agentId}: ${e}\x1b[0m\r\n`);
     console.error("spawn_agent failed:", e);
@@ -252,6 +268,21 @@ async function spawnTerminal() {
 async function handleClose() {
   await cleanup();
   emit("close");
+}
+
+function startCwdPolling() {
+  if (cwdPollTimer) clearInterval(cwdPollTimer);
+  cwdPollTimer = setInterval(async () => {
+    if (ptyId == null) return;
+    try {
+      const cwd: string = await invoke("pty_cwd", { id: ptyId });
+      if (cwd && cwd !== currentCwd.value) {
+        currentCwd.value = cwd;
+      }
+    } catch {
+      // pty_cwd not available or pty closed
+    }
+  }, 3000);
 }
 
 async function cleanup() {
@@ -283,6 +314,10 @@ async function cleanup() {
     clearTimeout(resizeTimer);
     resizeTimer = null;
   }
+  if (cwdPollTimer) {
+    clearInterval(cwdPollTimer);
+    cwdPollTimer = null;
+  }
 }
 
 // Re-open theme on change
@@ -303,3 +338,17 @@ onBeforeUnmount(() => {
   terminalEl.value?.parentElement?.removeEventListener("dragenter", handleDragEnter);
 });
 </script>
+
+<style scoped>
+.terminal-cwd {
+  font-size: 11px;
+  color: var(--text-muted, #888);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 1px 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 3px;
+}
+</style>

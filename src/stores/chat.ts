@@ -27,6 +27,10 @@ export const useChatStore = defineStore("chat", () => {
   const TOKEN_THRESHOLD = 100_000;
   let compressionTriggered = false;
 
+  // Execution status: idle | running | done | error
+  type ExecStatus = "idle" | "running" | "done" | "error";
+  const execStatus = ref<ExecStatus>("idle");
+
   // Streaming message state
   const streamingMessage = ref<StreamingMessage | null>(null);
   let streamingStableTimer: ReturnType<typeof setTimeout> | null = null;
@@ -328,14 +332,27 @@ export const useChatStore = defineStore("chat", () => {
     discussionAborted.value = true;
   }
 
-  function confirmExecution() {
+  async function confirmExecution() {
     showDecision.value = false;
-    // TODO: trigger execution phase
+    execStatus.value = "running";
+    try {
+      await invoke("group_confirm_exec");
+      execStatus.value = "done";
+      addMessage("system", "执行完成");
+    } catch (e) {
+      execStatus.value = "error";
+      addMessage("system", `执行失败: ${String(e).slice(0, 200)}`);
+    }
   }
 
   function rejectExecution() {
     showDecision.value = false;
+    execStatus.value = "idle";
     addMessage("system", "已取消执行");
+  }
+
+  function dismissExec() {
+    execStatus.value = "idle";
   }
 
   function setPhase(p: ChatPhase) {
@@ -389,12 +406,14 @@ export const useChatStore = defineStore("chat", () => {
     tokenEstimate,
     TOKEN_THRESHOLD,
     streamingMessage,
+    execStatus,
     manualCompress,
     addMessage,
     sendMessage,
     abortDiscussion,
     confirmExecution,
     rejectExecution,
+    dismissExec,
     setPhase,
     setWorkspacePath,
     clearMessages,

@@ -6,11 +6,23 @@
         :style="{ background: agentsStore.activeAgent.color }"
       />
       <span class="chat-agent-name">{{ agentsStore.activeAgent.glyph }}</span>
+      <!-- Phase + round display -->
       <span v-if="chatStore.phase !== 'idle'" class="chat-phase">
         {{ phaseText }}
+        <span v-if="chatStore.round > 0" class="chat-round">· 第{{ chatStore.round }}轮</span>
+        <span v-if="chatStore.streamingMessage" class="chat-speaking">
+          · {{ getAgentGlyph(chatStore.streamingMessage.agentId) }} 发言中
+        </span>
       </span>
+      <!-- Room manager toggle -->
+      <button class="room-toggle-btn" @click="showRoomManager = !showRoomManager" title="讨论组管理">
+        {{ showRoomManager ? '▾' : '▸' }} 组
+      </button>
       <ContextPanel />
     </div>
+
+    <!-- Room Manager Panel -->
+    <RoomManager v-if="showRoomManager" />
 
     <!-- Messages -->
     <div class="chat-messages" ref="messagesRef">
@@ -77,11 +89,25 @@
     </div>
 
     <!-- Decision panel after discussion -->
-    <div v-if="chatStore.showDecision" class="decision-panel">
-      <div class="decision-title">讨论完成 · 第 {{ chatStore.round }} 轮</div>
-      <div class="decision-actions">
-        <button class="decision-btn confirm" @click="chatStore.confirmExecution">确认执行</button>
-        <button class="decision-btn reject" @click="chatStore.rejectExecution">取消</button>
+    <div v-if="chatStore.showDecision || chatStore.execStatus !== 'idle'" class="decision-panel">
+      <div v-if="chatStore.execStatus === 'idle'" class="decision-content">
+        <div class="decision-title">讨论完成 · 第 {{ chatStore.round }} 轮</div>
+        <div class="decision-actions">
+          <button class="decision-btn confirm" @click="handleConfirmExec">确认执行</button>
+          <button class="decision-btn reject" @click="chatStore.rejectExecution">取消</button>
+        </div>
+      </div>
+      <div v-else-if="chatStore.execStatus === 'running'" class="decision-content">
+        <div class="decision-title">执行中...</div>
+        <div class="exec-spinner" />
+      </div>
+      <div v-else-if="chatStore.execStatus === 'done'" class="decision-content">
+        <div class="decision-title">执行完成</div>
+        <button class="decision-btn reject" @click="chatStore.dismissExec">关闭</button>
+      </div>
+      <div v-else-if="chatStore.execStatus === 'error'" class="decision-content">
+        <div class="decision-title exec-error">执行失败</div>
+        <button class="decision-btn reject" @click="chatStore.dismissExec">关闭</button>
       </div>
     </div>
 
@@ -115,11 +141,17 @@ import { useChatStore } from "../stores/chat";
 import { useAgentsStore } from "../stores/agents";
 import { useWorkspaceStore } from "../stores/workspace";
 import ContextPanel from "./ContextPanel.vue";
+import RoomManager from "./RoomManager.vue";
 import type { AgentDef } from "../stores/agents";
 
 const chatStore = useChatStore();
 const agentsStore = useAgentsStore();
 const workspaceStore = useWorkspaceStore();
+const showRoomManager = ref(false);
+
+async function handleConfirmExec() {
+  await chatStore.confirmExecution();
+}
 
 // Load history when workspace changes
 onMounted(() => {
@@ -338,6 +370,36 @@ watch(
   font-size: 11px;
   color: var(--text-muted, #888);
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chat-round {
+  font-size: 10px;
+  color: var(--gold, #e0b0ff);
+  opacity: 0.8;
+}
+
+.chat-speaking {
+  font-size: 10px;
+  color: var(--jade, #5ccfb8);
+}
+
+.room-toggle-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted, #888);
+  font-size: 11px;
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.room-toggle-btn:hover {
+  background: rgba(224, 176, 255, 0.1);
+  color: var(--text-primary);
 }
 
 .chat-messages {
@@ -595,5 +657,30 @@ watch(
 
 .decision-btn.reject:hover {
   background: rgba(255, 255, 255, 0.12);
+}
+
+.decision-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.exec-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(224, 176, 255, 0.2);
+  border-top-color: var(--gold, #e0b0ff);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.exec-error {
+  color: #ff6464;
 }
 </style>
