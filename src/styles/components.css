@@ -975,7 +975,7 @@ html, body {
 }
 .statusbar-dot.idle { background: var(--text-muted); }
 .statusbar-dot.busy { background: var(--gold); animation: pulse 1.5s ease-in-out infinite; }
-.statusbar-dot.error { background: #ff6464; }
+.statusbar-dot.error { background: var(--vermilion-glow); }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
@@ -1131,7 +1131,7 @@ html, body {
   border: none; background: transparent; color: var(--text-muted); cursor: pointer;
   border-radius: 4px; font-size: .7rem; transition: all .15s;
 }
-.terminal-close-btn:hover { background: rgba(200, 68, 42, .15); color: var(--vermilion-glow); }
+.terminal-close-btn:hover { background: color-mix(in srgb, var(--vermilion-glow) 15%, transparent); color: var(--vermilion-glow); }
 .terminal-body { flex: 1; overflow: hidden; background: var(--bg-primary); }
 
 /* ═══ Change Inbox ═══ */
@@ -1187,7 +1187,7 @@ html, body {
 }
 .change-inbox-item.created { color: var(--accent); }
 .change-inbox-item.modified { color: var(--gold); }
-.change-inbox-item.deleted { color: #ff6464; }
+.change-inbox-item.deleted { color: var(--vermilion-glow); }
 .change-inbox-type { font-size: 12px; }
 .change-inbox-name {
   flex: 1;
@@ -1233,7 +1233,7 @@ html, body {
   transition: width var(--transition-normal);
 }
 .context-progress-fill.warning { background: var(--gold); }
-.context-progress-fill.danger { background: #ff6464; }
+.context-progress-fill.danger { background: var(--vermilion-glow); }
 .context-tokens { white-space: nowrap; font-size: 10px; }
 .context-compress-btn {
   border: 1px solid var(--border);

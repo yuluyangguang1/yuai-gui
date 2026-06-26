@@ -177,7 +177,13 @@ pub fn pty_resize(state: tauri::State<AppState>, id: u32, cols: u16, rows: u16) 
 
 /// Kill a PTY session.
 #[tauri::command]
-pub fn pty_kill(state: tauri::State<AppState>, id: u32) -> Result<(), String> {
+pub fn pty_kill(
+    state: tauri::State<AppState>,
+    rec_state: tauri::State<crate::recording::RecordingState>,
+    id: u32,
+) -> Result<(), String> {
+    // M3: Stop recording before killing the session
+    crate::recording::stop_recording(&rec_state, id);
     let mut sessions = state.sessions.write().unwrap();
     if let Some(session) = sessions.remove(&id) {
         if let Ok(mut killer) = session.killer.lock() {
@@ -192,6 +198,7 @@ pub fn pty_kill(state: tauri::State<AppState>, id: u32) -> Result<(), String> {
 pub fn spawn_agent(
     app: tauri::AppHandle,
     state: tauri::State<AppState>,
+    rec_state: tauri::State<crate::recording::RecordingState>,
     agent_id: String,
     cwd: Option<String>,
     cols: u16,
@@ -303,6 +310,8 @@ pub fn spawn_agent(
     });
 
     log::info!("spawn_agent id={} agent={} binary={}", id, agent_id, binary_path.display());
+    // M3: Auto-start recording for agent sessions
+    crate::recording::start_recording(&rec_state, id, cols, rows);
     Ok(id)
 }
 
@@ -353,13 +362,14 @@ pub fn pty_cwd(state: tauri::State<AppState>, id: u32) -> Result<String, String>
 
     #[cfg(target_os = "windows")]
     {
-        // On Windows, use PowerShell to get process working directory
+        // On Windows, use PowerShell CIM to get process working directory
+        // (Get-Process.Path returns the exe path, not the CWD)
         let output = StdCommand::new("powershell")
             .args([
                 "-NoProfile",
                 "-Command",
                 &format!(
-                    "(Get-Process -Id {}).Path | ForEach-Object {{ $_.DirectoryName }}",
+                    "(Get-CimInstance Win32_Process -Filter \"ProcessId={}\").CommandLine",
                     pid
                 ),
             ])

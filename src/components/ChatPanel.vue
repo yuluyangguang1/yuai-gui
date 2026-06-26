@@ -398,7 +398,7 @@ watch(
 }
 
 .room-toggle-btn:hover {
-  background: rgba(224, 176, 255, 0.1);
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
   color: var(--text-primary);
 }
 
@@ -432,7 +432,7 @@ watch(
 }
 
 .chat-message.user .chat-msg-bubble {
-  background: rgba(224, 176, 255, 0.12);
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
   align-self: flex-end;
   max-width: 80%;
 }
@@ -567,7 +567,7 @@ watch(
 
 .chat-send-btn {
   background: var(--gold, #e0b0ff);
-  color: #1a1a2e;
+  color: var(--text-inverse);
   border: none;
   border-radius: 8px;
   width: 36px;
@@ -598,7 +598,7 @@ watch(
 
 .abort-btn {
   background: rgba(255, 80, 80, 0.15);
-  color: #ff6464;
+  color: var(--vermilion-glow);
   border: 1px solid rgba(255, 80, 80, 0.3);
   border-radius: 6px;
   padding: 6px 20px;
@@ -642,7 +642,7 @@ watch(
 
 .decision-btn.confirm {
   background: var(--gold, #e0b0ff);
-  color: #1a1a2e;
+  color: var(--text-inverse);
 }
 
 .decision-btn.confirm:hover {
@@ -681,6 +681,6 @@ watch(
 }
 
 .exec-error {
-  color: #ff6464;
+  color: var(--vermilion-glow);
 }
 </style>

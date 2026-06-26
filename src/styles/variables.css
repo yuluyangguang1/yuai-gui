@@ -56,6 +56,18 @@
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
+  /* ── Semantic aliases (M6) ── */
+  --jade: var(--accent);
+  --jade-deep: var(--accent-muted);
+  --silver: var(--text-muted);
+  --bone: var(--text-primary);
+  --bone-dim: var(--text-secondary);
+  --hairline-warm: var(--border);
+  --ink: var(--text-primary);
+  --bg-code: #0d1f1f;
+  --border-default: var(--border);
+  --vermilion-glow: #c8442a;
+  --jade-soft: var(--accent-hover);
 
   color-scheme: dark;
 }

@@ -163,12 +163,6 @@ async function onDrop(e: DragEvent) {
   }
 }
 
-// Track dragenter for nested elements
-function handleDragEnter(e: DragEvent) {
-  e.preventDefault();
-  dragCounter++;
-  isDragOver.value = true;
-}
 </script>
 
 <style scoped>

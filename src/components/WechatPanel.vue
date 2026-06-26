@@ -319,8 +319,8 @@ onMounted(() => {
 }
 
 .wechat-disconnect-btn:hover {
-  color: #ff6464;
-  border-color: #ff646440;
+  color: var(--vermilion-glow);
+  border-color: var(--vermilion-glow)40;
 }
 
 /* ── Login ── */
@@ -369,7 +369,7 @@ onMounted(() => {
 }
 
 .wechat-login-error {
-  color: #ff6464;
+  color: var(--vermilion-glow);
   font-size: 12px;
   margin-top: 4px;
 }
@@ -400,7 +400,7 @@ onMounted(() => {
 }
 
 .wechat-qr-placeholder {
-  color: #333;
+  color: var(--text-primary);
   font-size: 13px;
 }
 

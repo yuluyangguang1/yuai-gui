@@ -158,7 +158,7 @@ async function kickAgent(agentId: string) {
 }
 
 .room-agent-status.idle {
-  color: #50c878;
+  color: var(--accent);
   background: rgba(80, 200, 120, 0.1);
 }
 
@@ -189,7 +189,7 @@ async function kickAgent(agentId: string) {
 }
 
 .room-agent-remove:hover {
-  color: #ff6464;
+  color: var(--vermilion-glow);
 }
 
 .room-add {

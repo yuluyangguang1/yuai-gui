@@ -357,7 +357,7 @@ onBeforeUnmount(() => {
 
 .rec-delete {
   font-size: 0.6rem;
-  color: #ff6464;
+  color: var(--vermilion-glow);
   background: none;
   border: none;
   cursor: pointer;

@@ -145,7 +145,7 @@ async function handleCompress() {
 }
 
 .context-progress-fill.danger {
-  background: #ff6464;
+  background: var(--vermilion-glow);
 }
 
 .context-tokens {
@@ -167,7 +167,7 @@ async function handleCompress() {
 }
 
 .context-compress-btn:hover:not(:disabled) {
-  background: rgba(224, 176, 255, 0.1);
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
   color: var(--text-primary);
 }
 
@@ -229,16 +229,16 @@ async function handleCompress() {
 
 .context-store-status.storing {
   color: var(--gold, #e0b0ff);
-  background: rgba(224, 176, 255, 0.1);
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
 }
 
 .context-store-status.success {
-  color: #50c878;
+  color: var(--accent);
   background: rgba(80, 200, 120, 0.1);
 }
 
 .context-store-status.error {
-  color: #ff6464;
+  color: var(--vermilion-glow);
   background: rgba(255, 100, 100, 0.1);
 }
 

@@ -369,13 +369,13 @@ onBeforeUnmount(() => {
 }
 
 .status-saved {
-  color: #50c878;
+  color: var(--accent);
   background: rgba(80, 200, 120, 0.1);
 }
 
 .status-saving {
   color: #e0b0ff;
-  background: rgba(224, 176, 255, 0.1);
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
   animation: pulse 1s ease-in-out infinite;
 }
 
@@ -385,12 +385,12 @@ onBeforeUnmount(() => {
 }
 
 .status-conflict {
-  color: #ff6464;
+  color: var(--vermilion-glow);
   background: rgba(255, 100, 100, 0.15);
 }
 
 .status-error {
-  color: #ff6464;
+  color: var(--vermilion-glow);
   background: rgba(255, 100, 100, 0.1);
 }
 

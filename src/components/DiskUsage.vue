@@ -139,7 +139,7 @@ onMounted(() => {
 }
 
 .disk-error {
-  color: #ff6464;
+  color: var(--vermilion-glow);
 }
 
 .disk-total {

@@ -11,7 +11,7 @@ const loading = ref(false);
 const statusColors: Record<string, string> = {
   modified: 'var(--gold)',
   added: 'var(--jade)',
-  deleted: '#c8442a',
+  deleted: 'var(--vermilion-glow)',
   untracked: 'var(--text-muted)',
   changed: 'var(--text-muted)',
 };
@@ -119,8 +119,8 @@ watch(() => workspace.path, loadChanges);
 }
 .diff-btn.accept { color: var(--accent); border-color: var(--border-accent); }
 .diff-btn.accept:hover { background: rgba(92, 207, 184, .08); }
-.diff-btn.reject { color: #c8442a; border-color: rgba(200, 68, 42, .3); }
-.diff-btn.reject:hover { background: rgba(200, 68, 42, .08); }
+.diff-btn.reject { color: var(--vermilion-glow); border-color: color-mix(in srgb, var(--vermilion-glow) 30%, transparent); }
+.diff-btn.reject:hover { background: color-mix(in srgb, var(--vermilion-glow) 8%, transparent); }
 
 .diff-file-list { border-bottom: 1px solid var(--border-light); max-height: 200px; overflow-y: auto; }
 .diff-file-item {
@@ -138,8 +138,8 @@ watch(() => workspace.path, loadChanges);
 }
 .diff-accept { color: var(--accent); border-color: var(--border-accent); }
 .diff-accept:hover { background: rgba(92, 207, 184, .1); }
-.diff-reject { color: #c8442a; border-color: rgba(200, 68, 42, .3); }
-.diff-reject:hover { background: rgba(200, 68, 42, .1); }
+.diff-reject { color: var(--vermilion-glow); border-color: color-mix(in srgb, var(--vermilion-glow) 30%, transparent); }
+.diff-reject:hover { background: color-mix(in srgb, var(--vermilion-glow) 10%, transparent); }
 
 .diff-empty {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -151,7 +151,7 @@ watch(() => workspace.path, loadChanges);
 }
 .diff-content pre { margin: 0; white-space: pre-wrap; word-break: break-all; }
 .diff-add { color: var(--accent); }
-.diff-del { color: #c8442a; }
+.diff-del { color: var(--vermilion-glow); }
 .diff-hunk { color: var(--gold); }
 .diff-header { color: var(--text-muted); }
 </style>

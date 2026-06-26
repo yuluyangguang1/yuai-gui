@@ -157,7 +157,7 @@ onUnmounted(() => {
   bottom: 24px;
   right: 24px;
   width: 320px;
-  background: rgba(24, 24, 32, 0.92);
+  background: color-mix(in srgb, var(--bg-secondary) 92%, transparent);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);

@@ -181,6 +181,7 @@ export const useWechatStore = defineStore('wechat', () => {
   let pollAbort: AbortController | null = null
   let pollBuf = ''
   let pollTimer: ReturnType<typeof setTimeout> | null = null
+  let saveTimer: ReturnType<typeof setInterval> | null = null
 
   // ── Computed ──
 
@@ -614,9 +615,18 @@ export const useWechatStore = defineStore('wechat', () => {
   // Auto-save on changes
   function watchAndSave() {
     // Use a simple approach: save periodically
-    setInterval(() => {
+    saveTimer = setInterval(() => {
       if (connected.value) saveState()
     }, 30000)
+  }
+
+  /** Cleanup: clear all timers to prevent memory leaks. */
+  function cleanup() {
+    stopPolling()
+    if (saveTimer) {
+      clearInterval(saveTimer)
+      saveTimer = null
+    }
   }
 
   // Initialize
@@ -667,5 +677,6 @@ export const useWechatStore = defineStore('wechat', () => {
     runAgent,
     saveState,
     loadState,
+    cleanup,
   }
 })

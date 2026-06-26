@@ -49,7 +49,7 @@
         <iframe
           :srcdoc="workspace.currentFileContent"
           class="html-iframe"
-          sandbox="allow-scripts allow-same-origin"
+          sandbox="allow-scripts"
           referrerpolicy="no-referrer"
         ></iframe>
       </div>

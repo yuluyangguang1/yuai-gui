@@ -210,7 +210,6 @@ export const useWorkspaceStore = defineStore("workspace", () => {
         }
       });
 
-      console.log("File watcher started for:", path.value);
     } catch (err) {
       console.warn("Failed to start file watcher:", err);
     }
