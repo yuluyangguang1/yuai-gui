@@ -46,10 +46,12 @@
 import { useAgentsStore } from "../../stores/agents";
 import { useWorkspaceStore } from "../../stores/workspace";
 
+const emit = defineEmits<{ 'open-settings': [] }>();
+
 const agentsStore = useAgentsStore();
 const workspace = useWorkspaceStore();
 
 function openSettings() {
-  // TODO: open settings dialog
+  emit('open-settings');
 }
 </script>

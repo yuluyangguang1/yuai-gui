@@ -2,7 +2,7 @@
   <div class="app-shell pattern-starfield">
     <AppTitlebar />
     <div class="app-main">
-      <AppRail />
+      <AppRail @open-settings="previewMode = 'settings'" />
       <HomeView v-show="workspaceStore.showWorkspace" />
 
       <div class="preview-col">
@@ -91,7 +91,7 @@ const updateStore = useUpdateStore();
 
 const commandPalette = ref<InstanceType<typeof CommandPalette> | null>(null);
 
-const previewMode = ref<'code' | 'diff' | 'terminal' | 'wechat' | 'organize' | 'settings'>('code');
+const previewMode = ref<'code' | 'diff' | 'terminal' | 'replay' | 'disk' | 'wechat' | 'organize' | 'settings'>('code');
 const activeTerminalAgent = ref<string | null>(null);
 const previewTabs = [
   { id: 'code' as const, label: '代码' },

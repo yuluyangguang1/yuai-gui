@@ -58,7 +58,10 @@ export const useChatStore = defineStore("chat", () => {
     if (tokens > TOKEN_THRESHOLD && !compressionTriggered) {
       compressionTriggered = true;
       try {
-        const summary: string = await invoke("compress_context");
+        const summary: string = await invoke("compress_context", {
+          roomId: workspacePath ?? 'default',
+          messages: messages.value.map(m => m.content),
+        });
         compressedSummary.value = summary;
       } catch (e) {
         console.warn("Context compression failed:", e);
@@ -71,7 +74,10 @@ export const useChatStore = defineStore("chat", () => {
 
   async function manualCompress() {
     try {
-      const summary: string = await invoke("compress_context");
+      const summary: string = await invoke("compress_context", {
+        roomId: workspacePath ?? 'default',
+        messages: messages.value.map(m => m.content),
+      });
       compressedSummary.value = summary;
       return summary;
     } catch (e) {
@@ -378,7 +384,7 @@ export const useChatStore = defineStore("chat", () => {
         if (session) {
           session.messages = history.reverse().map(m => ({
             id: `msg_${m.id}`,
-            role: 'assistant' as const,
+            role: (m.from === 'user' ? 'user' : m.from === 'system' ? 'system' : 'assistant') as 'user' | 'assistant' | 'system',
             content: m.content,
             timestamp: m.timestamp,
           }));

@@ -176,6 +176,23 @@ pub fn copy_file_to_workspace(src_path: String, dest_dir: String) -> Result<Stri
     Ok(dest.to_string_lossy().to_string())
 }
 
+/// Read a file and return its contents as base64-encoded string.
+#[tauri::command]
+pub fn read_file_bytes(path: String) -> Result<String, String> {
+    use base64::Engine;
+    let p = std::path::Path::new(&path);
+    if !p.exists() {
+        return Err(format!("file not found: {}", path));
+    }
+    // Limit to 50MB to avoid OOM
+    let meta = std::fs::metadata(p).map_err(|e| e.to_string())?;
+    if meta.len() > 50 * 1024 * 1024 {
+        return Err("file too large (>50MB)".into());
+    }
+    let bytes = std::fs::read(p).map_err(|e| format!("read error: {}", e))?;
+    Ok(base64::engine::general_purpose::STANDARD.encode(&bytes))
+}
+
 // ═══════════════════════════════════════════
 // Recursive Helper
 // ═══════════════════════════════════════════

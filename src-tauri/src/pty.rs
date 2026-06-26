@@ -49,6 +49,14 @@ pub fn cleanup_all_sessions(state: &AppState) {
     }
 }
 
+/// List all active PTY sessions with their IDs and PIDs.
+#[tauri::command]
+pub fn pty_list(state: tauri::State<AppState>) -> Result<Vec<(u32, u32)>, String> {
+    let sessions = state.sessions.read().unwrap();
+    let list: Vec<(u32, u32)> = sessions.iter().map(|(id, s)| (*id, s.pid)).collect();
+    Ok(list)
+}
+
 // ═══════════════════════════════════════════
 // Tauri Commands
 // ═══════════════════════════════════════════

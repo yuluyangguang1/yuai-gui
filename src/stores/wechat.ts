@@ -136,8 +136,10 @@ async function sendFiles(
     try {
       const fileName = f.path.split('/').pop() ?? f.path
       // Read file via Tauri FS
-      const data: number[] = await invoke('read_file_bytes', { path: f.path })
-      const uint8 = new Uint8Array(data)
+      const b64: string = await invoke('read_file_bytes', { path: f.path })
+      const binaryStr = atob(b64)
+      const uint8 = new Uint8Array(binaryStr.length)
+      for (let i = 0; i < binaryStr.length; i++) uint8[i] = binaryStr.charCodeAt(i)
       await sendMedia(account, cid, f.path, fileName, uint8, contextToken)
     } catch (err) {
       console.warn(`sendFiles ${f.path} failed:`, err)

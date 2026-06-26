@@ -143,6 +143,7 @@
 import { ref, computed, watch } from "vue";
 import { useWorkspaceStore } from "../stores/workspace";
 import MonacoEditor from "../components/MonacoEditor.vue";
+import { invoke } from "@tauri-apps/api/core";
 
 const workspace = useWorkspaceStore();
 const showMarkdownSource = ref(false);
@@ -231,14 +232,35 @@ const lastModified = computed(() => {
 
 // ── File data URL for media ──
 
-const fileDataUrl = computed(() => {
-  // For text-based previews (code, md, etc), we use content directly
-  // For binary files (images, video, audio), we'd need the Tauri asset protocol
-  // For now, create a data URL from text content for non-binary types
-  if (isHtml.value) return workspace.currentFileContent;
-  // For media files, we'd need invoke to get raw bytes; placeholder for now
-  return "";
-});
+const fileDataUrl = ref("");
+
+const mimeMap: Record<string, string> = {
+  png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif",
+  webp: "image/webp", svg: "image/svg+xml", bmp: "image/bmp", ico: "image/x-icon",
+  mp4: "video/mp4", webm: "video/webm", mov: "video/quicktime", avi: "video/x-msvideo",
+  mp3: "audio/mpeg", wav: "audio/wav", ogg: "audio/ogg", flac: "audio/flac",
+  pdf: "application/pdf",
+};
+
+async function loadFileDataUrl() {
+  const path = workspace.currentFile;
+  if (!path) { fileDataUrl.value = ""; return; }
+  if (isHtml.value) { fileDataUrl.value = workspace.currentFileContent; return; }
+  if (!isImage.value && !isVideo.value && !isAudio.value && !isPdf.value) {
+    fileDataUrl.value = "";
+    return;
+  }
+  try {
+    const b64: string = await invoke("read_file_bytes", { path });
+    const mime = mimeMap[ext.value] || "application/octet-stream";
+    fileDataUrl.value = `data:${mime};base64,${b64}`;
+  } catch (e) {
+    console.warn("Failed to load file bytes:", e);
+    fileDataUrl.value = "";
+  }
+}
+
+watch(() => workspace.currentFile, loadFileDataUrl, { immediate: true });
 
 // ── Markdown rendering (simple inline converter) ──
 

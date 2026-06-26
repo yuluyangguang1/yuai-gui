@@ -47,7 +47,10 @@ import { ref, computed } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { useChatStore } from "../stores/chat";
 
+import { useWorkspaceStore } from "../stores/workspace";
+
 const chatStore = useChatStore();
+const workspace = useWorkspaceStore();
 const compressedPrefix = ref("");
 const storeStatus = ref<"" | "storing" | "success" | "error">("");
 
@@ -72,7 +75,7 @@ function formatTokens(n: number): string {
 async function handleCompress() {
   // Get context prefix
   try {
-    const prefix: string = await invoke("get_context_prefix");
+    const prefix: string = await invoke("get_context_prefix", { roomId: workspace.path ?? 'default' });
     if (prefix) {
       compressedPrefix.value = prefix;
     }
@@ -86,7 +89,11 @@ async function handleCompress() {
     // Store the compressed summary
     storeStatus.value = "storing";
     try {
-      await invoke("store_compressed_summary", { summary });
+      await invoke("store_compressed_summary", {
+        roomId: workspace.path ?? 'default',
+        summary,
+        messageCount: chatStore.messages.length,
+      });
       storeStatus.value = "success";
       setTimeout(() => { storeStatus.value = ""; }, 3000);
     } catch {
