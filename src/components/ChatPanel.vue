@@ -107,6 +107,14 @@
       </div>
     </div>
 
+    <!-- Command Suggest (slash commands / flags) -->
+    <CommandSuggest
+      ref="commandSuggestRef"
+      :agent-id="currentAgent.id"
+      :textarea="inputRef"
+      @select="handleCommandSelect"
+    />
+
     <!-- Abort button during discussion -->
     <div v-if="chatStore.phase !== 'idle' && chatStore.round > 0" class="abort-bar">
       <button class="abort-btn" @click="chatStore.abortDiscussion">中断讨论</button>
@@ -167,6 +175,7 @@ import { useWorkspaceStore } from "../stores/workspace";
 import ContextPanel from "./ContextPanel.vue";
 import RoomManager from "./RoomManager.vue";
 import BeamPanel from "./BeamPanel.vue";
+import CommandSuggest from "./CommandSuggest.vue";
 import type { AgentDef } from "../stores/agents";
 import { ICONS } from "../utils/icons";
 
@@ -180,6 +189,7 @@ const currentAgent = computed(() => {
 });
 const workspaceStore = useWorkspaceStore();
 const showRoomManager = ref(false);
+const commandSuggestRef = ref<InstanceType<typeof CommandSuggest> | null>(null);
 
 async function handleConfirmExec() {
   await chatStore.confirmExecution();
@@ -258,6 +268,7 @@ async function scrollToBottom() {
 
 function handleInput() {
   checkMentionTrigger();
+  commandSuggestRef.value?.onInput();
 }
 
 function checkMentionTrigger() {
@@ -328,6 +339,9 @@ function selectMention(agent: AgentDef) {
 }
 
 function handleKeydown(e: KeyboardEvent) {
+  // Forward to CommandSuggest first; if it handles the key, stop here
+  if (commandSuggestRef.value?.handleKeydown(e)) return;
+
   if (mentionDropdown.visible) {
     const items = mentionDropdown.filteredAgents;
     switch (e.key) {
@@ -377,12 +391,28 @@ onUnmounted(() => {
 
 async function handleSend() {
   if (mentionDropdown.visible) return;
+  if (commandSuggestRef.value) {
+    const active = (commandSuggestRef.value as any).commandState?.visible
+      || (commandSuggestRef.value as any).flagState?.visible
+      || (commandSuggestRef.value as any).subState?.visible;
+    if (active) return;
+  }
   try {
     await chatStore.sendMessage();
   } catch (e) {
     console.error('handleSend failed:', e);
   }
   scrollToBottom();
+}
+
+function handleCommandSelect(value: string) {
+  chatStore.inputText = value;
+  nextTick(() => {
+    if (inputRef.value) {
+      inputRef.value.focus();
+      inputRef.value.setSelectionRange(value.length, value.length);
+    }
+  });
 }
 
 // Auto-scroll when messages change

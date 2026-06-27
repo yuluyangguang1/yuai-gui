@@ -21,6 +21,7 @@ mod skills;
 mod write_gate;
 mod kanban;
 mod mcp;
+mod usage;
 
 // ═══════════════════════════════════════════
 // Shared Types
@@ -258,6 +259,11 @@ pub fn run() {
             mcp::mcp_remove_server,
             mcp::mcp_test_server,
             mcp::mcp_reload,
+            // Usage tracking
+            usage::record_usage,
+            usage::get_usage_stats,
+            usage::get_usage_by_model,
+            usage::get_usage_by_provider,
         ])
         .run(tauri::generate_context!())
         .expect("error while running yuai-gui");

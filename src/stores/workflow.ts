@@ -23,6 +23,10 @@ export interface WorkflowEdge {
   id: string;
   source: string;
   target: string;
+  sourceHandle?: string;
+  targetHandle?: string;
+  sourceType?: WorkflowNodeData['nodeType'];
+  targetType?: WorkflowNodeData['nodeType'];
   animated?: boolean;
 }
 
@@ -51,6 +55,105 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
   /** Get the currently active workflow */
   const activeWorkflow = ref<Workflow | null>(null);
+
+  // ══════════════════════════════════════════════
+  // Edge Validation (inspired by Langflow)
+  // ══════════════════════════════════════════════
+
+  type EdgeValidationError =
+    | 'self-loop'
+    | 'duplicate'
+    | 'no-active-workflow'
+    | 'missing-source'
+    | 'missing-target'
+    | 'type-incompatible'
+    | 'cycle-detected';
+
+  interface EdgeValidationResult {
+    valid: boolean;
+    error?: EdgeValidationError;
+    message?: string;
+  }
+
+  /** Type compatibility matrix — which node types can connect to which */
+  const TYPE_COMPAT: Record<string, string[]> = {
+    input: ['agent', 'output', 'condition'],
+    agent: ['agent', 'output', 'condition'],
+    condition: ['agent', 'output'],
+    output: [],
+  };
+
+  /**
+   * Validate a proposed edge between two nodes.
+   * Returns { valid: true } if the edge is allowed.
+   */
+  function validateEdge(source: string, target: string): EdgeValidationResult {
+    // Self-loop check
+    if (source === target) {
+      return { valid: false, error: 'self-loop', message: '不能连接自身' };
+    }
+
+    const wf = activeWorkflow.value;
+    if (!wf) {
+      return { valid: false, error: 'no-active-workflow', message: '没有活跃工作流' };
+    }
+
+    // Node existence check
+    const sourceNode = wf.nodes.find(n => n.id === source);
+    const targetNode = wf.nodes.find(n => n.id === target);
+    if (!sourceNode) {
+      return { valid: false, error: 'missing-source', message: '源节点不存在' };
+    }
+    if (!targetNode) {
+      return { valid: false, error: 'missing-target', message: '目标节点不存在' };
+    }
+
+    // Duplicate check
+    if (wf.edges.some(e => e.source === source && e.target === target)) {
+      return { valid: false, error: 'duplicate', message: '连接已存在' };
+    }
+
+    // Type compatibility check
+    const allowed = TYPE_COMPAT[sourceNode.type] ?? [];
+    if (!allowed.includes(targetNode.type)) {
+      return {
+        valid: false,
+        error: 'type-incompatible',
+        message: `${sourceNode.type} 不能连接到 ${targetNode.type}`,
+      };
+    }
+
+    // Cycle detection (would adding this edge create a cycle?)
+    const wouldCycle = detectCycle(wf, source, target);
+    if (wouldCycle) {
+      return { valid: false, error: 'cycle-detected', message: '会产生循环依赖' };
+    }
+
+    return { valid: true };
+  }
+
+  /** Quick cycle detection using DFS from target to source */
+  function detectCycle(wf: Workflow, newSource: string, newTarget: string): boolean {
+    const adj = new Map<string, string[]>();
+    for (const n of wf.nodes) adj.set(n.id, []);
+    for (const e of wf.edges) adj.get(e.source)?.push(e.target);
+    // Add the proposed edge
+    adj.get(newSource)?.push(newTarget);
+
+    // DFS: can we reach newSource from newTarget?
+    const visited = new Set<string>();
+    const stack = [newTarget];
+    while (stack.length > 0) {
+      const current = stack.pop()!;
+      if (current === newSource) return true;
+      if (visited.has(current)) continue;
+      visited.add(current);
+      for (const neighbor of adj.get(current) ?? []) {
+        stack.push(neighbor);
+      }
+    }
+    return false;
+  }
 
   function createWorkflow(name: string): Workflow {
     const wf: Workflow = {
@@ -105,17 +208,28 @@ export const useWorkflowStore = defineStore('workflow', () => {
     delete nodeStatuses[nodeId];
   }
 
-  function addEdge(source: string, target: string) {
+  function addEdge(source: string, target: string): WorkflowEdge | undefined {
     const wf = activeWorkflow.value;
-    if (!wf) return;
+    if (!wf) return undefined;
 
-    // Prevent duplicates
-    if (wf.edges.some(e => e.source === source && e.target === target)) return;
-    // Prevent self-loops
-    if (source === target) return;
+    // Full validation (replaces old duplicate/self-loop checks)
+    const validation = validateEdge(source, target);
+    if (!validation.valid) {
+      console.warn(`[Workflow] Edge rejected: ${validation.message}`);
+      return undefined;
+    }
 
     const id = genEdgeId();
-    const edge: WorkflowEdge = { id, source, target, animated: true };
+    const sourceNode = wf.nodes.find(n => n.id === source);
+    const targetNode = wf.nodes.find(n => n.id === target);
+    const edge: WorkflowEdge = {
+      id,
+      source,
+      target,
+      sourceType: sourceNode?.type,
+      targetType: targetNode?.type,
+      animated: true,
+    };
     wf.edges.push(edge);
     return edge;
   }
@@ -231,5 +345,8 @@ export const useWorkflowStore = defineStore('workflow', () => {
     executeWorkflow,
     topologicalSort,
     resetStatuses,
+    validateEdge,
+    detectCycle: (source: string, target: string) =>
+      activeWorkflow.value ? detectCycle(activeWorkflow.value, source, target) : false,
   };
 });

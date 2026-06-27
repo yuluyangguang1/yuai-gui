@@ -55,6 +55,7 @@
           <KanbanBoard v-else-if="previewMode === 'kanban'" />
           <McpPanel v-else-if="previewMode === 'mcp'" />
           <WorkflowEditor v-else-if="previewMode === 'workflow'" />
+          <HardwarePanel v-else-if="previewMode === 'hardware'" />
         </div>
       </div>
 
@@ -88,6 +89,7 @@ const WorkflowEditor = defineAsyncComponent(() => import("./components/WorkflowE
 import SessionReplay from "./components/SessionReplay.vue";
 import DiskUsage from "./components/DiskUsage.vue";
 import WriteGatePanel from "./components/WriteGatePanel.vue";
+import HardwarePanel from "./components/HardwarePanel.vue";
 import KanbanBoard from "./components/KanbanBoard.vue";
 import McpPanel from "./components/McpPanel.vue";
 import CommandPalette from "./components/CommandPalette.vue";
@@ -106,7 +108,7 @@ const updateStore = useUpdateStore();
 
 const commandPalette = ref<InstanceType<typeof CommandPalette> | null>(null);
 
-const previewMode = ref<'code' | 'diff' | 'terminal' | 'wechat' | 'organize' | 'settings' | 'replay' | 'disk' | 'skills' | 'write-gate' | 'kanban' | 'mcp' | 'workflow'>('code');
+const previewMode = ref<'code' | 'diff' | 'terminal' | 'wechat' | 'organize' | 'settings' | 'replay' | 'disk' | 'skills' | 'write-gate' | 'kanban' | 'mcp' | 'workflow' | 'hardware'>('code');
 const activeTerminalAgent = ref<string | null>(null);
 const previewTabs = [
   { id: 'code' as const, label: '代码' },
@@ -121,6 +123,7 @@ const previewTabs = [
   { id: 'kanban' as const, label: '看板' },
   { id: 'mcp' as const, label: 'MCP' },
   { id: 'workflow' as const, label: '工作流' },
+  { id: 'hardware' as const, label: '硬件' },
   { id: 'settings' as const, label: '配置' },
 ];
 
