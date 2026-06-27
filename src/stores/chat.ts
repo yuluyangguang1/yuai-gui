@@ -647,6 +647,89 @@ export const useChatStore = defineStore("chat", () => {
     } catch { return 'idle'; }
   }
 
+  // ══════════════════════════════════════════════
+  // Selector Speaker Algorithm (from AutoGen)
+  // ══════════════════════════════════════════════
+
+  /** Override for forced speaker selection */
+  const forcedSpeaker = ref<string | null>(null);
+
+  /** Index for round-robin fallback */
+  let roundRobinIndex = 0;
+
+  /**
+   * Select the next speaker based on conversation context.
+   * Strategy: LLM-based selection → fallback to round-robin.
+   * @param candidates - list of agent ids to choose from
+   * @param forcedOverride - force a specific speaker (user override)
+   */
+  async function selectNextSpeaker(
+    candidates?: string[],
+    forcedOverride?: string
+  ): Promise<string | null> {
+    // User override takes top priority
+    if (forcedOverride) {
+      forcedSpeaker.value = null; // clear after use
+      return forcedOverride;
+    }
+    // Persistent forced speaker
+    if (forcedSpeaker.value) {
+      const sp = forcedSpeaker.value;
+      forcedSpeaker.value = null;
+      return sp;
+    }
+
+    const available = candidates ?? agentsStore.enabledAgents.map(a => a.id);
+    if (available.length === 0) return null;
+    if (available.length === 1) return available[0];
+
+    // Try LLM-based selection
+    try {
+      const session = agentsStore.activeSession;
+      const recentMessages = (session?.messages ?? []).slice(-10).map(m => ({
+        role: m.role,
+        agentId: m.agentId,
+        content: m.content.slice(0, 200), // truncate for context
+      }));
+
+      const agentInfo = available.map(id => {
+        const agent = agentsStore.agents.find(a => a.id === id);
+        return {
+          id,
+          name: agent?.chinese_name ?? id,
+          specialty: agent?.specialty ?? '',
+        };
+      });
+
+      const result: { agent_id: string; reason: string } = await invoke('select_next_speaker', {
+        candidates: available,
+        agentInfo,
+        recentMessages,
+        round: round.value,
+      });
+
+      if (result.agent_id && available.includes(result.agent_id)) {
+        roundRobinIndex = (available.indexOf(result.agent_id) + 1) % available.length;
+        return result.agent_id;
+      }
+    } catch (e) {
+      // LLM selection failed — fall through to round-robin
+      console.warn('[Speaker] LLM selection failed, using round-robin:', e);
+    }
+
+    // Round-robin fallback
+    const speaker = available[roundRobinIndex % available.length];
+    roundRobinIndex = (roundRobinIndex + 1) % available.length;
+    return speaker;
+  }
+
+  /**
+   * Set a forced speaker for the next round.
+   */
+  function setForcedSpeaker(agentId: string | null) {
+    forcedSpeaker.value = agentId;
+  }
+
   // Get all messages from group chat
   async function getMessages() {
     try {
@@ -702,5 +785,9 @@ export const useChatStore = defineStore("chat", () => {
     cleanup,
     loadHistory,
     persistMessage,
+    // Speaker selection (Phase 3)
+    forcedSpeaker,
+    selectNextSpeaker,
+    setForcedSpeaker,
   };
 });
