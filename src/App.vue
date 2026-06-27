@@ -54,6 +54,7 @@
           <WriteGatePanel v-else-if="previewMode === 'write-gate'" />
           <KanbanBoard v-else-if="previewMode === 'kanban'" />
           <McpPanel v-else-if="previewMode === 'mcp'" />
+          <WorkflowEditor v-else-if="previewMode === 'workflow'" />
         </div>
       </div>
 
@@ -67,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, defineAsyncComponent, onMounted } from "vue";
 import AppTitlebar from "./components/layout/AppTitlebar.vue";
 import AppRail from "./components/layout/AppRail.vue";
 import AppStatusbar from "./components/layout/AppStatusbar.vue";
@@ -76,11 +77,14 @@ import PreviewView from "./views/PreviewView.vue";
 import ChatPanel from "./components/ChatPanel.vue";
 import DiffViewer from "./components/DiffViewer.vue";
 import SettingsPanel from "./components/SettingsPanel.vue";
-import Terminal from "./components/Terminal.vue";
 import OrganizePanel from "./components/OrganizePanel.vue";
 import SkillsPanel from "./components/SkillsPanel.vue";
 
-import WechatPanel from "./components/WechatPanel.vue";
+// Lazy-load heavy components for performance
+const Terminal = defineAsyncComponent(() => import("./components/Terminal.vue"));
+const WechatPanel = defineAsyncComponent(() => import("./components/WechatPanel.vue"));
+const WorkflowEditor = defineAsyncComponent(() => import("./components/WorkflowEditor.vue"));
+
 import SessionReplay from "./components/SessionReplay.vue";
 import DiskUsage from "./components/DiskUsage.vue";
 import WriteGatePanel from "./components/WriteGatePanel.vue";
@@ -102,7 +106,7 @@ const updateStore = useUpdateStore();
 
 const commandPalette = ref<InstanceType<typeof CommandPalette> | null>(null);
 
-const previewMode = ref<'code' | 'diff' | 'terminal' | 'wechat' | 'organize' | 'settings' | 'replay' | 'disk' | 'skills' | 'write-gate' | 'kanban' | 'mcp'>('code');
+const previewMode = ref<'code' | 'diff' | 'terminal' | 'wechat' | 'organize' | 'settings' | 'replay' | 'disk' | 'skills' | 'write-gate' | 'kanban' | 'mcp' | 'workflow'>('code');
 const activeTerminalAgent = ref<string | null>(null);
 const previewTabs = [
   { id: 'code' as const, label: '代码' },
@@ -116,6 +120,7 @@ const previewTabs = [
   { id: 'write-gate' as const, label: '写入' },
   { id: 'kanban' as const, label: '看板' },
   { id: 'mcp' as const, label: 'MCP' },
+  { id: 'workflow' as const, label: '工作流' },
   { id: 'settings' as const, label: '配置' },
 ];
 

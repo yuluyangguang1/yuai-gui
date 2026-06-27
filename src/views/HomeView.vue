@@ -148,7 +148,10 @@
           @click="handleGridClick(node)"
           @contextmenu.prevent="onFileContextMenu($event, node)"
         >
-          <span class="grid-item-icon">{{ node.is_dir ? ICONS.folder : getFileIcon(node.name) }}</span>
+          <span class="grid-item-icon">
+            <template v-if="node.is_dir">{{ ICONS.folder }}</template>
+            <template v-else><span class="grid-rich-icon" v-html="getRichFileIcon(node.name)"></span></template>
+          </span>
           <span class="grid-item-name" :title="node.name">{{ node.name }}</span>
         </div>
       </template>
@@ -210,6 +213,7 @@ import Breadcrumb from "../components/Breadcrumb.vue";
 import { useToast } from "../composables/useToast";
 import { ICONS } from "../utils/icons";
 import { getFileIcon } from "../utils/fileIcons";
+import { getRichFileIcon } from "../utils/richIcons";
 
 const workspace = useWorkspaceStore();
 const toast = useToast();

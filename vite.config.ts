@@ -30,4 +30,15 @@ export default defineConfig({
       ignored: ["**/src-tauri/**"],
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vue-flow': ['@vue-flow/core', '@vue-flow/background', '@vue-flow/controls'],
+          'xterm': ['@xterm/xterm', '@xterm/addon-fit', '@xterm/addon-web-links'],
+          'vendor': ['vue', 'pinia', 'marked', 'dompurify'],
+        },
+      },
+    },
+  },
 });

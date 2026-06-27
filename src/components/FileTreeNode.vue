@@ -19,7 +19,7 @@
           <img class="tree-thumb" :src="thumbnailUrl" alt="" @error="thumbnailFailed = true" />
         </template>
         <template v-else>
-          {{ fileIcon }}
+          <span class="tree-rich-icon" v-html="richIcon"></span>
         </template>
       </span>
       <span class="tree-label">{{ node.name }}</span>
@@ -53,6 +53,7 @@ import { useWorkspaceStore } from "../stores/workspace";
 import { invoke } from "@tauri-apps/api/core";
 import { ICONS } from "../utils/icons";
 import { FILE_ICONS } from "../utils/fileIcons";
+import { getRichFileIcon } from "../utils/richIcons";
 
 // Module-level thumbnail cache to avoid re-fetching across component instances
 const thumbnailCache = new Map<string, string | null>();
@@ -152,6 +153,10 @@ const fileIcon = computed(() => {
   return FILE_ICONS[ext] ?? ICONS.file;
 });
 
+const richIcon = computed(() => {
+  return getRichFileIcon(props.node.name);
+});
+
 function handleClick() {
   if (props.node.is_dir) {
     expanded.value = !expanded.value;
@@ -173,6 +178,18 @@ function handleContextMenu(e: MouseEvent) {
   object-fit: cover;
   display: inline-block;
   vertical-align: middle;
+}
+
+.tree-rich-icon {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  width: 16px;
+  height: 16px;
+}
+
+.tree-rich-icon :deep(svg) {
+  display: block;
 }
 
 .star-btn {

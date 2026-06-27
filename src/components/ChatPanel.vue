@@ -44,9 +44,15 @@
 
     <!-- Messages -->
     <div class="chat-messages" ref="messagesRef">
-      <template v-if="chatStore.messages.length > 0">
+      <!-- Load more button for virtual scrolling -->
+      <div v-if="hasMoreMessages" class="chat-load-more">
+        <button class="load-more-btn" @click="loadMoreMessages">
+          加载更多消息 ({{ hiddenMessageCount }} 条隐藏)
+        </button>
+      </div>
+      <template v-if="visibleMessages.length > 0">
         <div
-          v-for="msg in chatStore.messages"
+          v-for="msg in visibleMessages"
           :key="msg.id"
           class="chat-message"
           :class="msg.role"
@@ -189,6 +195,19 @@ watch(() => workspaceStore.path, (p) => {
 
 const messagesRef = ref<HTMLElement | null>(null);
 const inputRef = ref<HTMLTextAreaElement | null>(null);
+
+// ── Virtual scroll: message windowing ──
+const MESSAGE_WINDOW = ref(50);
+const visibleMessages = computed(() => {
+  const msgs = chatStore.messages;
+  if (msgs.length <= MESSAGE_WINDOW.value) return msgs;
+  return msgs.slice(msgs.length - MESSAGE_WINDOW.value);
+});
+const hasMoreMessages = computed(() => chatStore.messages.length > MESSAGE_WINDOW.value);
+const hiddenMessageCount = computed(() => Math.max(0, chatStore.messages.length - MESSAGE_WINDOW.value));
+function loadMoreMessages() {
+  MESSAGE_WINDOW.value += 50;
+}
 
 // @Mention state
 const mentionDropdown = reactive({
@@ -384,6 +403,29 @@ watch(
   height: 100%;
   background: var(--bg-secondary);
   color: var(--text-primary);
+}
+
+/* Virtual scroll: load more */
+.chat-load-more {
+  display: flex;
+  justify-content: center;
+  padding: 8px;
+}
+
+.load-more-btn {
+  padding: 4px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-muted, #565f89);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.load-more-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--silver, #a9b1d6);
 }
 
 .chat-header {
