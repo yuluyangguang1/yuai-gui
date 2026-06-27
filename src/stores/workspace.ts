@@ -16,6 +16,16 @@ export interface FileNode {
   children?: FileNode[];
 }
 
+// ══════════════════════════════════════════════
+// Editor Tab Management (inspired by GPT-Runner)
+// ══════════════════════════════════════════════
+
+export interface EditorTab {
+  path: string;
+  name: string;
+  modified: boolean;
+}
+
 export const useWorkspaceStore = defineStore("workspace", () => {
   const path = ref<string>("");
   const fileTree = ref<FileNode[]>([]);
@@ -30,6 +40,72 @@ export const useWorkspaceStore = defineStore("workspace", () => {
   const filterText = ref('');
   const showHidden = ref(false);
   const viewMode = ref<'list' | 'grid'>('list');
+
+  // ── Editor Tabs ──
+  const openTabs = ref<EditorTab[]>([]);
+  const activeTabPath = computed(() => currentFile.value);
+
+  /** Open a file in a new tab (or activate existing tab). */
+  function openTab(filePath: string) {
+    const existing = openTabs.value.find(t => t.path === filePath);
+    if (existing) {
+      // Already open, just activate it
+      selectFile(filePath);
+      return;
+    }
+    openTabs.value.push({
+      path: filePath,
+      name: getFileName(filePath),
+      modified: false,
+    });
+    selectFile(filePath);
+  }
+
+  /** Close a tab by path. */
+  function closeTab(filePath: string) {
+    const idx = openTabs.value.findIndex(t => t.path === filePath);
+    if (idx === -1) return;
+    openTabs.value.splice(idx, 1);
+
+    // If closing the active tab, switch to adjacent tab
+    if (currentFile.value === filePath) {
+      if (openTabs.value.length > 0) {
+        const newIdx = Math.min(idx, openTabs.value.length - 1);
+        selectFile(openTabs.value[newIdx].path);
+      } else {
+        currentFile.value = "";
+        currentFileContent.value = "";
+      }
+    }
+  }
+
+  /** Close all tabs. */
+  function closeAllTabs() {
+    openTabs.value = [];
+    currentFile.value = "";
+    currentFileContent.value = "";
+  }
+
+  /** Close all tabs except the given path. */
+  function closeOtherTabs(keepPath: string) {
+    openTabs.value = openTabs.value.filter(t => t.path === keepPath);
+    if (!openTabs.value.find(t => t.path === keepPath)) {
+      currentFile.value = "";
+      currentFileContent.value = "";
+    }
+  }
+
+  /** Mark a tab as modified. */
+  function markTabModified(filePath: string) {
+    const tab = openTabs.value.find(t => t.path === filePath);
+    if (tab) tab.modified = true;
+  }
+
+  /** Clear the modified indicator for a tab. */
+  function clearTabModified(filePath: string) {
+    const tab = openTabs.value.find(t => t.path === filePath);
+    if (tab) tab.modified = false;
+  }
 
   function sortEntries(entries: FileNode[]): FileNode[] {
     const sorted = [...entries];
@@ -342,11 +418,13 @@ export const useWorkspaceStore = defineStore("workspace", () => {
   function markChanged(filePath: string) {
     changedFiles.value.add(filePath);
     changedFiles.value = new Set(changedFiles.value);
+    markTabModified(filePath);
   }
 
   function clearChanged(filePath: string) {
     changedFiles.value.delete(filePath);
     changedFiles.value = new Set(changedFiles.value);
+    clearTabModified(filePath);
   }
 
   // ── File Follow Mode ──
@@ -415,6 +493,15 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     followedAgentId,
     favorites,
     recentFiles,
+    // Editor Tabs
+    openTabs,
+    activeTabPath,
+    openTab,
+    closeTab,
+    closeAllTabs,
+    closeOtherTabs,
+    markTabModified,
+    clearTabModified,
     // Sorting & Filtering
     sortBy,
     filterText,

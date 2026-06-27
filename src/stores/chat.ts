@@ -12,6 +12,18 @@ export interface StreamingMessage {
   agentId: string;
 }
 
+// ══════════════════════════════════════════════
+// Thread Grouping (inspired by Codex Tracker)
+// ══════════════════════════════════════════════
+
+export interface ThreadInfo {
+  threadId: string;
+  parentThreadId: string | null;
+  childThreadIds: string[];
+  title: string;
+  createdAt: number;
+}
+
 export const useChatStore = defineStore("chat", () => {
   type ChatMode = 'single' | 'group' | 'beam';
   const chatMode = ref<ChatMode>('single');
@@ -57,6 +69,76 @@ export const useChatStore = defineStore("chat", () => {
   const agentsStore = useAgentsStore();
 
   const messages = computed(() => agentsStore.activeMessages);
+
+  // ── Thread Grouping ──
+  const currentThreadId = ref<string>('default');
+  const threads = ref<Map<string, ThreadInfo>>(new Map());
+
+  /** Create a new thread, optionally linked to a parent. */
+  function createThread(title: string, parentThreadId?: string): string {
+    const threadId = `thread_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const thread: ThreadInfo = {
+      threadId,
+      parentThreadId: parentThreadId ?? null,
+      childThreadIds: [],
+      title,
+      createdAt: Date.now(),
+    };
+    threads.value.set(threadId, thread);
+
+    // Link to parent
+    if (parentThreadId) {
+      const parent = threads.value.get(parentThreadId);
+      if (parent) {
+        parent.childThreadIds = [...parent.childThreadIds, threadId];
+      }
+    }
+
+    return threadId;
+  }
+
+  /** Switch to a different thread. */
+  function switchThread(threadId: string) {
+    if (threads.value.has(threadId)) {
+      currentThreadId.value = threadId;
+    }
+  }
+
+  /** Get messages grouped by thread. */
+  function getThreadMessages(threadId: string) {
+    return messages.value.filter((m: { threadId?: string }) => (m as any).threadId === threadId);
+  }
+
+  /** Navigate to parent thread. */
+  function navigateToParent() {
+    const current = threads.value.get(currentThreadId.value);
+    if (current?.parentThreadId) {
+      switchThread(current.parentThreadId);
+    }
+  }
+
+  /** Navigate to a child thread. */
+  function navigateToChild(index: number) {
+    const current = threads.value.get(currentThreadId.value);
+    if (current?.childThreadIds[index]) {
+      switchThread(current.childThreadIds[index]);
+    }
+  }
+
+  /** Get the current thread info. */
+  const currentThread = computed(() => threads.value.get(currentThreadId.value) ?? null);
+
+  /** Get all threads. */
+  const allThreads = computed(() => Array.from(threads.value.values()));
+
+  /** Get child threads of current thread. */
+  const childThreads = computed(() => {
+    const current = threads.value.get(currentThreadId.value);
+    if (!current) return [];
+    return current.childThreadIds
+      .map(id => threads.value.get(id))
+      .filter((t): t is ThreadInfo => t !== undefined);
+  });
 
   // Token estimate: approximate tokens as character count / 4
   const tokenEstimate = computed(() => {
@@ -305,7 +387,7 @@ export const useChatStore = defineStore("chat", () => {
 
     try {
       // 1. Send to group chat, get speakers
-      const speakers: { agent_id: string; reason: string }[] | null = await invoke("group_send", {
+      const speakers = await invoke<{ agent_id: string; reason: string }[] | null>("group_send", {
         content: text,
       });
 
@@ -323,11 +405,11 @@ export const useChatStore = defineStore("chat", () => {
         const timeoutMs = isFirstRound ? 30_000 : 20_000;
 
         // Get next speaker for this round
-        let speaker: { agent_id: string; reason: string } | null;
+        let speaker: { agent_id: string; reason: string } | null = null;
         if (r === 0) {
           speaker = speakers[0] ?? null;
         } else {
-          speaker = await invoke("group_next_speaker").catch(() => null);
+          try { speaker = await invoke<{ agent_id: string; reason: string }>("group_next_speaker"); } catch { /* null */ }
         }
         if (!speaker) break;
 
@@ -361,9 +443,8 @@ export const useChatStore = defineStore("chat", () => {
           const durationMs = Date.now() - startTime;
 
           // 2e. Check convergence
-          const converged: boolean = await invoke("group_check_convergence", {
-            message: response,
-          }).catch(() => false);
+          let converged = false;
+          try { converged = await invoke<boolean>("group_check_convergence", { message: response }); } catch { /* false */ }
 
           // 2f. Record response in backend
           await invoke("group_agent_response", {
@@ -428,7 +509,7 @@ export const useChatStore = defineStore("chat", () => {
       let failed = 0;
 
       while (true) {
-        const executor: string | null = await invoke("group_next_executor");
+        const executor = await invoke<string | null>("group_next_executor");
         if (!executor) break;
 
         const agentId = executor;
@@ -596,6 +677,18 @@ export const useChatStore = defineStore("chat", () => {
     TOKEN_THRESHOLD,
     streamingMessage,
     execStatus,
+    // Thread grouping
+    currentThreadId,
+    threads,
+    currentThread,
+    allThreads,
+    childThreads,
+    createThread,
+    switchThread,
+    getThreadMessages,
+    navigateToParent,
+    navigateToChild,
+    // Existing
     manualCompress,
     addMessage,
     sendMessage,

@@ -1,7 +1,8 @@
 /**
  * Workflow store — DAG-based workflow editor with topological execution.
+ * Phase 2: Snapshot undo/redo + Auto-layout.
  */
-import { ref, reactive } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import { defineStore } from 'pinia';
 
 export type NodeStatus = 'idle' | 'running' | 'done' | 'failed';
@@ -37,6 +38,11 @@ export interface Workflow {
   edges: WorkflowEdge[];
 }
 
+interface Snapshot {
+  nodes: WorkflowNode[];
+  edges: WorkflowEdge[];
+}
+
 let nodeCounter = 0;
 let edgeCounter = 0;
 
@@ -48,6 +54,8 @@ function genEdgeId(): string {
   return `edge_${++edgeCounter}_${Date.now()}`;
 }
 
+const MAX_SNAPSHOTS = 50;
+
 export const useWorkflowStore = defineStore('workflow', () => {
   const workflows = ref<Workflow[]>([]);
   const activeWorkflowId = ref<string | null>(null);
@@ -55,6 +63,154 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
   /** Get the currently active workflow */
   const activeWorkflow = ref<Workflow | null>(null);
+
+  // ══════════════════════════════════════════════
+  // Snapshot Undo/Redo (inspired by Langflow)
+  // ══════════════════════════════════════════════
+
+  const historyStack = ref<Snapshot[]>([]);
+  const historyIndex = ref(-1);
+
+  const canUndo = computed(() => historyIndex.value > 0);
+  const canRedo = computed(() => historyIndex.value < historyStack.value.length - 1);
+
+  /** Deep clone nodes + edges and push to history stack. */
+  function takeSnapshot() {
+    const wf = activeWorkflow.value;
+    if (!wf) return;
+
+    const snapshot: Snapshot = {
+      nodes: JSON.parse(JSON.stringify(wf.nodes)),
+      edges: JSON.parse(JSON.stringify(wf.edges)),
+    };
+
+    // If we're not at the end of the stack, truncate forward history
+    if (historyIndex.value < historyStack.value.length - 1) {
+      historyStack.value = historyStack.value.slice(0, historyIndex.value + 1);
+    }
+
+    historyStack.value.push(snapshot);
+
+    // Enforce max snapshots
+    if (historyStack.value.length > MAX_SNAPSHOTS) {
+      historyStack.value = historyStack.value.slice(historyStack.value.length - MAX_SNAPSHOTS);
+    }
+
+    historyIndex.value = historyStack.value.length - 1;
+  }
+
+  /** Restore previous snapshot. */
+  function undo() {
+    if (!canUndo.value) return;
+    historyIndex.value--;
+    restoreSnapshot(historyStack.value[historyIndex.value]);
+  }
+
+  /** Restore next snapshot. */
+  function redo() {
+    if (!canRedo.value) return;
+    historyIndex.value++;
+    restoreSnapshot(historyStack.value[historyIndex.value]);
+  }
+
+  function restoreSnapshot(snapshot: Snapshot) {
+    const wf = activeWorkflow.value;
+    if (!wf) return;
+    wf.nodes = JSON.parse(JSON.stringify(snapshot.nodes));
+    wf.edges = JSON.parse(JSON.stringify(snapshot.edges));
+  }
+
+  // ══════════════════════════════════════════════
+  // Auto-layout (inspired by Langflow)
+  // ══════════════════════════════════════════════
+
+  const HORIZONTAL_SPACING = 200;
+  const VERTICAL_SPACING = 100;
+
+  /**
+   * Auto-layout nodes using topological sort.
+   * Position nodes in columns (layers), center-aligned.
+   */
+  function autoLayout() {
+    const wf = activeWorkflow.value;
+    if (!wf || wf.nodes.length === 0) return;
+
+    takeSnapshot(); // Save state before layout
+
+    // Build adjacency and in-degree
+    const inDegree = new Map<string, number>();
+    const adjList = new Map<string, string[]>();
+    const nodeMap = new Map<string, WorkflowNode>();
+
+    for (const n of wf.nodes) {
+      inDegree.set(n.id, 0);
+      adjList.set(n.id, []);
+      nodeMap.set(n.id, n);
+    }
+
+    for (const e of wf.edges) {
+      adjList.get(e.source)?.push(e.target);
+      inDegree.set(e.target, (inDegree.get(e.target) ?? 0) + 1);
+    }
+
+    // BFS-based layer assignment (Kahn's algorithm variant)
+    const layers: string[][] = [];
+    const assigned = new Set<string>();
+    const queue: string[] = [];
+
+    // Start with root nodes (in-degree 0)
+    for (const [id, deg] of inDegree) {
+      if (deg === 0) queue.push(id);
+    }
+
+    let currentLayer = [...queue];
+    for (const id of queue) assigned.add(id);
+
+    while (currentLayer.length > 0) {
+      layers.push(currentLayer);
+      const nextLayer: string[] = [];
+
+      for (const id of currentLayer) {
+        for (const neighbor of adjList.get(id) ?? []) {
+          if (!assigned.has(neighbor)) {
+            // Check if all predecessors are assigned
+            const preds = wf.edges.filter(e => e.target === neighbor).map(e => e.source);
+            if (preds.every(p => assigned.has(p))) {
+              nextLayer.push(neighbor);
+              assigned.add(neighbor);
+            }
+          }
+        }
+      }
+
+      currentLayer = nextLayer;
+    }
+
+    // Handle unassigned nodes (orphaned or in cycles)
+    const unassigned = wf.nodes.filter(n => !assigned.has(n.id));
+    if (unassigned.length > 0) {
+      layers.push(unassigned.map(n => n.id));
+    }
+
+    // Position nodes: columns for layers, center-aligned
+    for (let col = 0; col < layers.length; col++) {
+      const layer = layers[col];
+      const layerHeight = layer.length * VERTICAL_SPACING;
+      const startY = -layerHeight / 2;
+
+      for (let row = 0; row < layer.length; row++) {
+        const node = nodeMap.get(layer[row]);
+        if (node) {
+          node.position = {
+            x: col * HORIZONTAL_SPACING,
+            y: startY + row * VERTICAL_SPACING,
+          };
+        }
+      }
+    }
+
+    takeSnapshot(); // Save state after layout
+  }
 
   // ══════════════════════════════════════════════
   // Edge Validation (inspired by Langflow)
@@ -165,17 +321,24 @@ export const useWorkflowStore = defineStore('workflow', () => {
     workflows.value.push(wf);
     activeWorkflowId.value = wf.id;
     activeWorkflow.value = wf;
+    historyStack.value = [];
+    historyIndex.value = -1;
     return wf;
   }
 
   function setActiveWorkflow(id: string) {
     activeWorkflowId.value = id;
     activeWorkflow.value = workflows.value.find(w => w.id === id) ?? null;
+    // Reset history for the new workflow
+    historyStack.value = [];
+    historyIndex.value = -1;
   }
 
   function addNode(type: WorkflowNodeData['nodeType'], position: { x: number; y: number }, label?: string) {
     const wf = activeWorkflow.value;
     if (!wf) return;
+
+    takeSnapshot();
 
     const defaultLabels: Record<string, string> = {
       agent: 'Agent',
@@ -196,6 +359,8 @@ export const useWorkflowStore = defineStore('workflow', () => {
     };
     wf.nodes.push(node);
     nodeStatuses[id] = 'idle';
+
+    takeSnapshot();
     return node;
   }
 
@@ -203,9 +368,13 @@ export const useWorkflowStore = defineStore('workflow', () => {
     const wf = activeWorkflow.value;
     if (!wf) return;
 
+    takeSnapshot();
+
     wf.nodes = wf.nodes.filter(n => n.id !== nodeId);
     wf.edges = wf.edges.filter(e => e.source !== nodeId && e.target !== nodeId);
     delete nodeStatuses[nodeId];
+
+    takeSnapshot();
   }
 
   function addEdge(source: string, target: string): WorkflowEdge | undefined {
@@ -219,6 +388,8 @@ export const useWorkflowStore = defineStore('workflow', () => {
       return undefined;
     }
 
+    takeSnapshot();
+
     const id = genEdgeId();
     const sourceNode = wf.nodes.find(n => n.id === source);
     const targetNode = wf.nodes.find(n => n.id === target);
@@ -231,13 +402,20 @@ export const useWorkflowStore = defineStore('workflow', () => {
       animated: true,
     };
     wf.edges.push(edge);
+
+    takeSnapshot();
     return edge;
   }
 
   function removeEdge(edgeId: string) {
     const wf = activeWorkflow.value;
     if (!wf) return;
+
+    takeSnapshot();
+
     wf.edges = wf.edges.filter(e => e.id !== edgeId);
+
+    takeSnapshot();
   }
 
   /** Topological sort (Kahn's algorithm) */
@@ -336,6 +514,15 @@ export const useWorkflowStore = defineStore('workflow', () => {
     activeWorkflowId,
     activeWorkflow,
     nodeStatuses,
+    // Undo/Redo
+    canUndo,
+    canRedo,
+    takeSnapshot,
+    undo,
+    redo,
+    // Auto-layout
+    autoLayout,
+    // Existing
     createWorkflow,
     setActiveWorkflow,
     addNode,

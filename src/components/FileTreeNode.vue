@@ -11,6 +11,20 @@
       @click="handleClick"
       @contextmenu.prevent="handleContextMenu"
     >
+      <!-- Cascade Selection Checkbox -->
+      <span class="tree-checkbox" @click.stop="toggleCheck">
+        <span
+          class="checkbox-visual"
+          :class="{
+            checked: checkState === 'checked',
+            indeterminate: checkState === 'indeterminate',
+          }"
+        >
+          <template v-if="checkState === 'checked'">✓</template>
+          <template v-else-if="checkState === 'indeterminate'">−</template>
+        </span>
+      </span>
+
       <span class="tree-icon">
         <template v-if="node.is_dir">
           {{ expanded ? ICONS.folder : ICONS.folderOpen }}
@@ -40,7 +54,9 @@
         :key="child.path"
         :node="child"
         :depth="depth + 1"
+        :selected-paths="selectedPaths"
         @contextmenu="(e: MouseEvent, n: FileNode) => emit('contextmenu', e, n)"
+        @toggle-select="(path: string) => emit('toggleSelect', path)"
       />
     </template>
   </div>
@@ -61,14 +77,60 @@ const thumbnailCache = new Map<string, string | null>();
 const props = defineProps<{
   node: FileNode;
   depth: number;
+  selectedPaths?: Set<string>;
 }>();
 
 const emit = defineEmits<{
-  (e: 'contextmenu', event: MouseEvent, node: FileNode): void
-}>()
+  (e: 'contextmenu', event: MouseEvent, node: FileNode): void;
+  (e: 'toggleSelect', path: string): void;
+}>();
 
 const workspace = useWorkspaceStore();
 const expanded = ref(props.depth < 1);
+
+// ══════════════════════════════════════════════
+// Cascade Selection (inspired by GPT-Runner)
+// ══════════════════════════════════════════════
+
+type CheckState = 'unchecked' | 'checked' | 'indeterminate';
+
+/** Count all file descendants of a directory node. */
+function getAllFilePaths(node: FileNode): string[] {
+  if (!node.is_dir) return [node.path];
+  const paths: string[] = [];
+  if (node.children) {
+    for (const child of node.children) {
+      paths.push(...getAllFilePaths(child));
+    }
+  }
+  return paths;
+}
+
+/** Determine checkbox state for this node. */
+const checkState = computed<CheckState>(() => {
+  if (!props.selectedPaths) return 'unchecked';
+
+  if (!props.node.is_dir) {
+    return props.selectedPaths.has(props.node.path) ? 'checked' : 'unchecked';
+  }
+
+  // For directories: check children
+  const childPaths = getAllFilePaths(props.node);
+  if (childPaths.length === 0) return 'unchecked';
+
+  const selectedCount = childPaths.filter(p => props.selectedPaths!.has(p)).length;
+  if (selectedCount === 0) return 'unchecked';
+  if (selectedCount === childPaths.length) return 'checked';
+  return 'indeterminate';
+});
+
+/** Toggle selection for this node (and cascade to children). */
+function toggleCheck() {
+  const paths = getAllFilePaths(props.node);
+  for (const p of paths) {
+    emit('toggleSelect', p);
+  }
+}
 
 /// Track when the change was detected (for recent-change glow)
 const changeTimestamps = ref<Map<string, number>>(new Map());
@@ -190,6 +252,38 @@ function handleContextMenu(e: MouseEvent) {
 
 .tree-rich-icon :deep(svg) {
   display: block;
+}
+
+.tree-checkbox {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 4px;
+  cursor: pointer;
+}
+
+.checkbox-visual {
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--text-muted, #888);
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  line-height: 1;
+  color: var(--bg, #fff);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.checkbox-visual.checked {
+  background: var(--accent, #50c878);
+  border-color: var(--accent, #50c878);
+}
+
+.checkbox-visual.indeterminate {
+  background: var(--accent, #50c878);
+  border-color: var(--accent, #50c878);
+  opacity: 0.6;
 }
 
 .star-btn {
