@@ -60,7 +60,7 @@ impl Default for GroupChat {
             messages: Vec::new(),
             phase: ChatPhase::Idle,
             participants: vec![
-                "claude".into(), "codex".into(), "openclaw".into(), "hermes".into(), "openhuman".into()
+                "claude".into(), "codex".into(), "openclaw".into(), "hermes".into()
             ],
             speaking_order: VecDeque::new(),
             current_speaker: None,
@@ -514,7 +514,6 @@ fn specialty_score(agent_id: &str, content: &str) -> f32 {
         "codex" => &[("原型", 1.0), ("快速", 0.8), ("测试", 1.0), ("demo", 1.0), ("实验", 1.0), ("尝试", 0.8), ("prototype", 1.0), ("quick", 0.8), ("test", 1.0), ("experiment", 1.0), ("try", 0.8), ("hack", 0.8)],
         "openclaw" => &[("内容", 1.0), ("文案", 1.0), ("运营", 1.0), ("文章", 1.0), ("发布", 0.8), ("推广", 0.8), ("content", 1.0), ("write", 1.0), ("article", 1.0), ("publish", 0.8), ("copy", 0.8), ("marketing", 0.8)],
         "hermes" => &[("记忆", 1.0), ("学习", 1.0), ("任务", 0.8), ("分析", 1.0), ("研究", 1.0), ("总结", 1.0), ("整理", 0.8), ("memory", 1.0), ("learn", 1.0), ("task", 0.8), ("analyze", 1.0), ("research", 1.0), ("summarize", 1.0), ("organize", 0.8)],
-        "openhuman" => &[("人机", 1.0), ("协作", 1.0), ("交互", 1.0), ("体验", 0.8), ("设计", 0.8), ("用户", 0.8), ("human", 1.0), ("collaborate", 1.0), ("interact", 1.0), ("interface", 0.8), ("design", 0.8), ("ux", 0.8)],
         _ => &[],
     };
     keywords.iter()

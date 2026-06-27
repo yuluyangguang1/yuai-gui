@@ -30,7 +30,7 @@ export interface Session {
   createdAt: number;
 }
 
-// The 5 agents: 梅兰竹菊莲 (built-in defaults matching backend)
+// The 4 agents: 梅兰竹菊 (built-in defaults matching backend)
 const BUILTIN_AGENTS: AgentDef[] = [
   {
     id: "claude", name: "claude", chinese_name: "梅", glyph: "梅", color: "#ff8c32",
@@ -50,11 +50,6 @@ const BUILTIN_AGENTS: AgentDef[] = [
   {
     id: "hermes", name: "hermes", chinese_name: "菊", glyph: "菊", color: "#a064ff",
     specialty: "记忆、学习、任务编排", binary: "", config_type: "openai_env",
-    enabled: true, in_group: true,
-  },
-  {
-    id: "openhuman", name: "openhuman", chinese_name: "莲", glyph: "莲", color: "#64b5f6",
-    specialty: "人机协作、开放人类智能", binary: "", config_type: "openai_env",
     enabled: true, in_group: true,
   },
 ];

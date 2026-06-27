@@ -37,7 +37,7 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": [],
+    "resources": ["../bundle/claude/macos-x64/claude", "../bundle/codex/macos-x64/codex", "../bundle/openclaw/macos-x64/openclaw", "../bundle/hermes/macos-x64/hermes", "../bundle/cc-switch/macos-x64/cc-switch"],
     "category": "DeveloperTool",
     "shortDescription": "yu.ai 统一启动器",
     "longDescription": "便携 AI 工具集统一入口 · openclaw · hermes · claude · codex"

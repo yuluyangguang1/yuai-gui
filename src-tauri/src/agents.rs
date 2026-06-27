@@ -5,12 +5,11 @@ use crate::AgentDef;
 
 /// Resolve the bundle root directory.
 pub fn bundle_root(app: &tauri::AppHandle) -> PathBuf {
-    // In production: same directory as the executable
-    if let Ok(exe) = std::env::current_exe() {
-        if let Some(p) = exe.parent() {
-            // In dev mode, also check project root (where bundle/ actually is)
-            #[cfg(debug_assertions)]
-            {
+    // In dev mode, check project root (where bundle/ actually is)
+    #[cfg(debug_assertions)]
+    {
+        if let Ok(exe) = std::env::current_exe() {
+            if let Some(p) = exe.parent() {
                 let project_root = p.ancestors().find(|a| a.join("Cargo.toml").exists());
                 if let Some(pr) = project_root {
                     if pr.join("bundle").exists() {
@@ -18,13 +17,29 @@ pub fn bundle_root(app: &tauri::AppHandle) -> PathBuf {
                     }
                 }
             }
+        }
+    }
+
+    // In production: check resource directory first (Tauri bundles resources here)
+    if let Ok(resource_dir) = app.path().resource_dir() {
+        if resource_dir.join("bundle").exists() {
+            return resource_dir;
+        }
+        // Tauri .app bundles place resources under Contents/Resources/_up_/
+        let up_bundle = resource_dir.join("_up_").join("bundle");
+        if up_bundle.exists() {
+            return resource_dir.join("_up_");
+        }
+    }
+
+    // Fallback: same directory as executable
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(p) = exe.parent() {
             return p.to_path_buf();
         }
     }
-    // Fallback: resource dir
-    app.path()
-        .resource_dir()
-        .unwrap_or_else(|_| PathBuf::from("."))
+
+    PathBuf::from(".")
 }
 
 /// Load agents from data/agents.json.
@@ -76,6 +91,11 @@ pub fn resolve_binary_path(root: &std::path::Path, binary_template: &str) -> Pat
         return found;
     }
 
+    // Fallback: use login shell PATH (catches Homebrew, nvm, etc.)
+    if let Some(found) = find_in_login_shell_path(&binary_name) {
+        return found;
+    }
+
     // Return the bundle path anyway (caller will report "not found")
     bundle_path
 }
@@ -91,6 +111,50 @@ fn find_in_path(name: &str) -> Option<PathBuf> {
         }
     }
     None
+}
+
+/// Use a login shell to resolve the full PATH, then search for the binary.
+/// This catches binaries installed via Homebrew, nvm, etc. that are only
+/// available in a login shell environment.
+fn find_in_login_shell_path(name: &str) -> Option<PathBuf> {
+    #[cfg(target_os = "windows")]
+    {
+        // On Windows, use `where`
+        let output = std::process::Command::new("where")
+            .arg(name)
+            .output()
+            .ok()?;
+        if output.status.success() {
+            let text = String::from_utf8_lossy(&output.stdout);
+            let first_line = text.lines().next()?.trim();
+            if !first_line.is_empty() {
+                return Some(PathBuf::from(first_line));
+            }
+        }
+        None
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        // On macOS/Linux, spawn a login shell to get the full PATH
+        let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".to_string());
+        let cmd = format!("command -v {}", name);
+        let output = std::process::Command::new(&shell)
+            .args(["-lc", &cmd])
+            .output()
+            .ok()?;
+        if output.status.success() {
+            let text = String::from_utf8_lossy(&output.stdout);
+            let path_str = text.trim();
+            if !path_str.is_empty() {
+                let candidate = PathBuf::from(path_str);
+                if candidate.exists() {
+                    return Some(candidate);
+                }
+            }
+        }
+        None
+    }
 }
 
 fn current_platform() -> &'static str {
@@ -151,18 +215,6 @@ fn default_agents() -> Vec<AgentDef> {
             color: "#a064ff".into(),
             specialty: "记忆、学习、任务编排".into(),
             binary: "bundle/hermes/{platform}/hermes".into(),
-            config_type: "openai_env".into(),
-            enabled: true,
-            in_group: true,
-        },
-        AgentDef {
-            id: "openhuman".into(),
-            name: "openhuman".into(),
-            chinese_name: "莲".into(),
-            glyph: "莲".into(),
-            color: "#64b5f6".into(),
-            specialty: "人机协作、开放人类智能".into(),
-            binary: "bundle/openhuman/{platform}/openhuman".into(),
             config_type: "openai_env".into(),
             enabled: true,
             in_group: true,

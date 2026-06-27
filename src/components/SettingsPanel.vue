@@ -8,11 +8,10 @@ const apiKey = ref('');
 const model = ref('');
 const status = ref('');
 const appTypes = [
-  { id: 'claude', label: 'Claude', glyph: '梅', color: '#ff8c32' },
-  { id: 'codex', label: 'Codex', glyph: '兰', color: '#50c878' },
-  { id: 'openclaw', label: 'OpenClaw', glyph: '竹', color: '#ff6464' },
-  { id: 'hermes', label: 'Hermes', glyph: '菊', color: '#a064ff' },
-  { id: 'openhuman', label: 'OpenHuman', glyph: '莲', color: '#5ccfb8' },
+  { id: 'claude', label: 'Claude (梅)', glyph: '梅', color: '#ff8c32' },
+  { id: 'codex', label: 'Codex (兰)', glyph: '兰', color: '#50c878' },
+  { id: 'openclaw', label: 'OpenClaw (竹)', glyph: '竹', color: '#ff6464' },
+  { id: 'hermes', label: 'Hermes (菊)', glyph: '菊', color: '#a064ff' },
 ];
 
 async function loadProviders() {
@@ -100,6 +99,24 @@ onMounted(loadProviders);
         <button @click="applyTemplate('https://api.openai.com/v1', 'gpt-4o')">OpenAI</button>
         <button @click="applyTemplate('https://api.anthropic.com/v1', 'claude-sonnet-4')">Anthropic</button>
         <button @click="applyTemplate('https://api.deepseek.com/v1', 'deepseek-chat')">DeepSeek</button>
+        <button @click="applyTemplate('https://api.moonshot.cn/v1', 'moonshot-v1-8k')">Moonshot</button>
+        <button @click="applyTemplate('https://dashscope.aliyuncs.com/compatible-mode/v1', 'qwen-plus')">通义千问</button>
+        <button @click="applyTemplate('https://open.bigmodel.cn/api/paas/v4', 'glm-4-flash')">智谱 GLM</button>
+        <button @click="applyTemplate('https://api.baichuan-ai.com/v1', 'Baichuan4')">百川</button>
+        <button @click="applyTemplate('https://ark.cn-beijing.volces.com/api/v3', 'doubao-1.5-pro-32k')">豆包</button>
+        <button @click="applyTemplate('https://api.xiaomimimo.com/v1', 'MiMo')">小米 MiMo</button>
+        <button @click="applyTemplate('https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop', 'ernie-4.0-8k')">百度千帆</button>
+        <button @click="applyTemplate('https://spark-api-open.xf-yun.com/v1', 'generalv3.5')">讯飞星火</button>
+        <button @click="applyTemplate('http://localhost:3000/v1', '')">本地中转</button>
+        <button @click="applyTemplate('https://dashscope.aliyuncs.com/compatible-mode/v1', 'qwen-max')">通义千问</button>
+        <button @click="applyTemplate('https://open.bigmodel.cn/api/paas/v4', 'glm-4')">智谱 GLM</button>
+        <button @click="applyTemplate('https://api.baichuan-ai.com/v1', 'Baichuan4')">百川</button>
+        <button @click="applyTemplate('https://ark.cn-beijing.volces.com/api/v3', 'doubao-pro-32k')">火山(豆包)</button>
+        <button @click="applyTemplate('https://api.xiaomi.com/v1', 'MiMo')">小米 MiMo</button>
+        <button @click="applyTemplate('https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop', 'ernie-4.0-8k')">百度千帆</button>
+        <button @click="applyTemplate('https://spark-api-open.xf-yun.com/v1', 'generalv3.5')">讯飞星火</button>
+        <button @click="applyTemplate('https://api.sensenova.cn/v1', 'SenseChat')">商汤</button>
+        <button @click="applyTemplate('https://api.kunlun.com/v1', 'kunlun')">昆仑</button>
         <button @click="applyTemplate('http://localhost:3000/v1', '')">本地中转</button>
       </div>
     </div>

@@ -18,6 +18,19 @@ function cleanAnsi(s: string): string {
 }
 
 export const useChatStore = defineStore("chat", () => {
+  type ChatMode = 'single' | 'group' | 'beam';
+  const chatMode = ref<ChatMode>('single');
+  const chatTarget = ref<string>('hermes'); // agentId for single mode
+
+  function setChatMode(mode: ChatMode) {
+    chatMode.value = mode;
+  }
+
+  function setChatTarget(agentId: string) {
+    chatTarget.value = agentId;
+    chatMode.value = 'single';
+  }
+
   const phase = ref<ChatPhase>("idle");
   const round = ref(0);
   const inputText = ref("");
@@ -223,6 +236,59 @@ export const useChatStore = defineStore("chat", () => {
 
     addMessage("user", text);
     inputText.value = "";
+
+    // ─── Beam mode: delegate to beam store ───
+    if (chatMode.value === "beam") {
+      try {
+        const { useBeamStore } = await import("./beam");
+        const beamStore = useBeamStore();
+        await beamStore.sendQuestion(text);
+      } catch (e) {
+        console.error("beam send error:", e);
+        addMessage("system", `Beam 发送失败: ${String(e).slice(0, 300)}`);
+      }
+      return;
+    }
+
+    // ─── Single mode: directly spawn target agent ───
+    if (chatMode.value === "single") {
+      phase.value = "generating";
+      const agentId = chatTarget.value;
+      const agent = agentsStore.agents.find((a) => a.id === agentId);
+
+      streamingMessage.value = {
+        id: crypto.randomUUID(),
+        content: "",
+        agentId,
+      };
+
+      try {
+        const ptyId = await spawnAgentIfNeeded(agentId);
+        agentBuffers[agentId] = "";
+        await invoke("pty_write", { id: ptyId, data: text + "\n" });
+
+        const response = await captureAgentResponse(agentId, 60_000);
+        finalizeStreaming();
+
+        // Update the last assistant message content to the clean response
+        const session = agentsStore.activeSession;
+        if (session && session.messages.length > 0) {
+          const lastMsg = session.messages[session.messages.length - 1];
+          if (lastMsg.role === "assistant" && lastMsg.agentId === agentId) {
+            lastMsg.content = response;
+          }
+        }
+      } catch (e) {
+        console.error("single send error:", e);
+        finalizeStreaming();
+        addMessage("system", `${agentId}: ${String(e).slice(0, 200)}`);
+      } finally {
+        phase.value = "idle";
+      }
+      return;
+    }
+
+    // ─── Group mode: multi-agent discussion ───
     round.value = 0;
     discussionAborted.value = false;
     phase.value = "thinking";
@@ -341,10 +407,73 @@ export const useChatStore = defineStore("chat", () => {
   async function confirmExecution() {
     showDecision.value = false;
     execStatus.value = "running";
+
     try {
+      // Tell backend to set up execution queue
       await invoke("group_confirm_exec");
+
+      // Drain the execution queue: get each executor and run it
+      let completed = 0;
+      let failed = 0;
+
+      while (true) {
+        const executor: string | null = await invoke("group_next_executor");
+        if (!executor) break;
+
+        const agentId = executor;
+        addMessage("system", `⏳ ${agentId} 开始执行...`);
+
+        streamingMessage.value = {
+          id: crypto.randomUUID(),
+          content: "",
+          agentId,
+        };
+
+        try {
+          const ptyId = await spawnAgentIfNeeded(agentId);
+
+          // Build execution prompt
+          const execPrompt: string = await invoke("group_build_prompt", { agentId });
+          agentBuffers[agentId] = "";
+          await invoke("pty_write", { id: ptyId, data: execPrompt + "\n" });
+
+          // Wait for response
+          const response = await captureAgentResponse(agentId, 120_000);
+          finalizeStreaming();
+
+          // Record result in group chat
+          await invoke("group_agent_response", {
+            agentId,
+            content: response,
+            tokens: null,
+            model: null,
+            durationMs: null,
+          });
+
+          // Update the last assistant message
+          const session = agentsStore.activeSession;
+          if (session && session.messages.length > 0) {
+            const lastMsg = session.messages[session.messages.length - 1];
+            if (lastMsg.role === "assistant" && lastMsg.agentId === agentId) {
+              lastMsg.content = response;
+            }
+          }
+
+          completed++;
+          addMessage("system", `✅ ${agentId} 执行完成`);
+        } catch (e) {
+          failed++;
+          finalizeStreaming();
+          addMessage("system", `❌ ${agentId} 执行失败: ${String(e).slice(0, 200)}`);
+        }
+      }
+
+      if (completed === 0 && failed === 0) {
+        addMessage("system", "无执行任务");
+      } else {
+        addMessage("system", `执行完成: ${completed} 成功, ${failed} 失败`);
+      }
       execStatus.value = "done";
-      addMessage("system", "执行完成");
     } catch (e) {
       execStatus.value = "error";
       addMessage("system", `执行失败: ${String(e).slice(0, 200)}`);
@@ -423,6 +552,10 @@ export const useChatStore = defineStore("chat", () => {
   }
 
   return {
+    chatMode,
+    chatTarget,
+    setChatMode,
+    setChatTarget,
     phase,
     round,
     inputText,

@@ -73,6 +73,7 @@ import DiffViewer from "./components/DiffViewer.vue";
 import SettingsPanel from "./components/SettingsPanel.vue";
 import Terminal from "./components/Terminal.vue";
 import OrganizePanel from "./components/OrganizePanel.vue";
+
 import WechatPanel from "./components/WechatPanel.vue";
 import SessionReplay from "./components/SessionReplay.vue";
 import DiskUsage from "./components/DiskUsage.vue";
@@ -91,7 +92,7 @@ const updateStore = useUpdateStore();
 
 const commandPalette = ref<InstanceType<typeof CommandPalette> | null>(null);
 
-const previewMode = ref<'code' | 'diff' | 'terminal' | 'replay' | 'disk' | 'wechat' | 'organize' | 'settings'>('code');
+const previewMode = ref<'code' | 'diff' | 'terminal' | 'wechat' | 'organize' | 'settings' | 'replay' | 'disk'>('code');
 const activeTerminalAgent = ref<string | null>(null);
 const previewTabs = [
   { id: 'code' as const, label: '代码' },

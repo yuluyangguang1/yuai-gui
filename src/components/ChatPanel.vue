@@ -1,11 +1,17 @@
 <template>
-  <div class="chat-panel">
+  <BeamPanel v-if="chatStore.chatMode === 'beam'" />
+  <div v-else class="chat-panel">
     <div class="chat-header">
       <span
         class="chat-agent-indicator"
-        :style="{ background: agentsStore.activeAgent.color }"
+        :style="{ background: chatStore.chatMode === 'group' ? 'var(--gold)' : agentsStore.activeAgent.color }"
       />
-      <span class="chat-agent-name">{{ agentsStore.activeAgent.glyph }}</span>
+      <span class="chat-agent-name">
+        {{ chatStore.chatMode === 'group' ? '合' : agentsStore.activeAgent.glyph }}
+      </span>
+      <span class="chat-mode-label">
+        {{ chatStore.chatMode === 'group' ? '群聊' : agentsStore.activeAgent.chinese_name }}
+      </span>
       <!-- Phase + round display -->
       <span v-if="chatStore.phase !== 'idle'" class="chat-phase">
         {{ phaseText }}
@@ -14,8 +20,13 @@
           · {{ getAgentGlyph(chatStore.streamingMessage.agentId) }} 发言中
         </span>
       </span>
-      <!-- Room manager toggle -->
-      <button class="room-toggle-btn" @click="showRoomManager = !showRoomManager" title="讨论组管理">
+      <span class="chat-spacer" />
+      <!-- Beam mode toggle -->
+      <button class="chat-mode-btn" :class="{ active: chatStore.chatMode === 'beam' }" @click="chatStore.setChatMode(chatStore.chatMode === 'beam' ? 'single' : 'beam')" title="并行提问模式">
+        束
+      </button>
+      <!-- Room manager toggle (only in group mode) -->
+      <button v-if="chatStore.chatMode === 'group'" class="room-toggle-btn" @click="showRoomManager = !showRoomManager" title="讨论组管理">
         {{ showRoomManager ? '▾' : '▸' }} 组
       </button>
       <ContextPanel />
@@ -142,6 +153,7 @@ import { useAgentsStore } from "../stores/agents";
 import { useWorkspaceStore } from "../stores/workspace";
 import ContextPanel from "./ContextPanel.vue";
 import RoomManager from "./RoomManager.vue";
+import BeamPanel from "./BeamPanel.vue";
 import type { AgentDef } from "../stores/agents";
 
 const chatStore = useChatStore();

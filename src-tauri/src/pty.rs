@@ -8,6 +8,7 @@ use std::process::Command as StdCommand;
 
 use portable_pty::{native_pty_system, CommandBuilder, PtySize, MasterPty};
 use tauri::ipc::Channel;
+use tauri::Emitter;
 
 // ═══════════════════════════════════════════
 // PTY Session Management
@@ -21,14 +22,14 @@ pub struct PtySession {
 }
 
 pub struct AppState {
-    pub sessions: RwLock<HashMap<u32, Arc<PtySession>>>,
+    pub sessions: Arc<RwLock<HashMap<u32, Arc<PtySession>>>>,
     pub next_id: AtomicU32,
 }
 
 impl Default for AppState {
     fn default() -> Self {
         Self {
-            sessions: RwLock::new(HashMap::new()),
+            sessions: Arc::new(RwLock::new(HashMap::new())),
             next_id: AtomicU32::new(1),
         }
     }
@@ -65,6 +66,7 @@ pub fn pty_list(state: tauri::State<AppState>) -> Result<Vec<(u32, u32)>, String
 /// `on_data` channel streams stdout bytes to the frontend.
 #[tauri::command]
 pub fn pty_spawn(
+    app: tauri::AppHandle,
     state: tauri::State<AppState>,
     cmd: String,
     args: Vec<String>,
@@ -112,15 +114,9 @@ pub fn pty_spawn(
     // M6: try_clone_reader before inserting so failure doesn't orphan session
     let mut reader = session.master.lock().unwrap().try_clone_reader().map_err(|e| e.to_string())?;
     state.sessions.write().unwrap().insert(id, session.clone());
-    // H3: Get a clone of the sessions map for cleanup in reader thread
-    let sessions_ref = {
-        let s = state.sessions.read().unwrap();
-        // We can't clone RwLock, but we can get a reference via Arc
-        // Instead, use a simpler approach: store session Arc in thread and let frontend call pty_kill
-        drop(s);
-        None::<Arc<PtySession>> // placeholder — see cleanup note below
-    };
-    let _ = sessions_ref; // suppress unused warning
+
+    // Clone sessions Arc for cleanup in reader thread
+    let sessions_for_thread = state.sessions.clone();
     thread::spawn(move || {
         let mut buf = [0u8; 8192];
         loop {
@@ -139,12 +135,11 @@ pub fn pty_spawn(
                 }
             }
         }
-        // H3: Session cleanup — the Arc<PtySession> in HashMap will be cleaned
-        // when frontend calls pty_kill or window closes.
-        // The session stays in HashMap so frontend can detect [process exited]
-        // and call pty_kill explicitly.
+        // Cleanup: remove session from map and emit event
+        sessions_for_thread.write().unwrap().remove(&id);
         drop(session); // release our Arc reference
-        log::info!("pty id={} reader exited", id);
+        let _ = app.emit("pty-exit", id);
+        log::info!("pty id={} reader exited, session removed", id);
     });
 
     log::info!("pty_spawn id={} cmd={} cols={} rows={}", id, cmd, cols, rows);
@@ -287,6 +282,8 @@ pub fn spawn_agent(
     let mut reader = session.master.lock().unwrap().try_clone_reader().map_err(|e| e.to_string())?;
     state.sessions.write().unwrap().insert(id, session.clone());
 
+    // Clone sessions Arc for cleanup in reader thread
+    let sessions_for_thread = state.sessions.clone();
     thread::spawn(move || {
         let mut buf = [0u8; 8192];
         loop {
@@ -305,8 +302,11 @@ pub fn spawn_agent(
                 }
             }
         }
+        // Cleanup: remove session from map and emit event
+        sessions_for_thread.write().unwrap().remove(&id);
         drop(session);
-        log::info!("spawn_agent id={} reader exited", id);
+        let _ = app.emit("pty-exit", id);
+        log::info!("spawn_agent id={} reader exited, session removed", id);
     });
 
     log::info!("spawn_agent id={} agent={} binary={}", id, agent_id, binary_path.display());

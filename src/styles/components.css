@@ -1546,3 +1546,11 @@ html, body {
   opacity: 0.4;
   cursor: default;
 }
+
+/* ═══ Chat Mode Label ═══ */
+.chat-mode-label {
+  font-family: var(--font-serif);
+  font-size: .72rem;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
