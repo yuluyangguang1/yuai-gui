@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { invoke, Channel } from '@tauri-apps/api/core';
 import { useAgentsStore } from './agents';
+import { cleanAnsi } from '../utils/format';
 
 interface BeamResult {
   agentId: string;
@@ -21,10 +22,6 @@ export const useBeamStore = defineStore('beam', () => {
   const agentSessions = new Map<string, number>();
   const agentBuffers: Record<string, string> = {};
   
-  function cleanAnsi(s: string): string {
-    return s.replace(/\x1b\[[0-9;?]*[A-Za-z]|\x1b[()][AB0]|\r/g, '');
-  }
-  
   async function spawnIfNeeded(agentId: string): Promise<number> {
     if (agentSessions.has(agentId)) return agentSessions.get(agentId)!
     const on_data = new Channel<string>();
@@ -41,17 +38,28 @@ export const useBeamStore = defineStore('beam', () => {
     agentBuffers[agentId] = '';
     return new Promise(resolve => {
       let lastLen = 0, stableCount = 0;
+      let settled = false;
+
+      const settle = (value: string) => {
+        if (settled) return;
+        settled = true;
+        clearInterval(iv);
+        clearTimeout(timer);
+        resolve(value);
+      };
+
       const iv = setInterval(() => {
         const buf = agentBuffers[agentId] || '';
         if (buf.includes('[process exited]')) {
-          clearInterval(iv); resolve(cleanAnsi(buf.replace('[process exited]', '').trim()) || '（进程已退出）');
+          settle(cleanAnsi(buf.replace('[process exited]', '').trim()) || '（进程已退出）');
+          return;
         }
         if (buf.length === lastLen && buf.length > 0) {
           stableCount++;
-          if (stableCount >= 2) { clearInterval(iv); resolve(cleanAnsi(buf)); }
+          if (stableCount >= 2) { settle(cleanAnsi(buf)); }
         } else { stableCount = 0; lastLen = buf.length; }
       }, 1000);
-      setTimeout(() => { clearInterval(iv); resolve(agentBuffers[agentId] ? cleanAnsi(agentBuffers[agentId]) : '（无响应）'); }, timeoutMs);
+      const timer = setTimeout(() => { settle(agentBuffers[agentId] ? cleanAnsi(agentBuffers[agentId]) : '（无响应）'); }, timeoutMs);
     });
   }
   
@@ -97,6 +105,14 @@ export const useBeamStore = defineStore('beam', () => {
     results.value = [];
     showComparison.value = false;
   }
+
+  /** Cleanup: release agent sessions and buffers to prevent memory leaks. */
+  function cleanup() {
+    agentSessions.clear();
+    for (const key of Object.keys(agentBuffers)) {
+      delete agentBuffers[key];
+    }
+  }
   
-  return { messages, results, isRunning, showComparison, sendQuestion, pickResponse, clearMessages };
+  return { messages, results, isRunning, showComparison, sendQuestion, pickResponse, clearMessages, cleanup };
 });

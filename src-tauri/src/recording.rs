@@ -14,8 +14,11 @@ const MAX_RECORDINGS: usize = 60;
 /// An active recording session — holds a file handle and timing state.
 pub struct Recording {
     file: std::fs::File,
+    #[allow(dead_code)]
     start: Instant,
+    #[allow(dead_code)]
     width: u16,
+    #[allow(dead_code)]
     height: u16,
 }
 
@@ -119,33 +122,6 @@ pub fn start_recording(state: &RecordingState, session_id: u32, width: u16, heig
     );
 }
 
-/// Record an output event (type 'o').
-pub fn record_output(state: &RecordingState, session_id: u32, data: &str) {
-    record_event(state, session_id, "o", data);
-}
-
-/// Record an input event (type 'i').
-pub fn record_input(state: &RecordingState, session_id: u32, data: &str) {
-    record_event(state, session_id, "i", data);
-}
-
-/// Record a resize event (type 'r').
-pub fn record_resize(state: &RecordingState, session_id: u32, width: u16, height: u16) {
-    record_event(state, session_id, "r", &format!("{}x{}", width, height));
-}
-
-fn record_event(state: &RecordingState, session_id: u32, event_type: &str, data: &str) {
-    let map = state.active.lock().unwrap();
-    if let Some(rec) = map.get(&session_id) {
-        if let Ok(mut r) = rec.lock() {
-            let elapsed = r.start.elapsed().as_secs_f64();
-            // Escape data for JSON string
-            let escaped = escape_json_str(data);
-            let _ = writeln!(r.file, "[{:.6}, \"{}\", \"{}\"]", elapsed, event_type, escaped);
-        }
-    }
-}
-
 /// Stop recording for a session — flushes and closes the file.
 pub fn stop_recording(state: &RecordingState, session_id: u32) {
     if let Some(rec) = state.active.lock().unwrap().remove(&session_id) {
@@ -154,24 +130,6 @@ pub fn stop_recording(state: &RecordingState, session_id: u32) {
         }
         log::info!("recording stopped: session={}", session_id);
     }
-}
-
-fn escape_json_str(s: &str) -> String {
-    let mut out = String::with_capacity(s.len());
-    for ch in s.chars() {
-        match ch {
-            '\\' => out.push_str("\\\\"),
-            '"' => out.push_str("\\\""),
-            '\n' => out.push_str("\\n"),
-            '\r' => out.push_str("\\r"),
-            '\t' => out.push_str("\\t"),
-            c if c < '\x20' => {
-                out.push_str(&format!("\\u{:04x}", c as u32));
-            }
-            c => out.push(c),
-        }
-    }
-    out
 }
 
 fn chrono_timestamp() -> String {

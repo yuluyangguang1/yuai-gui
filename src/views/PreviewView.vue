@@ -144,6 +144,8 @@ import { ref, computed, watch } from "vue";
 import { useWorkspaceStore } from "../stores/workspace";
 import MonacoEditor from "../components/MonacoEditor.vue";
 import { invoke } from "@tauri-apps/api/core";
+import { marked } from "marked";
+import DOMPurify from "dompurify";
 
 const workspace = useWorkspaceStore();
 const showMarkdownSource = ref(false);
@@ -266,64 +268,9 @@ watch(() => workspace.currentFile, loadFileDataUrl, { immediate: true });
 
 const renderedMarkdown = computed(() => {
   if (!isMarkdown.value) return "";
-  return simpleMarkdown(workspace.currentFileContent);
+  const rawHtml = marked.parse(workspace.currentFileContent, { async: false }) as string;
+  return DOMPurify.sanitize(rawHtml);
 });
-
-function simpleMarkdown(md: string): string {
-  let html = md;
-
-  // Escape HTML
-  html = html
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-
-  // Code blocks
-  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_m, lang, code) => {
-    return `<pre class="md-code-block"><code class="lang-${lang}">${code.trim()}</code></pre>`;
-  });
-
-  // Inline code
-  html = html.replace(/`([^`]+)`/g, "<code class=\"md-inline-code\">$1</code>");
-
-  // Headers
-  html = html.replace(/^######\s+(.+)$/gm, "<h6>$1</h6>");
-  html = html.replace(/^#####\s+(.+)$/gm, "<h5>$1</h5>");
-  html = html.replace(/^####\s+(.+)$/gm, "<h4>$1</h4>");
-  html = html.replace(/^###\s+(.+)$/gm, "<h3>$1</h3>");
-  html = html.replace(/^##\s+(.+)$/gm, "<h2>$1</h2>");
-  html = html.replace(/^#\s+(.+)$/gm, "<h1>$1</h1>");
-
-  // Bold and italic
-  html = html.replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>");
-  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-  html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
-
-  // Links
-  html = html.replace(
-    /\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2" target="_blank" rel="noopener">$1</a>'
-  );
-
-  // Horizontal rule
-  html = html.replace(/^---+$/gm, "<hr />");
-
-  // Blockquotes
-  html = html.replace(/^&gt;\s+(.+)$/gm, "<blockquote>$1</blockquote>");
-
-  // Unordered lists
-  html = html.replace(/^[-*]\s+(.+)$/gm, "<li>$1</li>");
-  html = html.replace(/(<li>.*<\/li>\n?)+/g, "<ul>$&</ul>");
-
-  // Paragraphs (lines that aren't already wrapped)
-  html = html.replace(/^(?!<[a-z/])((?!^\s*$).+)$/gm, "<p>$1</p>");
-
-  // Line breaks
-  html = html.replace(/\n\n/g, "");
-  html = html.replace(/\n/g, "<br />");
-
-  return html;
-}
 
 // ── CSV parsing ──
 

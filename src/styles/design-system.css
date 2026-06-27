@@ -1,0 +1,491 @@
+/* ══════════════════════════════════════════════
+   yuai-gui 统一设计语言
+   ══════════════════════════════════════════════ */
+
+/* ── 设计原则 ──
+   1. 青瓷墨玉：深沉底色 + 温润强调色
+   2. 毛笔字形：中文用 brush 字体，拉丁用系统字体
+   3. 呼吸感：充足留白，不拥挤
+   4. 一致性：同类元素相同样式
+   5. 可读性：高对比度，清晰层次
+*/
+
+/* ══════════════════════════════════════════════
+   1. 颜色系统
+   ══════════════════════════════════════════════ */
+
+/* 主色调 */
+:root {
+  /* 背景层次（5级） */
+  --bg-base: #0b1a1a;        /* 最深 — 页面底色 */
+  --bg-surface: #0f2424;     /* 面板/卡片 */
+  --bg-raised: #132e2e;      /* 悬浮/弹窗 */
+  --bg-overlay: #1a3c3c;     /* 下拉/菜单 */
+  --bg-hover: #1e4c4c;       /* 悬停态 */
+
+  /* 文字层次（4级） */
+  --text-primary: #e8ddd0;   /* 主文字 — 象牙白 */
+  --text-secondary: #b8a898; /* 次文字 — 暖灰 */
+  --text-muted: #887868;     /* 辅助文字 — 暗灰 */
+  --text-inverse: #0b1a1a;   /* 反色文字 — 深色底上 */
+
+  /* 强调色 */
+  --accent: #5ccfb8;         /* 翡翠绿 — 主强调 */
+  --accent-soft: rgba(92, 207, 184, 0.12); /* 弱化 */
+  --accent-hover: #7adbc9;   /* 悬停 */
+  --accent-muted: #3a9980;   /* 禁用 */
+
+  /* 金色 */
+  --gold: #c9a85c;           /* 赤金 — 次强调 */
+  --gold-soft: rgba(201, 168, 92, 0.12);
+  --gold-hover: #d4b970;
+
+  /* 语义色 */
+  --success: #5ccfb8;        /* 成功 — 同 accent */
+  --error: #ff6464;          /* 错误 — 红 */
+  --error-soft: rgba(255, 100, 100, 0.12);
+  --warning: #e6c07b;        /* 警告 — 琥珀 */
+  --warning-soft: rgba(230, 192, 123, 0.12);
+  --info: #64b5f6;           /* 信息 — 蓝 */
+
+  /* 边框 */
+  --border: #2a4a4a;         /* 主边框 */
+  --border-light: #1e3a3a;   /* 细线 */
+  --border-accent: rgba(92, 207, 184, 0.3); /* 强调边框 */
+
+  /* 阴影（3级） */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+
+  /* Agent 颜色 */
+  --agent-mei: #ff8c32;      /* 梅 — 暖橙 */
+  --agent-lan: #50c878;      /* 兰 — 翠绿 */
+  --agent-zhu: #ff6464;      /* 竹 — 珊瑚红 */
+  --agent-ju: #a064ff;       /* 菊 — 紫罗兰 */
+
+  color-scheme: dark;
+}
+
+/* ══════════════════════════════════════════════
+   2. 字体系统
+   ══════════════════════════════════════════════ */
+
+:root {
+  /* 字体族 */
+  --font-display: "Ma Shan Zheng", cursive;          /* 品牌/标题 — 毛笔 */
+  --font-body: "LXGW WenKai", "Noto Serif SC", serif; /* 正文 — 楷体 */
+  --font-ui: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; /* UI */
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace; /* 代码 */
+
+  /* 字号 scale（1.25 倍） */
+  --text-xs: 0.625rem;   /* 10px — 极小 */
+  --text-sm: 0.75rem;    /* 12px — 小 */
+  --text-base: 0.875rem; /* 14px — 正文 */
+  --text-lg: 1rem;       /* 16px — 标题 */
+  --text-xl: 1.25rem;    /* 20px — 大标题 */
+  --text-2xl: 1.5rem;    /* 24px — 品牌 */
+
+  /* 字重 */
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* 行高 */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+
+  /* 字间距 */
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.05em;
+  --tracking-wider: 0.1em;
+}
+
+/* ══════════════════════════════════════════════
+   3. 间距系统（4px 基数）
+   ══════════════════════════════════════════════ */
+
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+}
+
+/* ══════════════════════════════════════════════
+   4. 圆角系统
+   ══════════════════════════════════════════════ */
+
+:root {
+  --radius-sm: 4px;    /* 小元素 — 按钮、标签 */
+  --radius-md: 8px;    /* 中元素 — 卡片、输入框 */
+  --radius-lg: 12px;   /* 大元素 — 面板、弹窗 */
+  --radius-full: 9999px; /* 圆形 — 头像、状态点 */
+}
+
+/* ══════════════════════════════════════════════
+   5. 动画系统
+   ══════════════════════════════════════════════ */
+
+:root {
+  --ease-fast: 120ms ease;
+  --ease-normal: 200ms ease;
+  --ease-slow: 350ms ease;
+  --ease-bounce: 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ══════════════════════════════════════════════
+   6. 布局常量
+   ══════════════════════════════════════════════ */
+
+:root {
+  --rail-width: 56px;
+  --sidebar-width: 260px;
+  --chat-width: 400px;
+  --titlebar-height: 42px;
+  --statusbar-height: 28px;
+}
+
+/* ══════════════════════════════════════════════
+   7. 组件样式
+   ══════════════════════════════════════════════ */
+
+/* ── 按钮 ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
+  cursor: pointer;
+  transition: all var(--ease-fast);
+  border: 1px solid transparent;
+  user-select: none;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--text-inverse);
+  border-color: var(--accent);
+}
+.btn-primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: var(--border);
+}
+.btn-secondary:hover {
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border-color: transparent;
+}
+.btn-ghost:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--error);
+  border-color: var(--error);
+}
+.btn-danger:hover {
+  background: var(--error-soft);
+}
+
+.btn-icon {
+  padding: var(--space-1);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── 输入框 ── */
+.input {
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  transition: border-color var(--ease-fast);
+  outline: none;
+}
+.input:focus {
+  border-color: var(--accent);
+}
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+/* ── 卡片 ── */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  transition: all var(--ease-fast);
+}
+.card:hover {
+  border-color: var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── 标签 ── */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--border-accent);
+}
+
+.tag-gold {
+  background: var(--gold-soft);
+  color: var(--gold);
+  border-color: rgba(201, 168, 92, 0.3);
+}
+
+.tag-error {
+  background: var(--error-soft);
+  color: var(--error);
+  border-color: rgba(255, 100, 100, 0.3);
+}
+
+/* ── 分割线 ── */
+.divider {
+  height: 1px;
+  background: var(--border-light);
+  margin: var(--space-2) 0;
+}
+
+/* ── 空状态 ── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-8);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.empty-state .glyph {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  color: var(--accent);
+  opacity: 0.6;
+}
+
+/* ── 面板标题 ── */
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-light);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+.panel-header .glyph {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  color: var(--accent);
+}
+
+/* ── 列表项 ── */
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--ease-fast);
+}
+.list-item:hover {
+  background: var(--bg-hover);
+}
+.list-item.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* ── 状态点 ── */
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--text-muted);
+}
+.status-dot.online {
+  background: var(--success);
+}
+.status-dot.busy {
+  background: var(--warning);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+.status-dot.error {
+  background: var(--error);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ── 工具栏 ── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+
+/* ── 芯片选择器 ── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  background: var(--bg-raised);
+  color: var(--text-muted);
+  border: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: all var(--ease-fast);
+}
+.chip:hover {
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+.chip.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--border-accent);
+}
+
+/* ── 进度条 ── */
+.progress-track {
+  height: 4px;
+  background: var(--bg-raised);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width var(--ease-normal);
+}
+.progress-fill.warning {
+  background: var(--warning);
+}
+.progress-fill.error {
+  background: var(--error);
+}
+
+/* ── Toast ── */
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-overlay);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  backdrop-filter: blur(8px);
+}
+.toast.success { border-left: 3px solid var(--success); }
+.toast.error { border-left: 3px solid var(--error); }
+.toast.warning { border-left: 3px solid var(--warning); }
+.toast.info { border-left: 3px solid var(--info); }
+
+/* ══════════════════════════════════════════════
+   8. 排版规则
+   ══════════════════════════════════════════════ */
+
+/* 品牌文字用毛笔字体 */
+.brand, .glyph-display {
+  font-family: var(--font-display);
+}
+
+/* 正文用楷体 */
+body, .text-body {
+  font-family: var(--font-body);
+}
+
+/* UI 元素用系统字体 */
+.btn, .input, .tag, .chip, .panel-header, .list-item {
+  font-family: var(--font-ui);
+}
+
+/* 代码用等宽字体 */
+code, pre, .text-mono {
+  font-family: var(--font-mono);
+}
+
+/* Agent 名用毛笔 */
+.agent-glyph {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+}
+
+/* ══════════════════════════════════════════════
+   9. 图标规范
+   ══════════════════════════════════════════════ */
+
+/* 所有图标统一用 Unicode，不用 emoji */
+/* 原因：Unicode 在所有平台一致，emoji 因平台而异 */
+
+/* 图标尺寸 */
+.icon-sm { font-size: 12px; }
+.icon-md { font-size: 14px; }
+.icon-lg { font-size: 16px; }
+.icon-xl { font-size: 20px; }
+
+/* 图标颜色跟随文字 */
+.icon { color: currentColor; }
+
+/* 强调图标 */
+.icon-accent { color: var(--accent); }
+.icon-gold { color: var(--gold); }
+.icon-error { color: var(--error); }

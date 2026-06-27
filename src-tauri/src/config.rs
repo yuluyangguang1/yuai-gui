@@ -84,8 +84,10 @@ pub fn save_provider(root: &Path, config: &ProviderConfig) -> Result<(), String>
     ensure_db(root)?;
     let path = db_path(root);
     let conn = Connection::open(&path).map_err(|e| e.to_string())?;
+    // Normalize base_url based on config type
+    let normalized_url = normalize_url(&config.app_type, &config.base_url);
 
-    let settings_json = build_settings(&config.app_type, &config.base_url, &config.api_key, &config.model);
+    let settings_json = build_settings(&config.app_type, &normalized_url, &config.api_key, &config.model);
 
     // If is_current, unset all others first
     if config.is_current {
@@ -111,6 +113,29 @@ pub fn get_active_provider(root: &Path, app_type: &str) -> Result<Option<Provide
 }
 
 // ─── Internal helpers ───
+
+/// Normalize base_url based on config type.
+/// - anthropic_env: strip trailing /v1 (Anthropic SDK doesn't want it)
+/// - openai_env / codex / others: ensure trailing /v1
+pub fn normalize_url(app_type: &str, base_url: &str) -> String {
+    let url = base_url.trim_end_matches('/');
+    match app_type {
+        "claude" => {
+            // Anthropic: strip trailing /v1
+            url.strip_suffix("/v1").unwrap_or(url).to_string()
+        }
+        _ => {
+            // OpenAI-compatible: ensure trailing /v1
+            if url.ends_with("/v1") {
+                url.to_string()
+            } else if url.is_empty() {
+                String::new()
+            } else {
+                format!("{}/v1", url)
+            }
+        }
+    }
+}
 
 fn parse_settings(app_type: &str, json_str: &str) -> (String, String, String) {
     let val: serde_json::Value = serde_json::from_str(json_str).unwrap_or_default();
@@ -152,7 +177,8 @@ fn parse_settings(app_type: &str, json_str: &str) -> (String, String, String) {
             if let Some(env) = env {
                 let url = env.get("OPENAI_BASE_URL").and_then(|v| v.as_str()).unwrap_or("").to_string();
                 let key = env.get("OPENAI_API_KEY").and_then(|v| v.as_str()).unwrap_or("").to_string();
-                return (url, key, String::new());
+                let model = env.get("OPENAI_MODEL").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                return (url, key, model);
             }
         }
     }
@@ -185,7 +211,8 @@ fn build_settings(app_type: &str, base_url: &str, api_key: &str, model: &str) ->
             serde_json::json!({
                 "env": {
                     "OPENAI_BASE_URL": base_url,
-                    "OPENAI_API_KEY": api_key
+                    "OPENAI_API_KEY": api_key,
+                    "OPENAI_MODEL": model
                 }
             }).to_string()
         }

@@ -9,10 +9,11 @@
       }"
       :style="{ paddingLeft: (depth * 14 + 8) + 'px' }"
       @click="handleClick"
+      @contextmenu.prevent="handleContextMenu"
     >
       <span class="tree-icon">
         <template v-if="node.is_dir">
-          {{ expanded ? "📂" : "📁" }}
+          {{ expanded ? ICONS.folder : ICONS.folderOpen }}
         </template>
         <template v-else-if="thumbnailUrl">
           <img class="tree-thumb" :src="thumbnailUrl" alt="" @error="thumbnailFailed = true" />
@@ -29,7 +30,7 @@
         @click.stop="workspace.toggleFavorite(node.path)"
         :title="workspace.isFavorite(node.path) ? '取消收藏' : '收藏'"
       >
-        {{ workspace.isFavorite(node.path) ? '★' : '☆' }}
+        {{ workspace.isFavorite(node.path) ? ICONS.starFilled : ICONS.starEmpty }}
       </button>
     </div>
 
@@ -39,6 +40,7 @@
         :key="child.path"
         :node="child"
         :depth="depth + 1"
+        @contextmenu="(e: MouseEvent, n: FileNode) => emit('contextmenu', e, n)"
       />
     </template>
   </div>
@@ -49,6 +51,8 @@ import { ref, computed, watch, onMounted } from "vue";
 import type { FileNode } from "../stores/workspace";
 import { useWorkspaceStore } from "../stores/workspace";
 import { invoke } from "@tauri-apps/api/core";
+import { ICONS } from "../utils/icons";
+import { FILE_ICONS } from "../utils/fileIcons";
 
 // Module-level thumbnail cache to avoid re-fetching across component instances
 const thumbnailCache = new Map<string, string | null>();
@@ -57,6 +61,10 @@ const props = defineProps<{
   node: FileNode;
   depth: number;
 }>();
+
+const emit = defineEmits<{
+  (e: 'contextmenu', event: MouseEvent, node: FileNode): void
+}>()
 
 const workspace = useWorkspaceStore();
 const expanded = ref(props.depth < 1);
@@ -141,25 +149,7 @@ watch(() => props.node.path, async (newPath) => {
 
 const fileIcon = computed(() => {
   const ext = props.node.name.split(".").pop()?.toLowerCase() ?? "";
-  const icons: Record<string, string> = {
-    ts: "📘",
-    vue: "💚",
-    js: "📒",
-    json: "📋",
-    md: "📝",
-    css: "🎨",
-    html: "🌐",
-    rs: "🦀",
-    toml: "⚙",
-    yaml: "📋",
-    yml: "📋",
-    png: "🖼",
-    jpg: "🖼",
-    svg: "🖼",
-    txt: "📄",
-    py: "🐍",
-  };
-  return icons[ext] ?? "📄";
+  return FILE_ICONS[ext] ?? ICONS.file;
 });
 
 function handleClick() {
@@ -168,6 +158,10 @@ function handleClick() {
   } else {
     workspace.selectFile(props.node.path);
   }
+}
+
+function handleContextMenu(e: MouseEvent) {
+  emit('contextmenu', e, props.node);
 }
 </script>
 

@@ -1,14 +1,14 @@
 <template>
   <div class="agent-usage" v-if="hasUsage || loading">
     <div class="agent-usage-header" @click="showPopup = !showPopup">
-      <span class="agent-usage-icon">📊</span>
-      <span class="agent-usage-label">Token 用量</span>
+      <span class="agent-usage-icon">量</span>
+      <span class="agent-usage-label">令牌用量</span>
     </div>
 
     <Teleport to="body">
       <div v-if="showPopup" class="agent-usage-overlay" @click.self="showPopup = false">
         <div class="agent-usage-popup">
-          <div class="agent-usage-popup-title">Agent Token 用量统计</div>
+          <div class="agent-usage-popup-title">代理令牌用量统计</div>
 
           <div v-if="loading" class="agent-usage-loading">加载中...</div>
 
@@ -80,6 +80,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { useAgentUsage, type UsageStats } from "../composables/useAgentUsage";
+import { formatTokens } from "../utils/format";
 
 const { last5h, today, week, loading } = useAgentUsage();
 const showPopup = ref(false);
@@ -106,11 +107,5 @@ function barWidth(stats: UsageStats, type: "input" | "output"): string {
   if (total === 0) return "0%";
   const value = type === "input" ? stats.inputTokens : stats.outputTokens;
   return `${(value / maxTokens.value) * 100}%`;
-}
-
-function formatTokens(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return String(n);
 }
 </script>

@@ -79,6 +79,7 @@ fn is_cjk(ch: char) -> bool {
 
 /// Check whether the combined context for a room needs compression.
 /// `messages_total_chars` is the total character count of all messages in the room.
+#[allow(dead_code)]
 pub fn needs_compression(_messages_total_chars: usize, messages_text: &str) -> bool {
     let estimated = estimate_tokens(messages_text);
     estimated >= DEFAULT_THRESHOLD
@@ -150,6 +151,7 @@ impl ContextManager {
     }
 
     /// The message index from which new (uncompressed) messages start.
+    #[allow(dead_code)]
     pub fn uncompressed_start(&self, room_id: &str) -> usize {
         self.rooms
             .get(room_id)

@@ -3,7 +3,7 @@
     <Transition name="screenshot-toast">
       <div v-if="visible" class="screenshot-toast" @mouseenter="pauseDismiss" @mouseleave="resumeDismiss">
         <div class="screenshot-toast-header">
-          <span class="screenshot-toast-icon">📸</span>
+          <span class="screenshot-toast-icon">影</span>
           <span class="screenshot-toast-title">截图检测</span>
           <button class="screenshot-toast-close" @click="dismiss">×</button>
         </div>
@@ -31,6 +31,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
 import { useWorkspaceStore } from '../stores/workspace';
+import { formatSize } from '../utils/format';
 
 interface ScreenshotInfo {
   path: string;
@@ -48,17 +49,8 @@ let unlisten: UnlistenFn | null = null;
 
 const formattedSize = computed(() => {
   if (!info.value) return '';
-  const bytes = info.value.size;
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return formatSize(info.value.size);
 });
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
 
 async function showToast(screenshotInfo: ScreenshotInfo) {
   info.value = screenshotInfo;

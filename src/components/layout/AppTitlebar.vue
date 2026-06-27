@@ -14,7 +14,7 @@
         :title="settings.theme === 'dark' ? '切换亮色' : '切换暗色'"
         @click="settings.toggleTheme"
       >
-        {{ settings.theme === "dark" ? "☀" : "☾" }}
+        {{ settings.theme === "dark" ? "亮" : "暗" }}
       </button>
     </div>
   </header>

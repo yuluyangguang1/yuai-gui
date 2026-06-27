@@ -4,13 +4,20 @@
     <div class="chat-header">
       <span
         class="chat-agent-indicator"
-        :style="{ background: chatStore.chatMode === 'group' ? 'var(--gold)' : agentsStore.activeAgent.color }"
+        :style="{ background: chatStore.chatMode === 'group' ? 'var(--gold)' : currentAgent.color }"
       />
       <span class="chat-agent-name">
-        {{ chatStore.chatMode === 'group' ? '合' : agentsStore.activeAgent.glyph }}
+        {{ chatStore.chatMode === 'group' ? ICONS.group : currentAgent.glyph }}
       </span>
       <span class="chat-mode-label">
-        {{ chatStore.chatMode === 'group' ? '群聊' : agentsStore.activeAgent.chinese_name }}
+        {{ chatStore.chatMode === 'group' ? '群聊' : currentAgent.chinese_name }}
+      </span>
+      <!-- Agent status display -->
+      <span v-if="chatStore.chatMode !== 'group'" class="chat-agent-status" :class="'status-' + currentAgent.status">
+        {{ statusLabel(currentAgent.status) }}
+      </span>
+      <span v-else class="chat-agent-status status-group">
+        {{ agentsStore.enabledAgents.length }}/{{ agentsStore.agents.length }} 在线
       </span>
       <!-- Phase + round display -->
       <span v-if="chatStore.phase !== 'idle'" class="chat-phase">
@@ -23,11 +30,11 @@
       <span class="chat-spacer" />
       <!-- Beam mode toggle -->
       <button class="chat-mode-btn" :class="{ active: chatStore.chatMode === 'beam' }" @click="chatStore.setChatMode(chatStore.chatMode === 'beam' ? 'single' : 'beam')" title="并行提问模式">
-        束
+        {{ ICONS.beam }}
       </button>
       <!-- Room manager toggle (only in group mode) -->
       <button v-if="chatStore.chatMode === 'group'" class="room-toggle-btn" @click="showRoomManager = !showRoomManager" title="讨论组管理">
-        {{ showRoomManager ? '▾' : '▸' }} 组
+        {{ showRoomManager ? ICONS.collapse : ICONS.expand }} 组
       </button>
       <ContextPanel />
     </div>
@@ -45,7 +52,7 @@
           :class="msg.role"
         >
           <span class="chat-msg-meta" v-if="msg.role !== 'system'">
-            {{ msg.role === "user" ? "你" : agentsStore.activeAgent.glyph }}
+            {{ msg.role === "user" ? "你" : getAgentGlyph(msg.agentId || 'hermes') }}
             · {{ formatTime(msg.timestamp) }}
           </span>
           <div class="chat-msg-bubble">{{ msg.content }}</div>
@@ -139,7 +146,7 @@
           :disabled="!chatStore.inputText.trim()"
           @click="handleSend"
         >
-          ▶
+          {{ ICONS.play }}
         </button>
       </div>
     </div>
@@ -155,9 +162,16 @@ import ContextPanel from "./ContextPanel.vue";
 import RoomManager from "./RoomManager.vue";
 import BeamPanel from "./BeamPanel.vue";
 import type { AgentDef } from "../stores/agents";
+import { ICONS } from "../utils/icons";
 
 const chatStore = useChatStore();
 const agentsStore = useAgentsStore();
+
+// Current agent for single mode (uses chatTarget)
+const currentAgent = computed(() => {
+  if (chatStore.chatMode === 'group') return agentsStore.activeAgent;
+  return agentsStore.agents.find(a => a.id === chatStore.chatTarget) ?? agentsStore.activeAgent;
+});
 const workspaceStore = useWorkspaceStore();
 const showRoomManager = ref(false);
 
@@ -200,6 +214,15 @@ const phaseText = computed(() => {
 function getAgentGlyph(agentId: string): string {
   const agent = agentsStore.agents.find(a => a.id === agentId);
   return agent?.glyph ?? agentId;
+}
+
+function statusLabel(status: string): string {
+  switch (status) {
+    case 'running': return '运行中';
+    case 'error': return '错误';
+    case 'disabled': return '已禁用';
+    default: return '就绪';
+  }
 }
 
 function formatTime(ts: number): string {
@@ -335,7 +358,11 @@ onUnmounted(() => {
 
 async function handleSend() {
   if (mentionDropdown.visible) return;
-  await chatStore.sendMessage();
+  try {
+    await chatStore.sendMessage();
+  } catch (e) {
+    console.error('handleSend failed:', e);
+  }
   scrollToBottom();
 }
 
@@ -376,6 +403,38 @@ watch(
 .chat-agent-name {
   font-size: 14px;
   font-weight: 600;
+}
+
+.chat-agent-status {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+}
+
+.chat-agent-status.status-idle {
+  background: rgba(136,136,136,0.15);
+  color: #888;
+}
+
+.chat-agent-status.status-running {
+  background: rgba(76,175,80,0.15);
+  color: #4caf50;
+}
+
+.chat-agent-status.status-error {
+  background: rgba(244,67,54,0.15);
+  color: #f44336;
+}
+
+.chat-agent-status.status-disabled {
+  background: rgba(136,136,136,0.1);
+  color: #666;
+}
+
+.chat-agent-status.status-group {
+  background: rgba(224,176,255,0.1);
+  color: var(--gold, #e0b0ff);
 }
 
 .chat-phase {

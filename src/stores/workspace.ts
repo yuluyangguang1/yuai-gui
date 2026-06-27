@@ -25,6 +25,61 @@ export const useWorkspaceStore = defineStore("workspace", () => {
   const loading = ref(false);
   const showWorkspace = ref(true);
   let unlistenFileChanged: (() => void) | null = null;
+  // ── Sorting & Filtering ──
+  const sortBy = ref<'name' | 'mtime' | 'size'>('name');
+  const filterText = ref('');
+  const showHidden = ref(false);
+  const viewMode = ref<'list' | 'grid'>('list');
+
+  function sortEntries(entries: FileNode[]): FileNode[] {
+    const sorted = [...entries];
+    // Always directories first
+    sorted.sort((a, b) => {
+      if (a.is_dir !== b.is_dir) return a.is_dir ? -1 : 1;
+      switch (sortBy.value) {
+        case 'name':
+          return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+        case 'mtime':
+          // If we had mtime data we'd sort by it; fall back to name
+          return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+        case 'size':
+          // If we had size data we'd sort by it; fall back to name
+          return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+        default:
+          return 0;
+      }
+    });
+    return sorted;
+  }
+
+  function filterEntries(entries: FileNode[]): FileNode[] {
+    let result = entries;
+    // Hide hidden files (starting with .)
+    if (!showHidden.value) {
+      result = result.filter((e) => !e.name.startsWith('.'));
+    }
+    // Filter by text
+    if (filterText.value.trim()) {
+      const q = filterText.value.toLowerCase();
+      result = result.filter((e) => e.name.toLowerCase().includes(q));
+    }
+    return result;
+  }
+
+  function processTree(entries: FileNode[]): FileNode[] {
+    const filtered = filterEntries(entries);
+    const sorted = sortEntries(filtered);
+    // Recursively process children of directories
+    return sorted.map((node) => {
+      if (node.is_dir && node.children) {
+        return { ...node, children: processTree(node.children) };
+      }
+      return node;
+    });
+  }
+
+  const displayTree = computed(() => processTree(fileTree.value));
+
 
   // ── Favorites & Recent Files ──
   const favorites = ref<string[]>([]);
@@ -360,6 +415,12 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     followedAgentId,
     favorites,
     recentFiles,
+    // Sorting & Filtering
+    sortBy,
+    filterText,
+    showHidden,
+    viewMode,
+    displayTree,
     clearInbox,
     toggleWorkspace,
     openWorkspace,

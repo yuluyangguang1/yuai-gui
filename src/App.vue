@@ -2,7 +2,7 @@
   <div class="app-shell pattern-starfield">
     <AppTitlebar />
     <div class="app-main">
-      <AppRail @open-settings="previewMode = 'settings'" />
+      <AppRail @open-settings="previewMode = 'settings'" @open-skills="previewMode = 'skills'" />
       <HomeView v-show="workspaceStore.showWorkspace" />
 
       <div class="preview-col">
@@ -50,6 +50,10 @@
           <WechatPanel v-else-if="previewMode === 'wechat'" />
           <OrganizePanel v-else-if="previewMode === 'organize'" />
           <SettingsPanel v-else-if="previewMode === 'settings'" />
+          <SkillsPanel v-else-if="previewMode === 'skills'" />
+          <WriteGatePanel v-else-if="previewMode === 'write-gate'" />
+          <KanbanBoard v-else-if="previewMode === 'kanban'" />
+          <McpPanel v-else-if="previewMode === 'mcp'" />
         </div>
       </div>
 
@@ -58,6 +62,7 @@
     <AppStatusbar />
     <CommandPalette ref="commandPalette" @open-settings="previewMode = 'settings'" />
     <ScreenshotToast />
+    <ToastContainer />
   </div>
 </template>
 
@@ -73,12 +78,17 @@ import DiffViewer from "./components/DiffViewer.vue";
 import SettingsPanel from "./components/SettingsPanel.vue";
 import Terminal from "./components/Terminal.vue";
 import OrganizePanel from "./components/OrganizePanel.vue";
+import SkillsPanel from "./components/SkillsPanel.vue";
 
 import WechatPanel from "./components/WechatPanel.vue";
 import SessionReplay from "./components/SessionReplay.vue";
 import DiskUsage from "./components/DiskUsage.vue";
+import WriteGatePanel from "./components/WriteGatePanel.vue";
+import KanbanBoard from "./components/KanbanBoard.vue";
+import McpPanel from "./components/McpPanel.vue";
 import CommandPalette from "./components/CommandPalette.vue";
 import ScreenshotToast from "./components/ScreenshotToast.vue";
+import ToastContainer from "./components/ToastContainer.vue";
 import { useAgentsStore } from "./stores/agents";
 import { useWorkspaceStore } from "./stores/workspace";
 import { useChatStore } from "./stores/chat";
@@ -92,7 +102,7 @@ const updateStore = useUpdateStore();
 
 const commandPalette = ref<InstanceType<typeof CommandPalette> | null>(null);
 
-const previewMode = ref<'code' | 'diff' | 'terminal' | 'wechat' | 'organize' | 'settings' | 'replay' | 'disk'>('code');
+const previewMode = ref<'code' | 'diff' | 'terminal' | 'wechat' | 'organize' | 'settings' | 'replay' | 'disk' | 'skills' | 'write-gate' | 'kanban' | 'mcp'>('code');
 const activeTerminalAgent = ref<string | null>(null);
 const previewTabs = [
   { id: 'code' as const, label: '代码' },
@@ -102,6 +112,10 @@ const previewTabs = [
   { id: 'disk' as const, label: '磁盘' },
   { id: 'wechat' as const, label: '微信' },
   { id: 'organize' as const, label: '整理' },
+  { id: 'skills' as const, label: '技能' },
+  { id: 'write-gate' as const, label: '写入' },
+  { id: 'kanban' as const, label: '看板' },
+  { id: 'mcp' as const, label: 'MCP' },
   { id: 'settings' as const, label: '配置' },
 ];
 

@@ -173,7 +173,7 @@
           class="wechat-toolbar-btn"
           @click="wechatStore.checkConnection()"
           title="检查连接"
-        >🔄</button>
+        >↻</button>
         <span class="wechat-toolbar-status" :class="{ connected: wechatStore.connected }">
           {{ wechatStore.connected ? '在线' : '离线' }}
         </span>
@@ -320,7 +320,7 @@ onMounted(() => {
 
 .wechat-disconnect-btn:hover {
   color: var(--vermilion-glow);
-  border-color: var(--vermilion-glow)40;
+  border-color: color-mix(in srgb, var(--vermilion-glow) 40%, transparent);
 }
 
 /* ── Login ── */

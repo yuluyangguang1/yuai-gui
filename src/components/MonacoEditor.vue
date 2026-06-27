@@ -12,7 +12,7 @@
         class="monaco-btn"
         :class="{ active: wordWrap }"
         @click="toggleWordWrap"
-        title="Toggle Word Wrap"
+        title="切换自动换行"
       >
         ↩
       </button>

@@ -1,7 +1,7 @@
 <template>
   <div class="project-memory" v-if="sessions.length > 0 || loading">
     <div class="project-memory-header">
-      <span class="project-memory-title">🧠 AI 历史</span>
+      <span class="project-memory-title">忆 AI 历史</span>
       <span class="project-memory-count" v-if="sessions.length > 0">{{ sessions.length }}</span>
     </div>
     <div v-if="loading" class="project-memory-loading">加载中...</div>
@@ -48,6 +48,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { useProjectMemory } from "../composables/useProjectMemory";
+import { timeAgo, formatNumber } from "../utils/format";
 
 const { sessions, loading } = useProjectMemory();
 const expandedId = ref<string | null>(null);
@@ -60,22 +61,5 @@ const visibleSessions = computed(() =>
 
 function toggleExpand(id: string) {
   expandedId.value = expandedId.value === id ? null : id;
-}
-
-function timeAgo(ts: number): string {
-  if (!ts) return "";
-  const seconds = Math.floor((Date.now() - ts) / 1000);
-  if (seconds < 60) return "刚刚";
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}分钟前`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}小时前`;
-  const days = Math.floor(seconds / 86400);
-  if (days < 7) return `${days}天前`;
-  return `${Math.floor(days / 7)}周前`;
-}
-
-function formatNumber(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return String(n);
 }
 </script>

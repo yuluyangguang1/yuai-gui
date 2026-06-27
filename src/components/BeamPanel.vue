@@ -41,22 +41,23 @@
       </div>
 
       <!-- Thinking placeholders -->
-      <div
-        v-for="result in beamStore.results"
-        :key="result.agentId"
-        v-if="beamStore.isRunning"
-        class="beam-thinking"
-        :class="result.status"
-      >
-        <span
-          class="beam-thinking-dot"
-          :style="{ background: getAgentColor(result.agentId) }"
-        />
-        <span class="beam-thinking-name">{{ getAgentGlyph(result.agentId) }}</span>
-        <span v-if="result.status === 'thinking'" class="beam-thinking-text">思考中...</span>
-        <span v-else-if="result.status === 'done'" class="beam-thinking-text done">完成 · {{ result.duration }}ms</span>
-        <span v-else-if="result.status === 'error'" class="beam-thinking-text error">错误</span>
-      </div>
+      <template v-if="beamStore.isRunning">
+       <div
+         v-for="result in beamStore.results"
+         :key="result.agentId"
+         class="beam-thinking"
+         :class="result.status"
+       >
+         <span
+           class="beam-thinking-dot"
+           :style="{ background: getAgentColor(result.agentId) }"
+         />
+         <span class="beam-thinking-name">{{ getAgentGlyph(result.agentId) }}</span>
+         <span v-if="result.status === 'thinking'" class="beam-thinking-text">思考中...</span>
+         <span v-else-if="result.status === 'done'" class="beam-thinking-text done">完成 · {{ result.duration }}ms</span>
+         <span v-else-if="result.status === 'error'" class="beam-thinking-text error">错误</span>
+       </div>
+      </template>
     </div>
 
     <!-- Comparison panel -->

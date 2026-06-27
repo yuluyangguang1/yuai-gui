@@ -370,7 +370,9 @@ const MAX_MENTION_DEPTH: u32 = 4;
 /// A detected mention range in text.
 #[derive(Debug, Clone)]
 pub struct MentionRange {
+    #[allow(dead_code)]
     pub start: usize,       // byte offset of '@'
+    #[allow(dead_code)]
     pub end: usize,         // byte offset after the name
     pub target: String,     // the name after '@'
 }

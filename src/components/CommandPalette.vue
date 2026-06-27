@@ -36,6 +36,7 @@ import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue";
 import { useAgentsStore } from "../stores/agents";
 import { useWorkspaceStore } from "../stores/workspace";
 import { useSettingsStore } from "../stores/settings";
+import { ICONS } from "../utils/icons";
 
 interface CommandItem {
   id: string;
@@ -87,7 +88,7 @@ const allItems = computed<CommandItem[]>(() => {
         items.push({
           id: `file-${node.path}`,
           label: node.name,
-          icon: "📄",
+          icon: ICONS.file,
           hint: prefix + node.name,
           category: "file",
           action: () => {
@@ -104,7 +105,7 @@ const allItems = computed<CommandItem[]>(() => {
   items.push({
     id: "action-theme",
     label: "切换主题",
-    icon: "🎨",
+    icon: "色",
     hint: settingsStore.theme === "dark" ? "当前: 暗色" : "当前: 亮色",
     category: "action",
     action: () => settingsStore.toggleTheme(),

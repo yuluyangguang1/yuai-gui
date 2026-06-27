@@ -128,7 +128,7 @@ pub fn get_thumbnail(
     // Encode to JPEG into a buffer
     let mut buf: Vec<u8> = Vec::new();
     let cursor = Cursor::new(&mut buf);
-    let mut encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(cursor, 75);
+    let encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(cursor, 75);
     resized
         .write_with_encoder(encoder)
         .map_err(|e| format!("jpeg encode: {}", e))?;

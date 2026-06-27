@@ -1113,7 +1113,7 @@ html, body {
   background: transparent; cursor: pointer; transition: all .2s;
   min-width: 70px;
 }
-.terminal-agent-btn:hover { background: var(--hover); transform: translateY(-2px); }
+.terminal-agent-btn:hover { background: var(--bg-hover); transform: translateY(-2px); }
 
 /* Terminal component styles */
 .terminal-container { display: flex; flex-direction: column; height: 100%; }

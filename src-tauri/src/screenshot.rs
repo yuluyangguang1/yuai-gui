@@ -30,17 +30,7 @@ impl Default for ScreenshotState {
 }
 
 impl ScreenshotState {
-    fn is_duplicate(&self, path: &str) -> bool {
-        let mut recent = self.recent.lock().unwrap();
-        let now = Instant::now();
-        // Purge old entries (>3s)
-        recent.retain(|(_, t)| now.duration_since(*t) < Duration::from_secs(3));
-        if recent.iter().any(|(p, _)| p == path) {
-            return true;
-        }
-        recent.push((path.to_string(), now));
-        false
-    }
+    // is_duplicate was here but was unused — dedup is done inline in the watcher thread
 }
 
 /// Get the macOS screenshot directory from system preferences.

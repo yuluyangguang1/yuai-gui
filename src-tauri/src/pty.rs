@@ -258,6 +258,9 @@ pub fn spawn_agent(
                 }
             }
             "openai_env" | "custom_env" | _ => {
+                if !p.model.is_empty() {
+                    command.env("OPENAI_MODEL", &p.model);
+                }
                 if !p.base_url.is_empty() {
                     command.env("OPENAI_BASE_URL", &p.base_url);
                 }

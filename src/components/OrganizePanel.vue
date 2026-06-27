@@ -1,7 +1,7 @@
 <template>
   <div class="organize-panel">
     <div class="organize-header">
-      <span class="organize-title">🗂️ AI 整理</span>
+      <span class="organize-title">理 AI 整理</span>
     </div>
 
     <!-- Preferences -->
@@ -55,7 +55,7 @@
     <!-- Actions -->
     <div class="organize-actions">
       <button class="organize-btn" :disabled="!workspaceStore.path" @click="startOrganize">
-        🤖 开始整理
+        AI 开始整理
       </button>
     </div>
   </div>

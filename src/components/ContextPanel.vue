@@ -46,6 +46,7 @@
 import { ref, computed } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { useChatStore } from "../stores/chat";
+import { formatTokens } from "../utils/format";
 
 import { useWorkspaceStore } from "../stores/workspace";
 
@@ -66,11 +67,6 @@ const storeStatusText = computed(() => {
 const progressPercent = computed(() => {
   return Math.min(100, (chatStore.tokenEstimate / chatStore.TOKEN_THRESHOLD) * 100);
 });
-
-function formatTokens(n: number): string {
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
-  return String(n);
-}
 
 async function handleCompress() {
   // Get context prefix

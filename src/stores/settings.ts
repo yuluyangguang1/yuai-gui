@@ -1,7 +1,9 @@
 import { defineStore } from "pinia";
 import { ref, watch } from "vue";
 
-export type ThemeMode = "dark" | "light";
+export type ThemeMode = "dark" | "light" | "volt" | "warm" | "editorial";
+
+const ALL_THEMES: ThemeMode[] = ["dark", "light", "volt", "warm", "editorial"];
 
 export const useSettingsStore = defineStore("settings", () => {
   const theme = ref<ThemeMode>("dark");
@@ -10,8 +12,8 @@ export const useSettingsStore = defineStore("settings", () => {
   function load() {
     try {
       const saved = localStorage.getItem("yuai-theme");
-      if (saved === "light" || saved === "dark") {
-        theme.value = saved;
+      if (saved && ALL_THEMES.includes(saved as ThemeMode)) {
+        theme.value = saved as ThemeMode;
       }
     } catch {
       // ignore
@@ -32,7 +34,8 @@ export const useSettingsStore = defineStore("settings", () => {
   }
 
   function toggleTheme() {
-    theme.value = theme.value === "dark" ? "light" : "dark";
+    const idx = ALL_THEMES.indexOf(theme.value);
+    theme.value = ALL_THEMES[(idx + 1) % ALL_THEMES.length];
     applyTheme();
     save();
   }

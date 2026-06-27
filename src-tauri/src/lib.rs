@@ -17,6 +17,10 @@ mod thumbnail;
 mod updater;
 mod watcher;
 mod window;
+mod skills;
+mod write_gate;
+mod kanban;
+mod mcp;
 
 // ═══════════════════════════════════════════
 // Shared Types
@@ -72,6 +76,45 @@ fn save_provider(app: tauri::AppHandle, provider: config::ProviderConfig) -> Res
 fn get_active_provider(app: tauri::AppHandle, app_type: String) -> Result<Option<config::ProviderConfig>, String> {
     let root = agents::bundle_root(&app);
     config::get_active_provider(&root, &app_type)
+}
+
+/// Test connection to a provider by making a lightweight API call.
+#[tauri::command]
+fn test_connection(base_url: String, api_key: String, app_type: String) -> Result<String, String> {
+    let client = reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(10))
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let normalized_url = config::normalize_url(&app_type, &base_url);
+
+    let (test_url, headers) = match app_type.as_str() {
+        "claude" => {
+            let url = format!("{}/v1/messages", normalized_url);
+            let mut h = reqwest::header::HeaderMap::new();
+            h.insert("x-api-key", api_key.parse().map_err(|e: reqwest::header::InvalidHeaderValue| e.to_string())?);
+            h.insert("anthropic-version", "2023-06-01".parse().unwrap());
+            (url, h)
+        }
+        _ => {
+            let url = format!("{}/models", normalized_url);
+            let mut h = reqwest::header::HeaderMap::new();
+            h.insert("Authorization", format!("Bearer {}", api_key).parse().map_err(|e: reqwest::header::InvalidHeaderValue| e.to_string())?);
+            (url, h)
+        }
+    };
+
+    let resp = client.get(&test_url).headers(headers).send().map_err(|e| format!("连接失败: {}", e))?;
+    let status = resp.status();
+
+    if status.is_success() || status.as_u16() == 401 || status.as_u16() == 403 {
+        // 401/403 means the endpoint is reachable but auth failed — still "connected"
+        Ok(format!("✓ 连接成功 (HTTP {})", status.as_u16()))
+    } else if status.as_u16() == 404 {
+        Ok(format!("✓ 端点可达 (HTTP 404 — 可能需要检查 URL 路径)"))
+    } else {
+        Err(format!("连接失败: HTTP {}", status.as_u16()))
+    }
 }
 
 // ═══════════════════════════════════════════
@@ -150,6 +193,7 @@ pub fn run() {
             get_providers,
             save_provider,
             get_active_provider,
+            test_connection,
             files::read_dir_tree,
             files::read_file_content,
             files::list_dir,
@@ -186,6 +230,34 @@ pub fn run() {
             recording::delete_recording,
             updater::check_update,
             disk::get_disk_usage,
+            skills::get_skills,
+            skills::toggle_skill,
+            skills::trash_skill,
+            skills::update_skill_stats,
+            // Write Gate
+            write_gate::write_gate_list,
+            write_gate::write_gate_diff,
+            write_gate::write_gate_approve,
+            write_gate::write_gate_reject,
+            // Kanban
+            kanban::kanban_list_boards,
+            kanban::kanban_list_tasks,
+            kanban::kanban_get_task,
+            kanban::kanban_get_stats,
+            kanban::kanban_get_assignees,
+            kanban::kanban_create_task,
+            kanban::kanban_complete_tasks,
+            kanban::kanban_block_task,
+            kanban::kanban_unblock_tasks,
+            kanban::kanban_assign_task,
+            // MCP
+            mcp::mcp_list_servers,
+            mcp::mcp_list_tools,
+            mcp::mcp_add_server,
+            mcp::mcp_update_server,
+            mcp::mcp_remove_server,
+            mcp::mcp_test_server,
+            mcp::mcp_reload,
         ])
         .run(tauri::generate_context!())
         .expect("error while running yuai-gui");

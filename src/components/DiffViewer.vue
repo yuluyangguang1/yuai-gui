@@ -36,14 +36,22 @@ async function loadChanges() {
 
 async function acceptFile(path: string) {
   if (!workspace.path) return;
-  await invoke('accept_file', { cwd: workspace.path, path });
-  await loadChanges();
+  try {
+    await invoke('accept_file', { cwd: workspace.path, path });
+    await loadChanges();
+  } catch (e) {
+    console.error('accept_file failed:', e);
+  }
 }
 
 async function revertFile(path: string) {
   if (!workspace.path) return;
-  await invoke('revert_file', { cwd: workspace.path, path });
-  await loadChanges();
+  try {
+    await invoke('revert_file', { cwd: workspace.path, path });
+    await loadChanges();
+  } catch (e) {
+    console.error('revert_file failed:', e);
+  }
 }
 
 async function acceptAll() {

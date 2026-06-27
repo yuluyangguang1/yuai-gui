@@ -15,6 +15,7 @@ import {
 import type { WechatAccount, WechatMessage } from '../composables/useWechat'
 import { useAgentsStore } from './agents'
 import { useWorkspaceStore } from './workspace'
+import { cleanAnsi } from '../utils/format'
 
 // ── Types ──
 
@@ -41,12 +42,6 @@ const WX_FILE_PROTOCOL = `如果要你把某个文件或图片发到微信，在
 const WX_TERM_PROTOCOL = `要往某个终端输入内容，在回复末尾追加：<term n="编号">要输入的文本</term>`
 
 // ── Tag Parsing Helpers ──
-
-/** Strip ANSI escape sequences from a string. */
-function cleanAnsi(s: string): string {
-  // eslint-disable-next-line no-control-regex
-  return s.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').replace(/\x1b\][^\x07]*\x07/g, '')
-}
 
 /** Wait for stable output — resolves when no new data arrives for `idleMs`. */
 function waitForStableOutput(

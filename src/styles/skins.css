@@ -1,0 +1,204 @@
+/* ══════════════════════════════════════════════
+   yuai-gui 皮肤系统（参考 FanBox 三套皮肤）
+   ══════════════════════════════════════════════ */
+
+/* ── 皮肤 1 · 青瓷墨玉（默认深色）── */
+[data-theme="dark"], :root {
+  --bg-primary: #0b1a1a;
+  --bg-secondary: #0f2424;
+  --bg-tertiary: #132e2e;
+  --bg-surface: #163838;
+  --bg-elevated: #1a4242;
+  --bg-hover: #1e4c4c;
+  --text-primary: #e8ddd0;
+  --text-secondary: #b8a898;
+  --text-muted: #887868;
+  --text-inverse: #0b1a1a;
+  --accent: #5ccfb8;
+  --accent-hover: #7adbc9;
+  --accent-muted: #3a9980;
+  --gold: #c9a85c;
+  --gold-hover: #d4b970;
+  --gold-muted: #998040;
+  --border: #2a4a4a;
+  --border-light: #1e3a3a;
+  --border-accent: rgba(92, 207, 184, 0.3);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --radius: 8px;
+  --font-display: "Ma Shan Zheng", cursive;
+  --font-ui: "LXGW WenKai", "Noto Serif SC", sans-serif;
+  --font-mono: "JetBrains Mono", "Consolas", monospace;
+  color-scheme: dark;
+}
+
+/* ── 皮肤 2 · 宣纸暖光（亮色）── */
+[data-theme="light"] {
+  --bg-primary: #faf6f0;
+  --bg-secondary: #f4ede4;
+  --bg-tertiary: #ede5d8;
+  --bg-surface: #e8dfd0;
+  --bg-elevated: #e0d5c4;
+  --bg-hover: #d8cab8;
+  --text-primary: #3a3530;
+  --text-secondary: #5a5248;
+  --text-muted: #8a7e70;
+  --text-inverse: #faf6f0;
+  --accent: #2a8f7a;
+  --accent-hover: #3aa890;
+  --accent-muted: #207060;
+  --gold: #8a6a2a;
+  --gold-hover: #a07a30;
+  --gold-muted: #6a5020;
+  --border: #d0c4b0;
+  --border-light: #e0d4c0;
+  --border-accent: rgba(42, 143, 122, 0.3);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --radius: 8px;
+  color-scheme: light;
+}
+
+/* ── 皮肤 3 · 终端核 Volt（参考 FanBox terminal 皮肤）── */
+[data-theme="volt"] {
+  --bg-primary: #0b0c0a;
+  --bg-secondary: #131410;
+  --bg-tertiary: #1c1e17;
+  --bg-surface: #0e0f0c;
+  --bg-elevated: #252820;
+  --bg-hover: #2a2d24;
+  --text-primary: #f2f2ea;
+  --text-secondary: #c0c2b0;
+  --text-muted: #9b9d8c;
+  --text-inverse: #0b0c0a;
+  --accent: #cdf24b;
+  --accent-hover: #d8f56a;
+  --accent-muted: #a0c030;
+  --gold: #e6c07b;
+  --gold-hover: #f0d090;
+  --gold-muted: #b09050;
+  --border: #262920;
+  --border-light: #1e2018;
+  --border-accent: rgba(205, 242, 75, 0.3);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.6);
+  --radius: 4px;
+  --font-display: ui-monospace, "SF Mono", Menlo, monospace;
+  --font-ui: ui-monospace, "SF Mono", Menlo, monospace;
+  --font-brush: ui-monospace, "SF Mono", Menlo, monospace;
+  --font-serif: ui-monospace, "SF Mono", Menlo, monospace;
+  --font-body: ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: dark;
+}
+
+/* ── 皮肤 4 · 暖色纸感（参考 FanBox warm 皮肤）── */
+[data-theme="warm"] {
+  --bg-primary: #f5f0e8;
+  --bg-secondary: #faf6ef;
+  --bg-tertiary: #ece2d2;
+  --bg-surface: #f1ebdf;
+  --bg-elevated: #e8dfd0;
+  --bg-hover: #e0d5c4;
+  --text-primary: #1a1a18;
+  --text-secondary: #4a4540;
+  --text-muted: #6b6355;
+  --text-inverse: #fffaf3;
+  --accent: #cc785c;
+  --accent-hover: #d88a70;
+  --accent-muted: #a06040;
+  --gold: #c2893a;
+  --gold-hover: #d09a4a;
+  --gold-muted: #907020;
+  --border: #e3d9c8;
+  --border-light: #ede5d8;
+  --border-accent: rgba(204, 120, 92, 0.3);
+  --shadow-sm: 0 1px 2px rgba(90, 66, 42, 0.08);
+  --shadow-md: 0 4px 12px rgba(90, 66, 42, 0.12);
+  --shadow-lg: 0 14px 44px rgba(90, 66, 42, 0.18);
+  --radius: 9px;
+  --font-display: "Fraunces", Georgia, "Songti SC", serif;
+  --font-ui: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+  --font-brush: "Fraunces", Georgia, "Songti SC", serif;
+  --font-serif: "Fraunces", Georgia, "Songti SC", serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+  color-scheme: light;
+}
+
+/* ── 皮肤 5 · 编辑式粗野（参考 FanBox editorial 皮肤）── */
+[data-theme="editorial"] {
+  --bg-primary: #f4f1ea;
+  --bg-secondary: #ece8dd;
+  --bg-tertiary: #e4dfd2;
+  --bg-surface: #f4f1ea;
+  --bg-elevated: #e0dbd0;
+  --bg-hover: #d8d3c8;
+  --text-primary: #0a0a0a;
+  --text-secondary: #3a3830;
+  --text-muted: #57534a;
+  --text-inverse: #ffffff;
+  --accent: #ff433d;
+  --accent-hover: #ff5a55;
+  --accent-muted: #cc3530;
+  --gold: #0000ee;
+  --gold-hover: #3333ff;
+  --gold-muted: #0000aa;
+  --border: #d6d1c3;
+  --border-light: #e0dbd0;
+  --border-accent: rgba(255, 67, 61, 0.3);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.22);
+  --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.3);
+  --radius: 0px;
+  --font-display: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+  --font-ui: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+  --font-brush: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+  --font-serif: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+  color-scheme: light;
+}
+
+/* ── 编辑式皮肤特殊样式 ── */
+[data-theme="editorial"] .app-titlebar {
+  border-bottom: 2px solid var(--text-primary);
+}
+
+[data-theme="editorial"] .file-tree-node {
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+}
+
+[data-theme="editorial"] .chat-msg-bubble {
+  border-radius: 0;
+}
+
+[data-theme="editorial"] .cmdk-panel {
+  border: 2px solid var(--text-primary);
+  border-radius: 0;
+  box-shadow: 10px 10px 0 rgba(10, 10, 10, 0.9);
+  backdrop-filter: none;
+}
+
+/* ── 暖色皮肤纸张纹理 ── */
+[data-theme="warm"] body {
+  background-image: radial-gradient(rgba(140, 110, 70, 0.05) 1px, transparent 1px);
+  background-size: 4px 4px;
+}
+
+/* ── 键盘可达性 ── */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-radius: 3px;
+}
+
+/* ── 降噪：尊重系统「减少动态效果」 ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

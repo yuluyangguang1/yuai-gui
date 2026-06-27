@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import { invoke, Channel } from "@tauri-apps/api/core";
 import { useAgentsStore } from "./agents";
+import { cleanAnsi } from "../utils/format";
 
 export type ChatPhase = "idle" | "thinking" | "generating" | "tool_call" | "error";
 
@@ -11,12 +12,6 @@ export interface StreamingMessage {
   agentId: string;
 }
 
-/** Strip ANSI escape sequences from a string. */
-function cleanAnsi(s: string): string {
-  // eslint-disable-next-line no-control-regex
-  return s.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, "").replace(/\x1b\][^\x07]*\x07/g, "");
-}
-
 export const useChatStore = defineStore("chat", () => {
   type ChatMode = 'single' | 'group' | 'beam';
   const chatMode = ref<ChatMode>('single');
@@ -24,6 +19,12 @@ export const useChatStore = defineStore("chat", () => {
 
   function setChatMode(mode: ChatMode) {
     chatMode.value = mode;
+    // Reset group chat state when switching modes
+    showDecision.value = false;
+    execStatus.value = 'idle';
+    round.value = 0;
+    streamingMessage.value = null;
+    phase.value = 'idle';
   }
 
   function setChatTarget(agentId: string) {
@@ -167,7 +168,16 @@ export const useChatStore = defineStore("chat", () => {
       onData: on_data,
     });
     agentSessions.value.set(agentId, ptyId);
-    await new Promise((r) => setTimeout(r, 2000)); // wait for agent to initialize
+    // Wait for agent ready signal: poll buffer every 500ms up to 5s for
+    // first non-empty output, then clear init noise.
+    const READY_POLL_MS = 500;
+    const READY_MAX_MS = 5000;
+    let waited = 0;
+    while (waited < READY_MAX_MS) {
+      if (agentBuffers[agentId] && agentBuffers[agentId].length > 0) break;
+      await new Promise((r) => setTimeout(r, READY_POLL_MS));
+      waited += READY_POLL_MS;
+    }
     agentBuffers[agentId] = ""; // clear init output
     return ptyId;
   }
@@ -182,32 +192,33 @@ export const useChatStore = defineStore("chat", () => {
     return new Promise((resolve) => {
       let lastLen = 0;
       let stableCount = 0;
+      let settled = false;
+
+      const settle = (value: string) => {
+        if (settled) return;
+        settled = true;
+        clearInterval(abortCheck);
+        clearInterval(iv);
+        clearTimeout(timeout);
+        resolve(value);
+      };
 
       const abortCheck = setInterval(() => {
         if (discussionAborted.value) {
-          clearInterval(abortCheck);
-          clearInterval(iv);
-          clearTimeout(timeout);
-          resolve(agentBuffers[agentId] ? cleanAnsi(agentBuffers[agentId]) : "（已中断）");
+          settle(agentBuffers[agentId] ? cleanAnsi(agentBuffers[agentId]) : "（已中断）");
         }
       }, 500);
 
       const iv = setInterval(() => {
         const buf = agentBuffers[agentId] || "";
         if (buf.includes("[process exited]")) {
-          clearInterval(iv);
-          clearInterval(abortCheck);
-          clearTimeout(timeout);
-          resolve(cleanAnsi(buf.replace("[process exited]", "").trim()) || "（进程已退出）");
+          settle(cleanAnsi(buf.replace("[process exited]", "").trim()) || "（进程已退出）");
           return;
         }
         if (buf.length === lastLen && buf.length > 0) {
           stableCount++;
           if (stableCount >= 2) {
-            clearInterval(iv);
-            clearInterval(abortCheck);
-            clearTimeout(timeout);
-            resolve(cleanAnsi(buf));
+            settle(cleanAnsi(buf));
           }
         } else {
           stableCount = 0;
@@ -216,9 +227,7 @@ export const useChatStore = defineStore("chat", () => {
       }, 1000);
 
       const timeout = setTimeout(() => {
-        clearInterval(iv);
-        clearInterval(abortCheck);
-        resolve(agentBuffers[agentId] ? cleanAnsi(agentBuffers[agentId]) : "（无响应）");
+        settle(agentBuffers[agentId] ? cleanAnsi(agentBuffers[agentId]) : "（无响应）");
       }, timeoutMs);
     });
   }
@@ -267,7 +276,7 @@ export const useChatStore = defineStore("chat", () => {
         agentBuffers[agentId] = "";
         await invoke("pty_write", { id: ptyId, data: text + "\n" });
 
-        const response = await captureAgentResponse(agentId, 60_000);
+        const response = await captureAgentResponse(agentId, 30_000);
         finalizeStreaming();
 
         // Update the last assistant message content to the clean response
@@ -385,7 +394,9 @@ export const useChatStore = defineStore("chat", () => {
         } catch (e) {
           console.error(`Agent ${agentId} error:`, e);
           finalizeStreaming();
-          addMessage("system", `${agentId}: ${String(e).slice(0, 200)}`);
+          streamingMessage.value = null;
+          const agentName = agentsStore.agents.find(a => a.id === agentId)?.chinese_name || agentId;
+          addMessage("system", `${agentName} 无法响应: ${String(e).slice(0, 100)}`);
         }
       }
 
@@ -500,6 +511,24 @@ export const useChatStore = defineStore("chat", () => {
       session.messages = [];
     }
     streamingMessage.value = null;
+    if (streamingStableTimer) {
+      clearTimeout(streamingStableTimer);
+      streamingStableTimer = null;
+    }
+  }
+
+  /** Cleanup: release all timers and PTY sessions to prevent memory leaks. */
+  function cleanup() {
+    if (streamingStableTimer) {
+      clearTimeout(streamingStableTimer);
+      streamingStableTimer = null;
+    }
+    streamingMessage.value = null;
+    // Clear agent buffers
+    for (const key of Object.keys(agentBuffers)) {
+      delete agentBuffers[key];
+    }
+    agentSessions.value.clear();
   }
 
   async function loadHistory(workspacePathArg: string) {
@@ -577,6 +606,7 @@ export const useChatStore = defineStore("chat", () => {
     setPhase,
     setWorkspacePath,
     clearMessages,
+    cleanup,
     loadHistory,
     persistMessage,
   };
