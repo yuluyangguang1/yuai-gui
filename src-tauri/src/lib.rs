@@ -22,6 +22,7 @@ mod write_gate;
 mod kanban;
 mod mcp;
 mod usage;
+mod worktree;
 
 // ═══════════════════════════════════════════
 // Shared Types
@@ -264,6 +265,13 @@ pub fn run() {
             usage::get_usage_stats,
             usage::get_usage_by_model,
             usage::get_usage_by_provider,
+            // Worktree isolation
+            worktree::worktree_create,
+            worktree::worktree_list,
+            worktree::worktree_remove,
+            worktree::get_agent_changes,
+            worktree::get_agent_file_diff,
+            worktree::get_agent_file_content,
         ])
         .run(tauri::generate_context!())
         .expect("error while running yuai-gui");

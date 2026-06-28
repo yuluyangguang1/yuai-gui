@@ -35,6 +35,16 @@ export const useWorkspaceStore = defineStore("workspace", () => {
   const loading = ref(false);
   const showWorkspace = ref(true);
   let unlistenFileChanged: (() => void) | null = null;
+
+  // ── Agent Workspace Isolation (from Orca) ──
+  /** Per-agent isolated file changes. Each agent sees its own changes. */
+  const agentFileChanges = ref<Map<string, Set<string>>>(new Map()); // agentId -> changed file paths
+  /** Shared files visible to all agents. */
+  const sharedFiles = ref<Set<string>>(new Set());
+  /** Active isolation mode. */
+  const isolationMode = ref<'shared' | 'isolated'>('shared');
+  /** The agent whose workspace is currently being viewed (null = shared view). */
+  const viewingAgentId = ref<string | null>(null);
   // ── Sorting & Filtering ──
   const sortBy = ref<'name' | 'mtime' | 'size'>('name');
   const filterText = ref('');
@@ -477,6 +487,86 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     }
   }
 
+  // ── Agent Workspace Isolation Functions ──
+
+  /** Track a file change for a specific agent. */
+  function trackAgentChange(agentId: string, filePath: string) {
+    const existing = agentFileChanges.value.get(agentId) ?? new Set();
+    existing.add(filePath);
+    agentFileChanges.value = new Map(agentFileChanges.value.set(agentId, existing));
+  }
+
+  /** Get file changes for a specific agent. */
+  function getAgentChanges(agentId: string): string[] {
+    const changes = agentFileChanges.value.get(agentId);
+    return changes ? [...changes] : [];
+  }
+
+  /** Get all changed files visible to the current view. */
+  function getVisibleChanges(): string[] {
+    if (isolationMode.value === 'shared') {
+      return [...sharedFiles.value];
+    }
+    if (viewingAgentId.value) {
+      return getAgentChanges(viewingAgentId.value);
+    }
+    // Show all agent changes combined
+    const all = new Set<string>();
+    for (const changes of agentFileChanges.value.values()) {
+      for (const f of changes) all.add(f);
+    }
+    return [...all];
+  }
+
+  /** Mark a file as shared (visible to all agents). */
+  function markShared(filePath: string) {
+    sharedFiles.value.add(filePath);
+    sharedFiles.value = new Set(sharedFiles.value);
+  }
+
+  /** Remove a file from shared set. */
+  function unmarkShared(filePath: string) {
+    sharedFiles.value.delete(filePath);
+    sharedFiles.value = new Set(sharedFiles.value);
+  }
+
+  /** Set the isolation mode. */
+  function setIsolationMode(mode: 'shared' | 'isolated') {
+    isolationMode.value = mode;
+  }
+
+  /** Set which agent's workspace to view. */
+  function viewAgentWorkspace(agentId: string | null) {
+    viewingAgentId.value = agentId;
+    isolationMode.value = agentId ? 'isolated' : 'shared';
+  }
+
+  /** Merge an agent's changes into the shared workspace on completion. */
+  function mergeAgentWorkspace(agentId: string) {
+    const changes = agentFileChanges.value.get(agentId);
+    if (!changes) return;
+    for (const f of changes) {
+      sharedFiles.value.add(f);
+    }
+    sharedFiles.value = new Set(sharedFiles.value);
+    // Clear agent-specific tracking after merge
+    agentFileChanges.value.delete(agentId);
+    agentFileChanges.value = new Map(agentFileChanges.value);
+  }
+
+  /** Clear agent-specific changes. */
+  function clearAgentChanges(agentId: string) {
+    agentFileChanges.value.delete(agentId);
+    agentFileChanges.value = new Map(agentFileChanges.value);
+  }
+
+  const agentChangesCount = computed(() => {
+    const changes = viewingAgentId.value
+      ? agentFileChanges.value.get(viewingAgentId.value)
+      : null;
+    return changes?.size ?? 0;
+  });
+
   return {
     path,
     fileTree,
@@ -523,5 +613,20 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     isFavorite,
     addRecent,
     initWorkspace,
+    // Agent Workspace Isolation
+    agentFileChanges,
+    sharedFiles,
+    isolationMode,
+    viewingAgentId,
+    agentChangesCount,
+    trackAgentChange,
+    getAgentChanges,
+    getVisibleChanges,
+    markShared,
+    unmarkShared,
+    setIsolationMode,
+    viewAgentWorkspace,
+    mergeAgentWorkspace,
+    clearAgentChanges,
   };
 });
