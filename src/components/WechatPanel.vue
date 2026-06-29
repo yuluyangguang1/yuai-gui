@@ -38,7 +38,7 @@
       </div>
 
       <div v-else-if="wechatStore.loginStatus === 'scanned'" class="wechat-login-scanned">
-        <div class="wechat-scanned-icon">✓</div>
+        <div class="wechat-scanned-icon"><TIcon name="check" :size="20" /></div>
         <p class="wechat-scanned-hint">已扫码，请在手机上确认登录</p>
       </div>
 
@@ -118,7 +118,7 @@
             class="wechat-send-btn"
             :disabled="!inputText.trim()"
             @click="handleSend"
-          >▶</button>
+          ><TIcon name="play" :size="14" /></button>
         </div>
       </div>
 

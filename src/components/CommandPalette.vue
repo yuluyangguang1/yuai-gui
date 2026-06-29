@@ -33,6 +33,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue";
+import { TIcon } from "../utils/icons";
 import { useAgentsStore } from "../stores/agents";
 import { useWorkspaceStore } from "../stores/workspace";
 import { useSettingsStore } from "../stores/settings";
@@ -114,7 +115,7 @@ const allItems = computed<CommandItem[]>(() => {
   items.push({
     id: "action-settings",
     label: "打开设置",
-    icon: "⚙",
+    icon: "settings",
     category: "action",
     action: () => emit("open-settings"),
   });

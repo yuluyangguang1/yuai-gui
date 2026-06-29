@@ -3,7 +3,7 @@
     <div class="hw-header">
       <span class="hw-title">系统信息</span>
       <button class="hw-refresh" @click="refresh" :disabled="hw.detecting">
-        ↻ 刷新
+        <TIcon name="refresh" :size="14" /> 刷新
       </button>
     </div>
 

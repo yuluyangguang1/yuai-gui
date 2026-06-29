@@ -3,7 +3,7 @@
     <div class="disk-header">
       <span class="disk-title">磁盘用量</span>
       <button class="disk-refresh" @click="refresh" :disabled="loading">
-        ↻ 刷新
+        <TIcon name="refresh" :size="14" /> 刷新
       </button>
     </div>
     <div v-if="loading" class="disk-empty">加载中...</div>

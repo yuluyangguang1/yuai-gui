@@ -75,7 +75,7 @@
         :style="subState.position"
       >
         <div class="suggest-header">
-          <span class="suggest-icon">▸</span>
+          <span class="suggest-icon"><TIcon name="chevronRight" :size="12" /></span>
           <span class="suggest-title">/{{ subState.commandName }}</span>
           <span class="suggest-item-desc">{{ subState.commandDesc }}</span>
         </div>

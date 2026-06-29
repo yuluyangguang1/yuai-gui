@@ -3,7 +3,7 @@
     <div class="change-inbox-header">
       <span class="change-inbox-title">收 变更收件箱</span>
       <span class="change-inbox-count">{{ workspaceStore.inboxCount }}</span>
-      <button class="change-inbox-clear" @click="workspaceStore.clearInbox()">✕</button>
+      <button class="change-inbox-clear" @click="workspaceStore.clearInbox()"><TIcon name="close" :size="14" /></button>
     </div>
     <div class="change-inbox-list">
       <div
@@ -31,7 +31,7 @@ function typeIcon(type: string): string {
   switch (type) {
     case "created": return "+";
     case "modified": return "改";
-    case "deleted": return "✕";
+    case "deleted": return "close";
     default: return "•";
   }
 }

@@ -3,8 +3,8 @@
     <div class="diff-toolbar">
       <span class="diff-title">Inline Diff</span>
       <div class="diff-actions">
-        <button class="diff-btn accept-all" @click="acceptAll" title="Accept All">✓ Accept All</button>
-        <button class="diff-btn reject-all" @click="rejectAll" title="Reject All">✕ Reject All</button>
+        <button class="diff-btn accept-all" @click="acceptAll" title="Accept All"><TIcon name="check" :size="14" /> Accept All</button>
+        <button class="diff-btn reject-all" @click="rejectAll" title="Reject All"><TIcon name="close" :size="14" /> Reject All</button>
       </div>
     </div>
     <div class="diff-editor" ref="editorRef">

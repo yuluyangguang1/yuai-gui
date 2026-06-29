@@ -19,9 +19,9 @@
         :title="isFollowing ? '停止跟踪' : '跟踪文件变化'"
         @click="toggleFollow"
       >
-        {{ isFollowing ? "◉ 跟踪中" : "◎ 跟踪" }}
+        <TIcon name="eye" :size="14" /> {{ isFollowing ? '跟踪中' : '跟踪' }}
       </button>
-      <button class="terminal-close-btn" title="关闭终端" @click="handleClose">✕</button>
+      <button class="terminal-close-btn" title="关闭终端" @click="handleClose"><TIcon name="close" :size="14" /></button>
     </div>
     <div
       ref="terminalEl"

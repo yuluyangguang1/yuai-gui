@@ -5,7 +5,7 @@
       <span class="tb-title">队 团队协作</span>
       <div class="tb-header-actions">
         <button class="tb-btn" @click="showTemplates = !showTemplates">
-          {{ showTemplates ? '✕ 关闭' : '模板' }}
+          <TIcon name="close" :size="14" /> {{ showTemplates ? '关闭' : '模板' }}
         </button>
         <button class="tb-btn tb-btn-primary" @click="createNewTeam">+ 新团队</button>
       </div>

@@ -107,7 +107,7 @@ async function run() {
 
 function stop() {
   engine.value.cancel();
-  logs.value.push('⚠ 已要求终止...');
+  logs.value.push('△ 已要求终止...');
 }
 
 onConnect((edge: Connection) => {

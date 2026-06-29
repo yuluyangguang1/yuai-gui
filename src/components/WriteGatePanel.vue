@@ -3,7 +3,7 @@
     <div class="wg-header">
       <span class="wg-title">审 写入审批</span>
       <button class="wg-refresh" :disabled="store.loading" @click="store.fetchPending()">
-        {{ store.loading ? '…' : '↻' }}
+        <TIcon name="refresh" :size="14" :class="{ 'spin': store.loading }" />
       </button>
     </div>
 
@@ -37,7 +37,7 @@
             :disabled="!!store.activeAction"
             @click.stop="store.approve(rec)"
           >
-            {{ store.activeAction === store.recordKey(rec) + ':approve' ? '审批中…' : '✓ 批准' }}
+            <TIcon name="check" :size="14" /> 批准
           </button>
           <button
             class="wg-btn wg-btn-reject"

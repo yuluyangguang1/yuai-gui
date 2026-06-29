@@ -3,7 +3,7 @@
     <div class="mcp-header">
       <span class="mcp-title">桥 MCP 服务</span>
       <button class="mcp-refresh" :disabled="store.loading" @click="store.loadServers()">
-        {{ store.loading ? '…' : '↻' }}
+        <TIcon name="refresh" :size="14" :class="{ 'spin': store.loading }" />
       </button>
     </div>
 
@@ -34,7 +34,7 @@
           <span class="mcp-srv-name">{{ srv.name }}</span>
           <span class="mcp-srv-transport">{{ srv.transport }}</span>
           <span class="mcp-srv-tools">{{ srv.tools_registered }} 工具</span>
-          <span class="mcp-expand-arrow">{{ expanded[srv.name] ? '▾' : '▸' }}</span>
+          <span class="mcp-expand-arrow"><TIcon :name="expanded[srv.name] ? 'chevronDown' : 'chevronRight'" :size="14" /></span>
         </div>
         <div class="mcp-srv-status-label" :class="'mcp-status-' + store.statusClass(srv)">
           {{ store.statusLabel(srv) }}

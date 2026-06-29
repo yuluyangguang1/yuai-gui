@@ -24,7 +24,7 @@
     <div v-if="compressedPrefix" class="context-prefix">
       <div class="context-prefix-header">
         <span class="context-prefix-label">上下文前缀</span>
-        <button class="context-prefix-close" @click="compressedPrefix = ''">✕</button>
+        <button class="context-prefix-close" @click="compressedPrefix = ''"><TIcon name="close" :size="14" /></button>
       </div>
       <div class="context-prefix-text">{{ compressedPrefix }}</div>
     </div>

@@ -20,7 +20,7 @@
             indeterminate: checkState === 'indeterminate',
           }"
         >
-          <template v-if="checkState === 'checked'">✓</template>
+          <template v-if="checkState === 'checked'"><TIcon name="check" :size="12" /></template>
           <template v-else-if="checkState === 'indeterminate'">−</template>
         </span>
       </span>

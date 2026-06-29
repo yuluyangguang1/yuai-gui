@@ -22,7 +22,7 @@
           title="从讨论组移除"
           @click="kickAgent(agent.id)"
         >
-          ✕
+          <TIcon name="close" :size="14" />
         </button>
       </div>
     </div>

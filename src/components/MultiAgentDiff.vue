@@ -21,10 +21,10 @@
     <!-- Conflict Summary -->
     <div class="mad-summary" v-if="conflictCount > 0 || resolvedCount > 0">
       <span class="mad-summary-item conflict" v-if="conflictCount > 0">
-        ⚠ {{ conflictCount }} 冲突
+        <TIcon name="warning" :size="14" /> {{ conflictCount }} 冲突
       </span>
       <span class="mad-summary-item resolved" v-if="resolvedCount > 0">
-        ✓ {{ resolvedCount }} 已解决
+        <TIcon name="check" :size="14" /> {{ resolvedCount }} 已解决
       </span>
     </div>
 

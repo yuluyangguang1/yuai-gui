@@ -25,10 +25,10 @@ import type { ToastType } from '../composables/useToast'
 const { toasts, dismiss } = useToast()
 
 const icons: Record<ToastType, string> = {
-  success: '✓',
-  error: '✕',
-  warning: '⚠',
-  info: 'ℹ',
+  success: 'check',
+  error: 'close',
+  warning: 'warning',
+  info: 'info',
 }
 </script>
 

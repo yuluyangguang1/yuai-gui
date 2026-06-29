@@ -31,7 +31,7 @@
         >
           <span class="tab-glyph">{{ t.glyph }}</span>
           <span class="tab-label">{{ t.label }}</span>
-          <span v-if="activeProviders[t.id]" class="tab-indicator" :title="activeProviders[t.id]?.name || ''">●</span>
+          <span v-if="activeProviders[t.id]" class="tab-indicator" :title="activeProviders[t.id]?.name || ''"><TIcon name="statusOnline" :size="8" /></span>
         </button>
       </div>
 

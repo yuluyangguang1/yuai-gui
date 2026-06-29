@@ -23,7 +23,10 @@
         "
         @click="handleAgentClick(agent)"
       >
-        <component :is="getAgentIcon(agent.id)" :size="28" :color="agent.enabled ? agent.color : 'var(--silver)'" />
+        <Plum v-if="agent.id === 'claude'" :size="28" :color="agent.enabled ? agent.color : 'var(--silver)'" />
+        <Orchid v-else-if="agent.id === 'codex'" :size="28" :color="agent.enabled ? agent.color : 'var(--silver)'" />
+        <Bamboo v-else-if="agent.id === 'openclaw'" :size="28" :color="agent.enabled ? agent.color : 'var(--silver)'" />
+        <Chrysanthemum v-else-if="agent.id === 'hermes'" :size="28" :color="agent.enabled ? agent.color : 'var(--silver)'" />
         <span class="agent-en-name">{{ agent.name }}</span>
         <span
           class="agent-dot"
@@ -118,12 +121,8 @@ import { useAgentsStore } from "../../stores/agents";
 import { useChatStore } from "../../stores/chat";
 import { useWorkspaceStore } from "../../stores/workspace";
 import { ICONS } from "../../utils/icons";
-import { AGENT_ICONS } from "../../utils/agent-icons";
+import { Plum, Orchid, Bamboo, Chrysanthemum } from "../../utils/agent-icons";
 import type { AgentDef } from "../../stores/agents";
-
-function getAgentIcon(agentId: string) {
-  return AGENT_ICONS[agentId] || null
-}
 
 const emit = defineEmits<{
   "open-settings": [];

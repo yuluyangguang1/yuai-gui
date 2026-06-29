@@ -1,7 +1,7 @@
 <template>
   <div class="activation-panel">
     <div class="activation-header">
-      <span class="activation-icon">{{ activationStore.isActivated ? '✓' : '○' }}</span>
+      <span class="activation-icon"><TIcon :name="activationStore.isActivated ? 'check' : 'circle'" :size="16" /></span>
       <span class="activation-title">{{ activationStore.isActivated ? '已激活' : '未激活' }}</span>
     </div>
 
