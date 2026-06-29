@@ -125,7 +125,7 @@
         class="mad-result-item"
         :class="result.success ? 'success' : 'error'"
       >
-        <span class="mad-result-icon">{{ result.success ? '✓' : '✕' }}</span>
+        <span class="mad-result-icon"><TIcon :name="result.success ? 'check' : 'close'" :size="14" /></span>
         <span class="mad-result-file">{{ result.filePath }}</span>
         <span class="mad-result-agent" v-if="result.sourceAgentId">← {{ result.sourceAgentId }}</span>
         <span class="mad-result-error" v-if="result.error">{{ result.error }}</span>

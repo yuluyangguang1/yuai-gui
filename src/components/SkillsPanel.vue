@@ -122,7 +122,7 @@
             <span class="skills-stat-item">大小 <b>{{ formatChars(skill.content.length) }}</b></span>
           </div>
           <div class="skills-detail-actions">
-            <button class="skills-action-btn" @click.stop="handleTrash(skill)">{{ ICONS.close }} 删除</button>
+            <button class="skills-action-btn" @click.stop="handleTrash(skill)"><TIcon name="close" :size="14" /> 删除</button>
             <span class="skills-detail-dir">{{ skill.dir }}</span>
           </div>
         </div>

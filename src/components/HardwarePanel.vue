@@ -157,7 +157,7 @@ const modelCompat = computed<ModelCompat[]>(() => {
   // Small models (1-3B) - can run on most hardware
   models.push({
     name: "Qwen 0.5B / Phi-3 mini",
-    icon: "✓",
+    icon: "check",
     status: cores >= 2 ? "ok" : "maybe",
     verdict: cores >= 2 ? "可运行" : "可能卡顿",
   });
@@ -165,7 +165,7 @@ const modelCompat = computed<ModelCompat[]>(() => {
   // Medium models (7-8B)
   models.push({
     name: "Llama 3.1 8B / Qwen 7B",
-    icon: ram >= 8 ? "✓" : ram >= 4 ? "△" : "✕",
+    icon: ram >= 8 ? "check" : ram >= 4 ? "alertTriangle" : "close",
     status: ram >= 8 ? "ok" : ram >= 4 ? "maybe" : "no",
     verdict: ram >= 16 ? "流畅" : ram >= 8 ? "可用" : ram >= 4 ? "勉强" : "内存不足",
   });
@@ -173,7 +173,7 @@ const modelCompat = computed<ModelCompat[]>(() => {
   // Large models (13-14B)
   models.push({
     name: "Llama 13B / Qwen 14B",
-    icon: ram >= 16 ? "✓" : ram >= 8 ? "△" : "✕",
+    icon: ram >= 16 ? "check" : ram >= 8 ? "alertTriangle" : "close",
     status: ram >= 16 ? "ok" : ram >= 8 ? "maybe" : "no",
     verdict: ram >= 32 ? "流畅" : ram >= 16 ? "可用" : ram >= 8 ? "勉强" : "内存不足",
   });
@@ -181,7 +181,7 @@ const modelCompat = computed<ModelCompat[]>(() => {
   // Very large models (70B)
   models.push({
     name: "Llama 70B / Qwen 72B",
-    icon: ram >= 64 ? "✓" : ram >= 32 ? "△" : "✕",
+    icon: ram >= 64 ? "check" : ram >= 32 ? "alertTriangle" : "close",
     status: ram >= 64 ? "ok" : ram >= 32 ? "maybe" : "no",
     verdict: ram >= 64 ? "可用" : ram >= 32 ? "需量化" : "内存不足",
   });
@@ -189,7 +189,7 @@ const modelCompat = computed<ModelCompat[]>(() => {
   // Image generation (Stable Diffusion)
   models.push({
     name: "Stable Diffusion",
-    icon: hasDiscreteGpu ? "✓" : isAppleSilicon ? "✓" : "△",
+    icon: hasDiscreteGpu ? "check" : isAppleSilicon ? "check" : "alertTriangle",
     status: hasDiscreteGpu || isAppleSilicon ? "ok" : "maybe",
     verdict: hasDiscreteGpu ? "GPU加速" : isAppleSilicon ? "MPS加速" : "CPU模式(慢)",
   });

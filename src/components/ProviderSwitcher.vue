@@ -6,7 +6,7 @@
       @click="toggleDropdown"
       :title="`Current: ${currentProvider?.name ?? 'None'}`"
     >
-      <span class="trigger-icon">{{ currentProvider?.icon ?? '⚡' }}</span>
+      <span class="trigger-icon"><TIcon name="bolt" :size="14" /></span>
       <span class="trigger-name">{{ currentProvider?.name ?? 'Select Provider' }}</span>
       <span class="trigger-status" :class="currentProvider?.status ?? 'unknown'"></span>
       <span class="trigger-arrow" :class="{ open: isOpen }">▾</span>
@@ -56,6 +56,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { TIcon } from "../utils/icons";
 
 // ══════════════════════════════════════════════
 // Types

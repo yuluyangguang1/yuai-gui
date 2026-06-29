@@ -106,7 +106,7 @@ const allItems = computed<CommandItem[]>(() => {
   items.push({
     id: "action-theme",
     label: "切换主题",
-    icon: "色",
+    icon: "palette",
     hint: settingsStore.theme === "dark" ? "当前: 暗色" : "当前: 亮色",
     category: "action",
     action: () => settingsStore.toggleTheme(),
