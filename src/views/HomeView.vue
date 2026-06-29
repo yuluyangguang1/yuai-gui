@@ -28,7 +28,7 @@
           :class="{ active: workspace.showHidden }"
           @click="workspace.showHidden = !workspace.showHidden"
           :title="workspace.showHidden ? '隐藏隐藏文件' : '显示隐藏文件'"
-        >{{ workspace.showHidden ? '隐' : '显' }}</button>
+        ><TIcon :name="workspace.showHidden ? 'eyeOff' : 'eye'" :size="14" /></button>
       </div>
     </div>
 
