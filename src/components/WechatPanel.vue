@@ -11,7 +11,7 @@
         class="wechat-disconnect-btn"
         @click="wechatStore.disconnect()"
         title="断开连接"
-      >✕</button>
+      ><TIcon name="close" :size="14" /></button>
     </div>
 
     <!-- Login View -->
@@ -43,7 +43,7 @@
       </div>
 
       <div v-else-if="wechatStore.loginStatus === 'expired'" class="wechat-login-expired">
-        <div class="wechat-expired-icon">⟳</div>
+        <TIcon name="refresh" :size="24" />
         <p class="wechat-expired-hint">二维码已过期</p>
         <button class="wechat-login-btn" @click="wechatStore.login()">
           重新扫码
@@ -126,7 +126,7 @@
       <div v-if="showSettings" class="wechat-settings">
         <div class="wechat-settings-header">
           <span>设置</span>
-          <button class="wechat-settings-close" @click="showSettings = false">✕</button>
+          <button class="wechat-settings-close" @click="showSettings = false"><TIcon name="close" :size="14" /></button>
         </div>
 
         <div class="wechat-settings-group">
@@ -168,12 +168,12 @@
           :class="{ active: showSettings }"
           @click="showSettings = !showSettings"
           title="设置"
-        >⚙</button>
+        ><TIcon name="settings" :size="14" /></button>
         <button
           class="wechat-toolbar-btn"
           @click="wechatStore.checkConnection()"
           title="检查连接"
-        >↻</button>
+        ><TIcon name="refresh" :size="14" /></button>
         <span class="wechat-toolbar-status" :class="{ connected: wechatStore.connected }">
           {{ wechatStore.connected ? '在线' : '离线' }}
         </span>

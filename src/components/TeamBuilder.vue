@@ -81,7 +81,7 @@
     <div v-if="editingTeam" class="tb-editor">
       <div class="tb-editor-header">
         <span>{{ isNewTeam ? '新建团队' : '编辑团队' }}</span>
-        <button class="tb-btn-sm" @click="cancelEdit">✕</button>
+        <button class="tb-btn-sm" @click="cancelEdit"><TIcon name="close" :size="14" /></button>
       </div>
 
       <!-- Team Info -->
@@ -146,7 +146,7 @@
             @dragover.prevent
             @drop="handleDrop($event, idx)"
           >
-            <span class="tb-drag-handle">⠿</span>
+            <TIcon name="gripVertical" :size="14" />
             <span class="tb-member-glyph" :style="{ color: getAgentColor(member.agentId) }">
               {{ getAgentGlyph(member.agentId) }}
             </span>
@@ -156,7 +156,7 @@
               <option value="member">成员</option>
               <option value="reviewer">审查者</option>
             </select>
-            <button class="tb-btn-sm tb-btn-danger" @click="removeAgentFromTeam(member.agentId)">✕</button>
+            <button class="tb-btn-sm tb-btn-danger" @click="removeAgentFromTeam(member.agentId)"><TIcon name="close" :size="14" /></button>
           </div>
           <div v-if="editForm.members.length === 0" class="tb-hint">
             点击上方代理标签添加成员，拖拽调整顺序

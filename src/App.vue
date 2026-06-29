@@ -33,7 +33,7 @@
               @close="activeTerminalAgent = null"
             />
             <div v-else class="terminal-select">
-              <div style="font-family:var(--font-brush);font-size:2rem;color:var(--jade);opacity:.5;margin-bottom:12px">端</div>
+              <TIcon name="terminal" :size="32" style="color:var(--jade);opacity:.5;margin-bottom:12px" />
               <p style="color:var(--silver);font-size:.72rem;margin-bottom:16px">选择一个 Agent 启动终端</p>
               <div class="terminal-agent-grid stagger-scale">
                 <button

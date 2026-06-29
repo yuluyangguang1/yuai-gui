@@ -9,7 +9,7 @@
       <span class="trigger-icon"><TIcon name="bolt" :size="14" /></span>
       <span class="trigger-name">{{ currentProvider?.name ?? 'Select Provider' }}</span>
       <span class="trigger-status" :class="currentProvider?.status ?? 'unknown'"></span>
-      <span class="trigger-arrow" :class="{ open: isOpen }">▾</span>
+      <TIcon name="chevronDown" :size="14" :class="{ open: isOpen }" />
     </button>
 
     <!-- Dropdown -->
@@ -47,7 +47,7 @@
             class="test-single-btn"
             @click.stop="testProvider(provider.id)"
             title="Test connectivity"
-          >🔗</button>
+          ><TIcon name="link" :size="14" /></button>
         </div>
       </div>
     </div>

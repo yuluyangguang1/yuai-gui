@@ -10,7 +10,7 @@
 
     <!-- Search -->
     <div class="skills-search-bar">
-      <span class="skills-search-icon">⌕</span>
+      <TIcon name="search" :size="14" />
       <input
         v-model="searchQuery"
         class="skills-search-input"
