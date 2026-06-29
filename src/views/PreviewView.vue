@@ -78,7 +78,7 @@
       <!-- Audio -->
       <div v-else-if="isAudio" class="preview-audio">
         <div class="audio-container">
-          <span class="audio-icon">🎵</span>
+          <TIcon name="music" :size="24" />
           <span class="audio-name">{{ workspace.currentFileName }}</span>
           <audio controls class="audio-player">
             <source :src="fileDataUrl" />
@@ -112,7 +112,7 @@
 
       <!-- Archive: cannot preview -->
       <div v-else-if="isArchive" class="preview-unavailable">
-        <span class="unavailable-icon">📦</span>
+        <TIcon name="package" :size="24" />
         <span class="unavailable-title">压缩文件</span>
         <span class="unavailable-desc">无法预览压缩文件，请在系统中打开。</span>
         <span class="unavailable-name">{{ workspace.currentFileName }}</span>
@@ -120,7 +120,7 @@
 
       <!-- Other: file info + cannot preview -->
       <div v-else class="preview-unavailable">
-        <span class="unavailable-icon">📄</span>
+        <TIcon name="file" :size="24" />
         <span class="unavailable-title">无法预览</span>
         <span class="unavailable-desc">此文件类型暂不支持预览。</span>
         <div class="unavailable-meta">

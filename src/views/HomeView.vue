@@ -15,13 +15,13 @@
           :class="{ active: workspace.viewMode === 'list' }"
           @click="workspace.viewMode = 'list'"
           title="列表视图"
-        >☰</button>
+        ><TIcon name="menu" :size="14" /></button>
         <button
           class="ws-ctrl-btn"
           :class="{ active: workspace.viewMode === 'grid' }"
           @click="workspace.viewMode = 'grid'"
           title="网格视图"
-        >⊞</button>
+        ><TIcon name="layoutGrid" :size="14" /></button>
         <!-- Show hidden toggle -->
         <button
           class="ws-ctrl-btn"
@@ -80,7 +80,7 @@
     <!-- Recent files section -->
     <div v-if="workspace.hasWorkspace && workspace.recentFiles.length > 0" class="sidebar-section">
       <div class="sidebar-section-header">
-        <span class="sidebar-section-icon">近</span>
+        <TIcon name="history" :size="14" />
         <span class="sidebar-section-title">最近文件</span>
       </div>
       <div
