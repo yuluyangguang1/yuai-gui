@@ -14,7 +14,7 @@
         :title="settings.theme === 'dark' ? '切换亮色' : '切换暗色'"
         @click="settings.toggleTheme"
       >
-        {{ settings.theme === "dark" ? "亮" : "暗" }}
+        <TIcon :name="settings.theme === 'dark' ? 'sun' : 'moon'" :size="14" />
       </button>
     </div>
   </header>
@@ -23,6 +23,7 @@
 <script setup lang="ts">
 import { useSettingsStore } from "../../stores/settings";
 import { useWorkspaceStore } from "../../stores/workspace";
+import { TIcon } from "../../utils/tabler-icons";
 
 const settings = useSettingsStore();
 const workspace = useWorkspaceStore();

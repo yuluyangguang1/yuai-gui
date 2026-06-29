@@ -27,13 +27,13 @@
           class="diff-inline-btn accept"
           @click="acceptChange(idx)"
           title="Accept"
-        >✓</button>
+        ><TIcon name="check" :size="14" /></button>
         <button
           v-if="line.type !== 'equal'"
           class="diff-inline-btn reject"
           @click="rejectChange(idx)"
           title="Reject"
-        >✕</button>
+        ><TIcon name="close" :size="14" /></button>
       </div>
     </div>
   </div>

@@ -3,7 +3,7 @@
     <Transition name="screenshot-toast">
       <div v-if="visible" class="screenshot-toast" @mouseenter="pauseDismiss" @mouseleave="resumeDismiss">
         <div class="screenshot-toast-header">
-          <span class="screenshot-toast-icon">影</span>
+          <TIcon name="camera" :size="20" />
           <span class="screenshot-toast-title">截图检测</span>
           <button class="screenshot-toast-close" @click="dismiss">×</button>
         </div>

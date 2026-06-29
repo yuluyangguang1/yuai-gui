@@ -17,7 +17,7 @@
       <!-- GPU -->
       <div class="hw-section">
         <div class="hw-section-header">
-          <span class="hw-icon">🎮</span>
+          <TIcon name="deviceDesktop" :size="18" />
           <span class="hw-section-title">GPU</span>
         </div>
         <div class="hw-row">
@@ -33,7 +33,7 @@
       <!-- CPU -->
       <div class="hw-section">
         <div class="hw-section-header">
-          <span class="hw-icon">⚡</span>
+          <TIcon name="bolt" :size="18" />
           <span class="hw-section-title">CPU</span>
         </div>
         <div class="hw-row">
@@ -51,7 +51,7 @@
       <!-- RAM -->
       <div class="hw-section">
         <div class="hw-section-header">
-          <span class="hw-icon">💾</span>
+          <TIcon name="database" :size="18" />
           <span class="hw-section-title">内存</span>
         </div>
         <div class="hw-row">
@@ -69,7 +69,7 @@
       <!-- Model Compatibility (inspired by CanIRun.ai) -->
       <div class="hw-section">
         <div class="hw-section-header">
-          <span class="hw-icon">🤖</span>
+          <TIcon name="cpu" :size="18" />
           <span class="hw-section-title">模型兼容性</span>
         </div>
         <div class="hw-compat-grid">
@@ -89,7 +89,7 @@
       <!-- Browser Info -->
       <div class="hw-section">
         <div class="hw-section-header">
-          <span class="hw-icon">🌐</span>
+          <TIcon name="network" :size="18" />
           <span class="hw-section-title">浏览器</span>
         </div>
         <div class="hw-row">

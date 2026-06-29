@@ -33,7 +33,7 @@
 
     <!-- Team List -->
     <div v-if="teamsStore.teams.length === 0 && !editingTeam" class="tb-empty">
-      <div class="tb-empty-icon">队</div>
+      <TIcon name="users" :size="32" />
       <div class="tb-empty-text">暂无团队</div>
       <div class="tb-empty-hint">使用模板快速创建，或手动新建团队</div>
     </div>
