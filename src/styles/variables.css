@@ -28,10 +28,10 @@
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
 
   /* Agent colors */
-  --agent-mei: #ff8c32;   /* 梅 claude */
-  --agent-lan: #50c878;   /* 兰 codex */
-  --agent-zhu: #ff6464;   /* 竹 openclaw */
-  --agent-ju: #a064ff;    /* 菊 hermes */
+  --agent-mei: #d4577b;   /* 梅 claude */
+  --agent-lan: #6a994e;   /* 兰 codex */
+  --agent-zhu: #4caf50;   /* 竹 openclaw */
+  --agent-ju: #f0a830;    /* 菊 hermes */
 
   /* Sizing */
   --rail-width: 56px;

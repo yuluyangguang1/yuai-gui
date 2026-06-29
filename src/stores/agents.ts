@@ -36,22 +36,22 @@ export interface Session {
 // The 4 agents: 梅兰竹菊 (built-in defaults matching backend)
 const BUILTIN_AGENTS: AgentDef[] = [
   {
-    id: "claude", name: "claude", chinese_name: "梅", glyph: "梅", color: "#ff8c32",
+    id: "claude", name: "claude", chinese_name: "梅", glyph: "梅", color: "#d4577b",
     specialty: "编程、架构设计、代码审查", binary: "", config_type: "anthropic_env",
     enabled: true, in_group: true, status: 'idle',
   },
   {
-    id: "codex", name: "codex", chinese_name: "兰", glyph: "兰", color: "#50c878",
+    id: "codex", name: "codex", chinese_name: "兰", glyph: "兰", color: "#6a994e",
     specialty: "编程、快速原型、OpenAI 生态", binary: "", config_type: "codex_toml",
     enabled: true, in_group: true, status: 'idle',
   },
   {
-    id: "openclaw", name: "openclaw", chinese_name: "竹", glyph: "竹", color: "#ff6464",
+    id: "openclaw", name: "openclaw", chinese_name: "竹", glyph: "竹", color: "#4caf50",
     specialty: "内容生成、渠道运营、技能调用", binary: "", config_type: "openai_env",
     enabled: true, in_group: true, status: 'idle',
   },
   {
-    id: "hermes", name: "hermes", chinese_name: "菊", glyph: "菊", color: "#a064ff",
+    id: "hermes", name: "hermes", chinese_name: "菊", glyph: "菊", color: "#f0a830",
     specialty: "记忆、学习、任务编排", binary: "", config_type: "openai_env",
     enabled: true, in_group: true, status: 'idle',
   },

@@ -130,10 +130,10 @@ const activeProviders = reactive<Record<string, { name: string; model: string } 
 });
 
 const appTypes = [
-  { id: 'claude', label: 'Claude (梅)', glyph: '梅', color: '#ff8c32' },
-  { id: 'codex', label: 'Codex (兰)', glyph: '兰', color: '#50c878' },
-  { id: 'openclaw', label: 'OpenClaw (竹)', glyph: '竹', color: '#ff6464' },
-  { id: 'hermes', label: 'Hermes (菊)', glyph: '菊', color: '#a064ff' },
+  { id: 'claude', label: 'Claude (梅)', glyph: '梅', color: '#d4577b' },
+  { id: 'codex', label: 'Codex (兰)', glyph: '兰', color: '#6a994e' },
+  { id: 'openclaw', label: 'OpenClaw (竹)', glyph: '竹', color: '#4caf50' },
+  { id: 'hermes', label: 'Hermes (菊)', glyph: '菊', color: '#f0a830' },
 ];
 
 // ─── Methods ───

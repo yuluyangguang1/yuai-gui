@@ -23,8 +23,7 @@
         "
         @click="handleAgentClick(agent)"
       >
-        <component :is="getAgentIcon(agent.id)" :size="22" :color="agent.enabled ? agent.color : 'var(--silver)'" />
-        <span class="agent-glyph-char">{{ agent.glyph }}</span>
+        <component :is="getAgentIcon(agent.id)" :size="28" :color="agent.enabled ? agent.color : 'var(--silver)'" />
         <span class="agent-en-name">{{ agent.name }}</span>
         <span
           class="agent-dot"

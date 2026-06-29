@@ -149,10 +149,10 @@ export const AGENT_ICONS: Record<string, typeof Plum> = {
   hermes: Chrysanthemum,
 }
 
-/** Agent ID → 色彩映射 */
+/** Agent ID → 色彩映射（植物本色） */
 export const AGENT_COLORS: Record<string, string> = {
-  claude: '#ff8c32',
-  codex: '#50c878',
-  openclaw: '#ff6464',
-  hermes: '#a064ff',
+  claude: '#d4577b',   // 梅花粉红
+  codex: '#6a994e',    // 兰叶翠绿
+  openclaw: '#4caf50', // 竹青绿
+  hermes: '#f0a830',   // 菊花金黄
 }
