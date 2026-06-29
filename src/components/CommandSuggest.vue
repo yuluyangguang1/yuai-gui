@@ -8,7 +8,7 @@
         :style="commandState.position"
       >
         <div class="suggest-header">
-          <span class="suggest-icon">⌘</span>
+          <TIcon name="command" :size="12" />
           <span class="suggest-title">命令</span>
           <span class="suggest-count">{{ commandState.items.length }}</span>
         </div>
@@ -46,7 +46,7 @@
         :style="flagState.position"
       >
         <div class="suggest-header">
-          <span class="suggest-icon">⚑</span>
+          <TIcon name="flag" :size="12" />
           <span class="suggest-title">标志</span>
         </div>
         <div class="suggest-list">

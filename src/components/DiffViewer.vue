@@ -96,7 +96,7 @@ watch(() => workspace.path, loadChanges);
     </div>
 
     <div class="diff-empty" v-else-if="!loading">
-      <div style="font-family:var(--font-brush);font-size:2rem;color:var(--accent);opacity:.5;line-height:1;margin-bottom:8px">∅</div>
+      <TIcon name="file" :size="32" />
       <p>工作区无变更</p>
     </div>
 

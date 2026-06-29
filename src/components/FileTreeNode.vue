@@ -21,7 +21,7 @@
           }"
         >
           <template v-if="checkState === 'checked'"><TIcon name="check" :size="12" /></template>
-          <template v-else-if="checkState === 'indeterminate'">−</template>
+          <template v-else-if="checkState === 'indeterminate'"><TIcon name="minus" :size="12" /></template>
         </span>
       </span>
 

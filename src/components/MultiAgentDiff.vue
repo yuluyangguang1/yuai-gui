@@ -38,7 +38,7 @@
         @click="selectedFile = file.filePath"
       >
         <span class="mad-file-status" :class="file.hasConflict ? 'conflict' : 'ok'">
-          {{ file.hasConflict ? '⚠' : '✓' }}
+          <TIcon :name="file.hasConflict ? 'warning' : 'check'" :size="14" />
         </span>
         <span class="mad-file-path">{{ file.filePath }}</span>
         <span class="mad-file-agents">
@@ -87,7 +87,7 @@
               :class="{ picked: fileSelections.get(selectedFile) === change.agentId }"
               @click.stop="pickAgent(change.agentId)"
             >
-              {{ fileSelections.get(selectedFile) === change.agentId ? '✓ 已选' : '选用' }}
+              <TIcon v-if="fileSelections.get(selectedFile) === change.agentId" name="check" :size="14" /> {{ fileSelections.get(selectedFile) === change.agentId ? '已选' : '选用' }}
             </button>
           </div>
           <div class="mad-col-diff">
@@ -111,7 +111,7 @@
 
     <!-- Empty State -->
     <div class="mad-empty" v-if="!selectedFile && fileConflicts.length === 0">
-      <div class="mad-empty-icon">∅</div>
+      <TIcon name="file" :size="32" />
       <p>暂无多 Agent 变更</p>
       <p class="mad-empty-hint">多个 Agent 修改相同文件时会在此显示</p>
     </div>

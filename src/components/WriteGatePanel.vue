@@ -44,7 +44,7 @@
             :disabled="!!store.activeAction"
             @click.stop="store.reject(rec)"
           >
-            ✗ 拒绝
+            <TIcon name="close" :size="14" /> 拒绝
           </button>
         </div>
       </div>
