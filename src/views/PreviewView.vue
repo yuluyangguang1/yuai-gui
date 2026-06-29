@@ -133,7 +133,7 @@
 
     <!-- Preview empty state -->
     <div v-else class="preview-empty">
-      <span class="preview-empty-glyph">覽</span>
+      <TIcon name="eye" :size="32" />
       <span class="preview-empty-hint">选择文件以预览内容</span>
     </div>
   </div>

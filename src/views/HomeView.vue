@@ -65,7 +65,7 @@
         :class="{ active: workspace.currentFile === fav }"
         @click="workspace.selectFile(fav)"
       >
-        <span class="sidebar-item-icon">◦</span>
+        <TIcon name="file" :size="14" />
         <span class="sidebar-item-name" :title="fav">{{ fav.split(/[\/]/).pop() }}</span>
         <button
           class="star-btn active"
@@ -90,7 +90,7 @@
         :class="{ active: workspace.currentFile === recent.path }"
         @click="workspace.selectFile(recent.path)"
       >
-        <span class="sidebar-item-icon">◦</span>
+        <TIcon name="file" :size="14" />
         <span class="sidebar-item-name" :title="recent.path">{{ recent.path.split(/[\/]/).pop() }}</span>
         <button
           class="star-btn"
@@ -119,7 +119,7 @@
         />
       </template>
       <div v-else-if="workspace.loading" class="workspace-empty">
-        <span class="workspace-empty-icon">载</span>
+        <TIcon name="upload" :size="24" />
         <span class="workspace-empty-text">加载中...</span>
       </div>
       <div v-else class="workspace-empty">
@@ -128,7 +128,7 @@
 
       <!-- Drop zone overlay -->
       <div v-if="isDragOver" class="workspace-drop-overlay">
-        <span class="workspace-drop-icon">拖</span>
+        <TIcon name="download" :size="24" />
         <span class="workspace-drop-text">拖放文件到工作区</span>
       </div>
     </div>
@@ -156,7 +156,7 @@
         </div>
       </template>
       <div v-else-if="workspace.loading" class="workspace-empty">
-        <span class="workspace-empty-icon">载</span>
+        <TIcon name="upload" :size="24" />
         <span class="workspace-empty-text">加载中...</span>
       </div>
       <div v-else class="workspace-empty">
@@ -164,7 +164,7 @@
       </div>
 
       <div v-if="isDragOver" class="workspace-drop-overlay">
-        <span class="workspace-drop-icon">拖</span>
+        <TIcon name="download" :size="24" />
         <span class="workspace-drop-text">拖放文件到工作区</span>
       </div>
     </div>
@@ -177,7 +177,7 @@
 
     <!-- Empty state: no workspace -->
     <div v-if="!workspace.hasWorkspace" class="workspace-empty">
-      <span class="workspace-empty-glyph" style="font-family: var(--font-brush); font-size: 48px; color: var(--gold); opacity: 0.15;">文</span>
+      <TIcon name="folder" :size="48" style="color: var(--gold); opacity: 0.15;" />
       <span class="workspace-empty-text">
         尚未打开工作区<br />
         选择一个文件夹开始
