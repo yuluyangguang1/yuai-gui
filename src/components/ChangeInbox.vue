@@ -31,9 +31,9 @@ const workspaceStore = useWorkspaceStore();
 function typeIcon(type: string): string {
   switch (type) {
     case "created": return "+";
-    case "modified": return "改";
+    case "modified": return "edit";
     case "deleted": return "close";
-    default: return "•";
+    default: return "point";
   }
 }
 
