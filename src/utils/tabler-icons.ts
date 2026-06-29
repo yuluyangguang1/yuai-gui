@@ -1,200 +1,133 @@
 /**
- * Tabler Icons 统一封装
- * 替代纯 Unicode 字符，风格一致，跨平台无差异
- *
- * 用法：
- *   import { TIcon } from '@/utils/tabler-icons'
- *   <TIcon name="settings" :size="18" />
- *
- * 保留 agents 毛笔字形（梅兰竹菊）不动 — 那是品牌标识
+ * Tabler Icons 统一封装 — 静态 import 版本
+ * 直接导入所需图标，避免 Vite 动态 import 限制
  */
-import { h, defineComponent, type PropType } from 'vue'
+import { h, defineComponent } from 'vue'
 
-// ── 图标映射：旧 ICONS key → Tabler 组件名 ──
-const ICON_MAP: Record<string, string> = {
+// ── 静态导入所有用到的图标 ──
+import {
+  IconX, IconRefresh, IconSettings, IconChevronRight, IconChevronDown,
+  IconChevronUp, IconChevronLeft,
+  IconPlayerPlay, IconPlayerPause, IconSearch, IconPlus, IconMinus,
+  IconPencil, IconCopy, IconCheck, IconAlertTriangle, IconInfoCircle,
+  IconTrash, IconSend, IconEye, IconEyeOff, IconLock, IconLockOpen,
+  IconKey, IconExternalLink, IconDownload, IconUpload, IconShare,
+  IconBell, IconBookmark, IconHeart, IconStar, IconStarFilled,
+  IconFilter, IconSelector, IconMenu, IconDots, IconMaximize, IconMinimize,
+  IconFolder, IconFolderOpen, IconFile, IconFileCode, IconFileText,
+  IconArrowUp, IconArrowDown, IconArrowLeft, IconArrowRight,
+  IconHome, IconTerminal, IconCode, IconMessageCircle, IconPlug,
+  IconBrain, IconSparkles, IconDeviceDesktop, IconDatabase, IconCpu,
+  IconNetwork, IconWifi, IconLink, IconServer, IconShield,
+  IconBug, IconTool, IconBolt, IconSun, IconMoon, IconPalette,
+  IconCamera, IconPhoto, IconVideo, IconMusic, IconMicrophone,
+  IconVolume, IconVolumeOff, IconMail, IconPhone, IconMessage,
+  IconUser, IconUsers, IconRobot, IconClock, IconCalendar,
+  IconHistory, IconHourglass, IconRotate, IconRotate2,
+  IconLayout, IconLayoutGrid, IconLayoutList, IconLayoutSidebar,
+  IconLayoutDashboard, IconList, IconTable, IconChartBar,
+  IconSortAscending, IconSortDescending, IconGitBranch,
+  IconGitCommit, IconGitMerge, IconCircle, IconPointFilled, IconPoint,
+  IconAlertCircle, IconLoader, IconCircleCheck, IconCircleX, IconBan,
+  IconArchive, IconSchema, IconFlame, IconWind, IconSnowflake,
+  IconDiamond, IconCrown, IconAward, IconTrophy, IconFeather,
+  IconWand, IconPaw, IconCompass, IconAnchor,
+} from '@tabler/icons-vue'
+
+// ── 图标映射表 ──
+const ICONS_MAP: Record<string, any> = {
   // 动作
-  close: 'IconX',
-  refresh: 'IconRefresh',
-  settings: 'IconSettings',
-  expand: 'IconChevronRight',
-  collapse: 'IconChevronDown',
-  play: 'IconPlayerPlay',
-  pause: 'IconPlayerPause',
-  search: 'IconSearch',
-  add: 'IconPlus',
-  remove: 'IconMinus',
-  edit: 'IconPencil',
-  copy: 'IconCopy',
-  undo: 'IconRotateCounterClockwise',
-  redo: 'IconRotateClockwise',
-  check: 'IconCheck',
-  cross: 'IconX',
-  warning: 'IconAlertTriangle',
-  info: 'IconInfoCircle',
-  trash: 'IconTrash',
-  save: 'IconDeviceFloppy',
-  send: 'IconSend',
-  eye: 'IconEye',
-  eyeOff: 'IconEyeOff',
-  lock: 'IconLock',
-  lockOpen: 'IconLockOpen',
-  key: 'IconKey',
-  external: 'IconExternalLink',
-  download: 'IconDownload',
-  upload: 'IconUpload',
-  share: 'IconShare',
-  bell: 'IconBell',
-  bookmark: 'IconBookmark',
-  heart: 'IconHeart',
-  star: 'IconStar',
-  starFilled: 'IconStarFilled',
-  filter: 'IconFilter',
-  sort: 'IconSelector',
-  menu: 'IconMenu',
-  dots: 'IconDots',
-  maximize: 'IconMaximize',
-  minimize: 'IconMinimize',
+  close: IconX, x: IconX, refresh: IconRefresh, settings: IconSettings,
+  expand: IconChevronRight, collapse: IconChevronDown,
+  play: IconPlayerPlay, pause: IconPlayerPause, search: IconSearch,
+  add: IconPlus, plus: IconPlus, remove: IconMinus, minus: IconMinus,
+  edit: IconPencil, copy: IconCopy, check: IconCheck,
+  warning: IconAlertTriangle, info: IconInfoCircle,
+  trash: IconTrash, send: IconSend, eye: IconEye, eyeOff: IconEyeOff,
+  lock: IconLock, lockOpen: IconLockOpen, key: IconKey,
+  external: IconExternalLink, download: IconDownload, upload: IconUpload,
+  share: IconShare, bell: IconBell, bookmark: IconBookmark,
+  heart: IconHeart, star: IconStar, starFilled: IconStarFilled,
+  filter: IconFilter, sort: IconSelector, menu: IconMenu, dots: IconDots,
+  maximize: IconMaximize, minimize: IconMinimize,
 
   // 导航
-  folder: 'IconFolder',
-  folderOpen: 'IconFolderOpen',
-  file: 'IconFile',
-  fileCode: 'IconFileCode',
-  fileText: 'IconFileText',
-  arrowUp: 'IconArrowUp',
-  arrowDown: 'IconArrowDown',
-  arrowLeft: 'IconArrowLeft',
-  arrowRight: 'IconArrowRight',
-  chevronRight: 'IconChevronRight',
-  chevronLeft: 'IconChevronLeft',
-  chevronUp: 'IconChevronUp',
-  chevronDown: 'IconChevronDown',
-  home: 'IconHome',
-  back: 'IconArrowLeft',
+  folder: IconFolder, folderOpen: IconFolderOpen, file: IconFile,
+  fileCode: IconFileCode, fileText: IconFileText,
+  arrowUp: IconArrowUp, arrowDown: IconArrowDown,
+  arrowLeft: IconArrowLeft, arrowRight: IconArrowRight,
+  chevronRight: IconChevronRight, chevronLeft: IconChevronLeft,
+  chevronUp: IconChevronUp, chevronDown: IconChevronDown,
+  home: IconHome, back: IconArrowLeft,
 
   // 功能
-  terminal: 'IconTerminal',
-  code: 'IconCode',
-  preview: 'IconEye',
-  workspace: 'IconFolder',
-  wechat: 'IconMessageCircle',
-  kanban: 'IconLayoutKanban',
-  writeGate: 'IconShieldCheck',
-  mcp: 'IconPlugConnected',
-  memory: 'IconBrain',
-  usage: 'IconChartBar',
-  organize: 'IconLayoutGrid',
-  skills: 'IconSparkles',
-  devices: 'IconDeviceDesktop',
-  workflow: 'IconSchema',
-  git: 'IconGitBranch',
-  gitCommit: 'IconGitCommit',
-  gitMerge: 'IconGitMerge',
-
-  // 状态
-  statusOnline: 'IconPointFilled',
-  statusBusy: 'IconClock',
-  statusOffline: 'IconPoint',
-  statusError: 'IconAlertCircle',
-  running: 'IconLoader',
-  success: 'IconCircleCheck',
-  error: 'IconCircleX',
-  pending: 'IconClock',
-  blocked: 'IconBan',
-
-  // 系统
-  cpu: 'IconCpu',
-  memory_hw: 'IconCpu2',
-  disk: 'IconDatabase',
-  network: 'IconNetwork',
-  wifi: 'IconWifi',
-  link: 'IconLink',
-  server: 'IconServer',
-  plug: 'IconPlug',
-  shield: 'IconShield',
-  bug: 'IconBug',
-  tool: 'IconTool',
-  bolt: 'IconBolt',
-  sun: 'IconSun',
-  moon: 'IconMoon',
-  palette: 'IconPalette',
+  terminal: IconTerminal, code: IconCode,
+  messageCircle: IconMessageCircle, plug: IconPlug,
+  brain: IconBrain, sparkles: IconSparkles,
+  deviceDesktop: IconDeviceDesktop, database: IconDatabase,
+  cpu: IconCpu, network: IconNetwork, wifi: IconWifi,
+  link: IconLink, server: IconServer, shield: IconShield,
+  bug: IconBug, tool: IconTool, bolt: IconBolt,
+  sun: IconSun, moon: IconMoon, palette: IconPalette,
 
   // 媒体
-  camera: 'IconCamera',
-  photo: 'IconPhoto',
-  video: 'IconVideo',
-  music: 'IconMusic',
-  microphone: 'IconMicrophone',
-  volume: 'IconVolume',
-  volumeOff: 'IconVolumeOff',
+  camera: IconCamera, photo: IconPhoto, video: IconVideo,
+  music: IconMusic, microphone: IconMicrophone,
+  volume: IconVolume, volumeOff: IconVolumeOff,
 
   // 通讯
-  mail: 'IconMail',
-  phone: 'IconPhone',
-  message: 'IconMessage',
-  messageCircle: 'IconMessageCircle',
+  mail: IconMail, phone: IconPhone, message: IconMessage,
 
   // 用户
-  user: 'IconUser',
-  users: 'IconUsers',
-  robot: 'IconRobot',
+  user: IconUser, users: IconUsers, robot: IconRobot,
 
   // 时间
-  clock: 'IconClock',
-  calendar: 'IconCalendar',
-  history: 'IconHistory',
-  hourglass: 'IconHourglass',
+  clock: IconClock, calendar: IconCalendar,
+  history: IconHistory, hourglass: IconHourglass,
 
   // 布局
-  layout: 'IconLayout',
-  layoutGrid: 'IconLayoutGrid',
-  layoutList: 'IconLayoutList',
-  layoutSidebar: 'IconLayoutSidebar',
-  layoutDashboard: 'IconLayoutDashboard',
-  list: 'IconList',
-  table: 'IconTable',
-  chart: 'IconChartBar',
+  layout: IconLayout, layoutGrid: IconLayoutGrid,
+  layoutList: IconLayoutList, layoutSidebar: IconLayoutSidebar,
+  layoutDashboard: IconLayoutDashboard, list: IconList,
+  table: IconTable, chart: IconChartBar, chartBar: IconChartBar,
 
   // 排序
-  sortAsc: 'IconSortAscending',
-  sortDesc: 'IconSortDescending',
+  sortAsc: IconSortAscending, sortDesc: IconSortDescending,
 
   // Git
-  branch: 'IconGitBranch',
-  commit: 'IconGitCommit',
-  merge: 'IconGitMerge',
+  branch: IconGitBranch, gitBranch: IconGitBranch,
+  commit: IconGitCommit, gitCommit: IconGitCommit,
+  merge: IconGitMerge, gitMerge: IconGitMerge,
+
+  // 状态
+  circle: IconCircle, point: IconPoint, pointFilled: IconPointFilled,
+  statusOnline: IconPointFilled, statusBusy: IconClock,
+  statusOffline: IconPoint, statusError: IconAlertCircle,
+  running: IconLoader, success: IconCircleCheck,
+  error: IconCircleX, pending: IconClock, blocked: IconBan,
 
   // 看板
-  triage: 'IconSelector',
-  todo: 'IconCircle',
-  scheduled: 'IconClock',
-  ready: 'IconCircleCheck',
-  review: 'IconEye',
-  done: 'IconCheck',
-  archived: 'IconArchive',
-}
+  triage: IconSelector, todo: IconCircle,
+  scheduled: IconClock, ready: IconCircleCheck,
+  review: IconEye, done: IconCheck, archived: IconArchive,
 
-// ── 懒加载缓存 ──
-const iconCache = new Map<string, any>()
+  // 工作流
+  workflow: IconSchema, schema: IconSchema,
 
-async function loadIcon(name: string): Promise<any> {
-  if (iconCache.has(name)) return iconCache.get(name)
-  try {
-    const mod = await import(`@tabler/icons-vue/dist/esm/icons/${name}.mjs`)
-    const icon = mod.default || mod[name]
-    iconCache.set(name, icon)
-    return icon
-  } catch {
-    console.warn(`[TIcon] 图标未找到: ${name}`)
-    return null
-  }
+  // 其他
+  flame: IconFlame, wind: IconWind, snowflake: IconSnowflake,
+  diamond: IconDiamond, crown: IconCrown, award: IconAward,
+  trophy: IconTrophy, feather: IconFeather, wand: IconWand,
+  paw: IconPaw, compass: IconCompass, anchor: IconAnchor,
+  undo: IconRotate, redo: IconRotate2,
+  rotate: IconRotate, rotate2: IconRotate2,
 }
 
 /**
- * TIcon 组件 — 统一图标入口
+ * TIcon 组件
  *
  * Props:
- *   name    — ICONS key（如 'settings'）或 Tabler 组件名（如 'IconSettings'）
+ *   name    — 图标名（如 'settings'）
  *   size    — 尺寸 px，默认 18
  *   color   — 颜色，默认 currentColor
  *   stroke  — 线条宽度，默认 1.8
@@ -209,59 +142,34 @@ export const TIcon = defineComponent({
   },
   setup(props) {
     return () => {
-      // 解析图标名：支持 ICONS key 或直接 Tabler 名
-      const tablerName = ICON_MAP[props.name] || props.name
-
-      // 同步尝试从缓存渲染
-      const cached = iconCache.get(tablerName)
-      if (cached) {
-        return h(cached, {
-          size: props.size,
-          color: props.color,
-          stroke: props.stroke,
-        })
+      const icon = ICONS_MAP[props.name]
+      if (!icon) {
+        // 找不到图标时显示占位
+        return h('span', {
+          style: {
+            display: 'inline-flex',
+            width: props.size + 'px',
+            height: props.size + 'px',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: props.color,
+            fontSize: props.size * 0.5 + 'px',
+            opacity: 0.4,
+          },
+        }, '·')
       }
-
-      // 异步加载并触发更新
-      loadIcon(tablerName).then(() => {
-        // 触发 Vue 重新渲染（通过缓存更新）
+      return h(icon, {
+        size: props.size,
+        color: props.color,
+        stroke: props.stroke,
       })
-
-      // 占位符
-      return h('span', {
-        style: {
-          display: 'inline-flex',
-          width: props.size + 'px',
-          height: props.size + 'px',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: props.color,
-          fontSize: props.size * 0.6 + 'px',
-          opacity: 0.3,
-        },
-      }, '·')
     }
   },
 })
 
-/**
- * 预加载常用图标（在 App 启动时调用）
- */
+/** 预加载（静态 import 已自动包含，此函数保留兼容） */
 export async function preloadCommonIcons() {
-  const common = [
-    'IconX', 'IconSettings', 'IconSearch', 'IconPlus', 'IconMinus',
-    'IconCheck', 'IconRefresh', 'IconTerminal', 'IconCode', 'IconEye',
-    'IconFolder', 'IconFile', 'IconPencil', 'IconCopy', 'IconTrash',
-    'IconSend', 'IconArrowLeft', 'IconArrowRight', 'IconChevronRight',
-    'IconChevronDown', 'IconPlayerPlay', 'IconPlayerPause', 'IconAlertTriangle',
-    'IconInfoCircle', 'IconStar', 'IconStarFilled', 'IconPointFilled',
-    'IconLock', 'IconKey', 'IconShield', 'IconPlug', 'IconBrain',
-    'IconSparkles', 'IconRobot', 'IconUsers', 'IconHome', 'IconMenu',
-    'IconLoader', 'IconCircleCheck', 'IconCircleX', 'IconClock',
-    'IconGitBranch', 'IconDeviceDesktop', 'IconDatabase', 'IconCpu',
-    'IconMessageCircle', 'IconLayoutKanban', 'IconSchema',
-  ]
-  await Promise.all(common.map(loadIcon))
+  // 静态 import 无需预加载
 }
 
-export { ICON_MAP }
+export { ICONS_MAP as ICON_MAP }
