@@ -4,19 +4,19 @@
 
     <!-- Account Section -->
     <div class="settings-section">
-      <h3 class="section-title">账户</h3>
+      <h3 class="section-title"><TIcon name="user" :size="16" /> 账户</h3>
       <LoginPanel />
     </div>
 
     <!-- Activation Section -->
     <div class="settings-section">
-      <h3 class="section-title">激活</h3>
+      <h3 class="section-title"><TIcon name="key" :size="16" /> 激活</h3>
       <ActivationPanel />
     </div>
 
     <!-- API Config Section -->
     <div class="settings-section">
-      <h3 class="section-title">API 配置</h3>
+      <h3 class="section-title"><TIcon name="settings" :size="16" /> API 配置</h3>
       <p class="settings-desc">每个 Agent 可独立配置，也可共用同一个中转站 Key</p>
 
       <!-- Agent tabs with active provider indicator -->
@@ -37,13 +37,13 @@
 
       <!-- Active provider display -->
       <div v-if="activeProviders[selectedType]" class="active-provider-badge">
-        当前: <strong>{{ activeProviders[selectedType]?.name || '未配置' }}</strong>
+        <TIcon name="check" :size="14" /> 当前: <strong>{{ activeProviders[selectedType]?.name || '未配置' }}</strong>
         <span v-if="activeProviders[selectedType]?.model"> · {{ activeProviders[selectedType]?.model }}</span>
       </div>
 
       <!-- Preset Selector -->
       <div class="preset-section">
-        <label>快速预设</label>
+        <label><TIcon name="bolt" :size="14" /> 快速预设</label>
         <div class="preset-selector">
           <select v-model="selectedPresetIdx" @change="applyPreset">
             <option :value="-1">自定义</option>
@@ -54,7 +54,7 @@
         </div>
         <!-- Model dropdown for selected preset -->
         <div v-if="selectedPresetIdx >= 0 && PROVIDER_PRESETS[selectedPresetIdx]?.models?.length" class="preset-models">
-          <label>模型选择</label>
+          <label><TIcon name="cpu" :size="14" /> 模型选择</label>
           <div class="model-chips">
             <button
               v-for="m in PROVIDER_PRESETS[selectedPresetIdx].models"
@@ -70,19 +70,19 @@
       </div>
 
       <div class="settings-form">
-        <label>地址</label>
+        <label><TIcon name="link" :size="14" /> 地址</label>
         <input v-model="baseUrl" type="text" placeholder="https://api.example.com/v1" />
-        <label>密钥</label>
+        <label><TIcon name="key" :size="14" /> 密钥</label>
         <input v-model="apiKey" type="password" placeholder="sk-..." />
-        <label>模型</label>
+        <label><TIcon name="cpu" :size="14" /> 模型</label>
         <input v-model="model" type="text" placeholder="模型名称 (可选)" />
         <div class="settings-actions">
-          <button class="save-btn" @click="save">保存</button>
+          <button class="save-btn" @click="save"><TIcon name="check" :size="14" /> 保存</button>
           <button class="test-btn" @click="testConn" :disabled="testing">
-            {{ testing ? '测试中...' : '测试连接' }}
+            <TIcon name="plug" :size="14" /> {{ testing ? '测试中...' : '测试连接' }}
           </button>
-          <span class="settings-status" :class="{ error: connStatus.startsWith('连接失败') }" v-if="connStatus">{{ connStatus }}</span>
-          <span class="settings-status" v-else-if="status">{{ status }}</span>
+          <span class="settings-status" :class="{ error: connStatus.startsWith('连接失败') }" v-if="connStatus"><TIcon :name="connStatus.startsWith('连接失败') ? 'close' : 'check'" :size="14" /> {{ connStatus }}</span>
+          <span class="settings-status" v-else-if="status"><TIcon name="check" :size="14" /> {{ status }}</span>
         </div>
       </div>
     </div>
