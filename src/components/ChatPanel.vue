@@ -51,18 +51,21 @@
         </button>
       </div>
       <template v-if="visibleMessages.length > 0">
-        <div
-          v-for="msg in visibleMessages"
-          :key="msg.id"
-          class="chat-message"
-          :class="msg.role"
-        >
-          <span class="chat-msg-meta" v-if="msg.role !== 'system'">
-            {{ msg.role === "user" ? "你" : getAgentGlyph(msg.agentId || 'hermes') }}
-            · {{ formatTime(msg.timestamp) }}
-          </span>
-          <div class="chat-msg-bubble">{{ msg.content }}</div>
-        </div>
+        <TransitionGroup name="msg-stagger" tag="div">
+          <div
+            v-for="(msg, idx) in visibleMessages"
+            :key="msg.id"
+            class="chat-message"
+            :class="msg.role"
+            :style="{ transitionDelay: `${idx * 35}ms` }"
+          >
+            <span class="chat-msg-meta" v-if="msg.role !== 'system'">
+              {{ msg.role === "user" ? "你" : getAgentGlyph(msg.agentId || 'hermes') }}
+              · {{ formatTime(msg.timestamp) }}
+            </span>
+            <div class="chat-msg-bubble">{{ msg.content }}</div>
+          </div>
+        </TransitionGroup>
       </template>
 
       <!-- Streaming message bubble -->

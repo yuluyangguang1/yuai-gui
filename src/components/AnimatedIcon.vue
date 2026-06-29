@@ -58,11 +58,11 @@ const animation = icon.animation;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s var(--ease-spring-fast);
 }
 
 .animated-icon svg {
-  transition: all 0.3s ease;
+  transition: all 0.3s var(--ease-spring-normal);
 }
 
 /* Arrow Back */
@@ -80,7 +80,7 @@ const animation = icon.animation;
   opacity: 0;
   transform: scale(0.8);
   transform-origin: center;
-  transition: all 0.3s ease;
+  transition: all 0.3s var(--ease-spring-normal);
 }
 
 .animated-icon[data-animation="star"]:hover .star-fill {
@@ -91,7 +91,7 @@ const animation = icon.animation;
 .animated-icon[data-animation="star"]:hover .star-outline {
   transform: scale(1.1) rotate(-5deg);
   transform-origin: center;
-  transition: all 0.3s ease;
+  transition: all 0.3s var(--ease-spring-normal);
 }
 
 /* Search */

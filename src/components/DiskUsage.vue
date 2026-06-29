@@ -197,7 +197,7 @@ onMounted(() => {
   height: 100%;
   background: linear-gradient(90deg, var(--jade, #5ccfb8), rgba(92, 207, 184, 0.4));
   border-radius: 3px;
-  transition: width 0.3s ease;
+  transition: width 0.3s var(--ease-spring-fast);
   min-width: 2px;
 }
 

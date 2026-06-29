@@ -588,10 +588,10 @@ onUnmounted(() => {
 
 /* Transition */
 .suggest-fade-enter-active {
-  transition: opacity 0.12s ease, transform 0.12s ease;
+ transition: opacity 0.12s var(--ease-spring-fast), transform 0.12s var(--ease-spring-fast);
 }
 .suggest-fade-leave-active {
-  transition: opacity 0.08s ease;
+ transition: opacity 0.08s var(--ease-spring-fast);
 }
 .suggest-fade-enter-from {
   opacity: 0;

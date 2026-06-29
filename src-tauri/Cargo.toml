@@ -32,6 +32,10 @@ reqwest = { version = "0.12", features = ["blocking", "json"] }
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "gif", "webp", "bmp"] }
 md-5 = "0.10"
 base64 = "0.22"
+aes-gcm = "0.10"
+rand = "0.9"
+zeroize = "1"
+thiserror = "2"
 
 [features]
 default = ["custom-protocol"]

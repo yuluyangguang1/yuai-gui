@@ -12,6 +12,7 @@ mod files;
 mod git;
 mod pty;
 mod recording;
+mod secure;
 mod screenshot;
 mod thumbnail;
 mod updater;
@@ -23,6 +24,7 @@ mod kanban;
 mod mcp;
 mod usage;
 mod worktree;
+mod lan_discovery;
 
 // ═══════════════════════════════════════════
 // Shared Types
@@ -236,6 +238,11 @@ pub fn run() {
             skills::toggle_skill,
             skills::trash_skill,
             skills::update_skill_stats,
+            secure::seal,
+            secure::unseal,
+            secure::save_secret,
+            secure::remove_secret,
+            secure::load_secret,
             // Write Gate
             write_gate::write_gate_list,
             write_gate::write_gate_diff,
@@ -272,6 +279,11 @@ pub fn run() {
             worktree::get_agent_changes,
             worktree::get_agent_file_diff,
             worktree::get_agent_file_content,
+            // LAN Discovery
+            lan_discovery::lan_start_scan,
+            lan_discovery::lan_stop_scan,
+            lan_discovery::lan_devices,
+            lan_discovery::lan_pair_device,
         ])
         .run(tauri::generate_context!())
         .expect("error while running yuai-gui");

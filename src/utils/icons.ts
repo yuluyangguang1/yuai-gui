@@ -46,6 +46,7 @@ export const ICONS = {
   group: '合',
   beam: '束',
   skills: '技',
+  devices: '网',
 
   // ── 功能字形 ──
   terminal: '端',

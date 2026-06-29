@@ -142,7 +142,7 @@
   border-radius: 1px;
   background: var(--accent);
   opacity: 0;
-  transition: opacity 0.15s ease 0.08s;
+  transition: opacity 0.15s var(--ease-spring-fast) 0.08s;
 }
 
 .sidebar-resizer:hover::after,
@@ -303,6 +303,62 @@
   cursor: pointer;
   transition: 0.12s;
 }
+
+/* ── Staggered 入场动画 ── */
+/* 用法：父容器加 stagger-container，子项自动延迟入场 */
+.stagger-container > * {
+  animation: staggerFadeUp 0.35s var(--ease-spring-normal) both;
+}
+.stagger-container > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-container > *:nth-child(2) { animation-delay: 40ms; }
+.stagger-container > *:nth-child(3) { animation-delay: 80ms; }
+.stagger-container > *:nth-child(4) { animation-delay: 120ms; }
+.stagger-container > *:nth-child(5) { animation-delay: 160ms; }
+.stagger-container > *:nth-child(6) { animation-delay: 200ms; }
+.stagger-container > *:nth-child(7) { animation-delay: 240ms; }
+.stagger-container > *:nth-child(8) { animation-delay: 280ms; }
+.stagger-container > *:nth-child(9) { animation-delay: 320ms; }
+.stagger-container > *:nth-child(10) { animation-delay: 360ms; }
+.stagger-container > *:nth-child(n+11) { animation-delay: 400ms; }
+
+/* 单项入场（不需要 stagger 容器时直接用） */
+.stagger-item {
+  animation: staggerFadeUp 0.35s var(--ease-spring-normal) both;
+}
+
+/* 淡入 + 上移 */
+@keyframes staggerFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 淡入 + 缩放（用于卡片/面板） */
+@keyframes staggerFadeScale {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.stagger-scale > * {
+  animation: staggerFadeScale 0.3s var(--ease-spring-fast) both;
+}
+.stagger-scale > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-scale > *:nth-child(2) { animation-delay: 30ms; }
+.stagger-scale > *:nth-child(3) { animation-delay: 60ms; }
+.stagger-scale > *:nth-child(4) { animation-delay: 90ms; }
+.stagger-scale > *:nth-child(5) { animation-delay: 120ms; }
+.stagger-scale > *:nth-child(n+6) { animation-delay: 150ms; }
 
 .terminal-btn:hover,
 .terminal-btn.active {

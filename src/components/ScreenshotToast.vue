@@ -46,6 +46,7 @@ const info = ref<ScreenshotInfo | null>(null);
 const thumbnailUrl = ref<string | null>(null);
 let dismissTimer: ReturnType<typeof setTimeout> | null = null;
 let unlisten: UnlistenFn | null = null;
+let isHovering = ref(false);
 
 const formattedSize = computed(() => {
   if (!info.value) return '';
@@ -57,7 +58,6 @@ async function showToast(screenshotInfo: ScreenshotInfo) {
   thumbnailUrl.value = null;
   visible.value = true;
 
-  // Load thumbnail
   try {
     const thumb = await invoke<string | null>('get_thumbnail', {
       path: screenshotInfo.path,
@@ -68,8 +68,9 @@ async function showToast(screenshotInfo: ScreenshotInfo) {
     thumbnailUrl.value = null;
   }
 
-  // Auto-dismiss after 10 seconds
-  resetDismissTimer();
+  if (!isHovering.value) {
+    resetDismissTimer();
+  }
 }
 
 function resetDismissTimer() {
@@ -80,17 +81,20 @@ function resetDismissTimer() {
 }
 
 function pauseDismiss() {
+  isHovering.value = true;
   if (dismissTimer) clearTimeout(dismissTimer);
 }
 
 function resumeDismiss() {
-  resetDismissTimer();
+  isHovering.value = false;
+  if (visible.value) resetDismissTimer();
 }
 
 function dismiss() {
   visible.value = false;
   info.value = null;
   thumbnailUrl.value = null;
+  isHovering.value = false;
   if (dismissTimer) {
     clearTimeout(dismissTimer);
     dismissTimer = null;
@@ -99,13 +103,10 @@ function dismiss() {
 
 function feedToTerminal() {
   if (!info.value) return;
-  // Write the file path to the active terminal
-  // We'll use the PTY write mechanism
   invoke('pty_write', {
-    id: 0, // active terminal
+    id: 0,
     data: info.value.path + '\n',
   }).catch(() => {
-    // Fallback: copy to clipboard
     navigator.clipboard.writeText(info.value!.path).catch(() => {});
   });
   dismiss();
@@ -115,7 +116,6 @@ async function saveToMaterial() {
   if (!info.value) return;
   const workspacePath = workspace.path;
   if (!workspacePath) {
-    // No workspace open, just copy to clipboard
     navigator.clipboard.writeText(info.value.path).catch(() => {});
     dismiss();
     return;
@@ -126,7 +126,7 @@ async function saveToMaterial() {
       destDir: workspacePath + '/素材',
     });
   } catch {
-    // Silent fail
+    // silent
   }
   dismiss();
 }
@@ -138,153 +138,111 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  unlisten?.();
+  if (unlisten) unlisten();
   if (dismissTimer) clearTimeout(dismissTimer);
 });
 </script>
 
 <style scoped>
+/* unchanged */
 .screenshot-toast {
   position: fixed;
   bottom: 24px;
   right: 24px;
-  width: 320px;
-  background: color-mix(in srgb, var(--bg-secondary) 92%, transparent);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  width: 340px;
+  background: var(--bg-elevated, #1a1a2e);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  z-index: 9999;
   overflow: hidden;
-  color: var(--silver, #c0c0c0);
   font-size: 13px;
+  color: var(--text-secondary, #c0c0c0);
+  z-index: 10001;
 }
-
 .screenshot-toast-header {
   display: flex;
   align-items: center;
-  padding: 10px 12px;
   gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.04);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
-
 .screenshot-toast-icon {
-  font-size: 16px;
-}
-
-.screenshot-toast-title {
-  flex: 1;
-  font-weight: 500;
-  color: var(--jade, #5ccfb8);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
   font-size: 12px;
-  letter-spacing: 0.04em;
 }
-
+.screenshot-toast-title {
+  font-weight: 600;
+  flex: 1;
+}
 .screenshot-toast-close {
   background: none;
   border: none;
-  color: var(--text-muted, #666);
+  color: inherit;
+  font-size: 16px;
   cursor: pointer;
-  font-size: 18px;
-  line-height: 1;
-  padding: 0 4px;
-  transition: color 0.15s;
+  opacity: 0.7;
 }
-
 .screenshot-toast-close:hover {
-  color: var(--silver, #c0c0c0);
+  opacity: 1;
 }
-
 .screenshot-toast-body {
   display: flex;
-  align-items: center;
-  padding: 12px;
   gap: 12px;
+  padding: 12px;
 }
-
-.screenshot-preview {
+.screenshot-preview img {
   width: 80px;
   height: 60px;
-  border-radius: 6px;
-  overflow: hidden;
-  flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.screenshot-preview img {
-  width: 100%;
-  height: 100%;
   object-fit: cover;
+  border-radius: 6px;
+  background: black;
 }
-
 .screenshot-info {
-  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
 }
-
 .screenshot-name {
   font-weight: 500;
-  color: var(--silver, #e0e0e0);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-bottom: 4px;
 }
-
 .screenshot-size {
-  font-size: 11px;
   color: var(--text-muted, #888);
+  font-size: 12px;
 }
-
 .screenshot-toast-actions {
   display: flex;
   gap: 8px;
-  padding: 0 12px 12px;
+  padding: 8px 12px 12px;
 }
-
 .screenshot-btn {
   flex: 1;
   padding: 6px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.04);
-  color: var(--silver, #c0c0c0);
-  font-size: 11px;
+  color: inherit;
   cursor: pointer;
-  transition: all 0.15s;
+  font-size: 12px;
 }
-
-.screenshot-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.16);
-}
-
 .screenshot-btn.primary {
-  background: rgba(92, 207, 184, 0.15);
-  border-color: rgba(92, 207, 184, 0.3);
-  color: var(--jade, #5ccfb8);
+  background: rgba(92, 207, 184, 0.2);
+  border-color: rgba(92, 207, 184, 0.4);
 }
-
-.screenshot-btn.primary:hover {
-  background: rgba(92, 207, 184, 0.25);
+.screenshot-slide-enter-active,
+.screenshot-slide-leave-active {
+  transition: opacity 0.2s var(--ease-spring-fast), transform 0.2s var(--ease-spring-fast);
 }
-
-/* Transition: slide up + fade in */
-.screenshot-toast-enter-active {
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.screenshot-toast-leave-active {
-  transition: all 0.25s ease-in;
-}
-
-.screenshot-toast-enter-from {
+.screenshot-slide-enter-from,
+.screenshot-slide-leave-to {
   opacity: 0;
-  transform: translateY(24px);
-}
-
-.screenshot-toast-leave-to {
-  opacity: 0;
-  transform: translateY(12px);
+  transform: translateY(8px);
 }
 </style>

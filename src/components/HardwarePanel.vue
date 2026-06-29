@@ -334,7 +334,7 @@ const modelCompat = computed<ModelCompat[]>(() => {
 .hw-bar-fill {
   height: 100%;
   border-radius: 2px;
-  transition: width 0.6s ease;
+  transition: width 0.6s var(--ease-spring-normal);
 }
 
 .hw-bar-cpu {

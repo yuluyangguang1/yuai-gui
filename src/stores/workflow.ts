@@ -1,539 +1,282 @@
-/**
- * Workflow store — DAG-based workflow editor with topological execution.
- * Phase 2: Snapshot undo/redo + Auto-layout.
- */
-import { ref, reactive, computed } from 'vue';
-import { defineStore } from 'pinia';
-
-export type NodeStatus = 'idle' | 'running' | 'done' | 'failed';
+import { defineStore } from "pinia";
+import { ref, computed } from "vue";
+import type { Node, Edge } from "@vue-flow/core";
 
 export interface WorkflowNodeData {
   label: string;
-  nodeType: 'agent' | 'input' | 'output' | 'condition';
-  config?: Record<string, unknown>;
+  kind: "agent" | "prompt" | "condition" | "output";
+  agentId?: string;
+  prompt?: string;
+  condition?: string;
+  trueLabel?: string;
+  falseLabel?: string;
+  model?: string;
+  description?: string;
 }
 
-export interface WorkflowNode {
-  id: string;
-  type: WorkflowNodeData['nodeType'];
-  position: { x: number; y: number };
-  data: WorkflowNodeData;
-}
-
-export interface WorkflowEdge {
-  id: string;
-  source: string;
-  target: string;
+export interface WorkflowEdgeData {
   sourceHandle?: string;
   targetHandle?: string;
-  sourceType?: WorkflowNodeData['nodeType'];
-  targetType?: WorkflowNodeData['nodeType'];
-  animated?: boolean;
 }
 
-export interface Workflow {
-  id: string;
-  name: string;
-  nodes: WorkflowNode[];
-  edges: WorkflowEdge[];
+export interface WorkflowSchema {
+  version: 1;
+  kind: "workflow/v1";
+  meta?: { name?: string; createdAt?: number; updatedAt?: number };
+  nodes: Node<WorkflowNodeData>[];
+  edges: Edge<WorkflowEdgeData>[];
 }
 
-interface Snapshot {
-  nodes: WorkflowNode[];
-  edges: WorkflowEdge[];
-}
-
-let nodeCounter = 0;
-let edgeCounter = 0;
-
-function genNodeId(): string {
-  return `node_${++nodeCounter}_${Date.now()}`;
-}
-
-function genEdgeId(): string {
-  return `edge_${++edgeCounter}_${Date.now()}`;
-}
-
-const MAX_SNAPSHOTS = 50;
-
-export const useWorkflowStore = defineStore('workflow', () => {
-  const workflows = ref<Workflow[]>([]);
-  const activeWorkflowId = ref<string | null>(null);
-  const nodeStatuses = reactive<Record<string, NodeStatus>>({});
-
-  /** Get the currently active workflow */
-  const activeWorkflow = ref<Workflow | null>(null);
-
-  // ══════════════════════════════════════════════
-  // Snapshot Undo/Redo (inspired by Langflow)
-  // ══════════════════════════════════════════════
-
-  const historyStack = ref<Snapshot[]>([]);
+export const useWorkflowStore = defineStore("workflow", () => {
+  // -------------------- State --------------------
+  const schemaVersion = ref<number>(1);
+  const meta = ref<WorkflowSchema["meta"]>({});
+  const nodes = ref<Node<WorkflowNodeData>[]>([]);
+  const edges = ref<Edge<WorkflowEdgeData>[]>([]);
+  const readOnly = ref(false);
+  const history = ref<WorkflowSchema[]>([]);
   const historyIndex = ref(-1);
+  const MAX_HISTORY = 40;
 
-  const canUndo = computed(() => historyIndex.value > 0);
-  const canRedo = computed(() => historyIndex.value < historyStack.value.length - 1);
+  const dirty = computed(() => nodes.value.length > 0 || edges.value.length > 0);
 
-  /** Deep clone nodes + edges and push to history stack. */
-  function takeSnapshot() {
-    const wf = activeWorkflow.value;
-    if (!wf) return;
-
-    const snapshot: Snapshot = {
-      nodes: JSON.parse(JSON.stringify(wf.nodes)),
-      edges: JSON.parse(JSON.stringify(wf.edges)),
-    };
-
-    // If we're not at the end of the stack, truncate forward history
-    if (historyIndex.value < historyStack.value.length - 1) {
-      historyStack.value = historyStack.value.slice(0, historyIndex.value + 1);
-    }
-
-    historyStack.value.push(snapshot);
-
-    // Enforce max snapshots
-    if (historyStack.value.length > MAX_SNAPSHOTS) {
-      historyStack.value = historyStack.value.slice(historyStack.value.length - MAX_SNAPSHOTS);
-    }
-
-    historyIndex.value = historyStack.value.length - 1;
+  // -------------------- Undo/Redo (snapshot-based) --------------------
+  function snapshot() {
+    // 截断前进栈，压入当前状态
+    history.value = history.value.slice(0, historyIndex.value + 1);
+    history.value.push(toJSON());
+    if (history.value.length > MAX_HISTORY) history.value.shift();
+    historyIndex.value = history.value.length - 1;
   }
 
-  /** Restore previous snapshot. */
   function undo() {
-    if (!canUndo.value) return;
-    historyIndex.value--;
-    restoreSnapshot(historyStack.value[historyIndex.value]);
+    if (historyIndex.value > 0) {
+      historyIndex.value -= 1;
+      loadJSON(history.value[historyIndex.value]);
+    }
   }
 
-  /** Restore next snapshot. */
   function redo() {
-    if (!canRedo.value) return;
-    historyIndex.value++;
-    restoreSnapshot(historyStack.value[historyIndex.value]);
+    if (historyIndex.value < history.value.length - 1) {
+      historyIndex.value += 1;
+      loadJSON(history.value[historyIndex.value]);
+    }
   }
 
-  function restoreSnapshot(snapshot: Snapshot) {
-    const wf = activeWorkflow.value;
-    if (!wf) return;
-    wf.nodes = JSON.parse(JSON.stringify(snapshot.nodes));
-    wf.edges = JSON.parse(JSON.stringify(snapshot.edges));
+  function canUndo(): boolean {
+    return historyIndex.value > 0;
+  }
+  function canRedo(): boolean {
+    return historyIndex.value < history.value.length - 1;
   }
 
-  // ══════════════════════════════════════════════
-  // Auto-layout (inspired by Langflow)
-  // ══════════════════════════════════════════════
-
-  const HORIZONTAL_SPACING = 200;
-  const VERTICAL_SPACING = 100;
-
-  /**
-   * Auto-layout nodes using topological sort.
-   * Position nodes in columns (layers), center-aligned.
-   */
-  function autoLayout() {
-    const wf = activeWorkflow.value;
-    if (!wf || wf.nodes.length === 0) return;
-
-    takeSnapshot(); // Save state before layout
-
-    // Build adjacency and in-degree
-    const inDegree = new Map<string, number>();
-    const adjList = new Map<string, string[]>();
-    const nodeMap = new Map<string, WorkflowNode>();
-
-    for (const n of wf.nodes) {
-      inDegree.set(n.id, 0);
-      adjList.set(n.id, []);
-      nodeMap.set(n.id, n);
-    }
-
-    for (const e of wf.edges) {
-      adjList.get(e.source)?.push(e.target);
-      inDegree.set(e.target, (inDegree.get(e.target) ?? 0) + 1);
-    }
-
-    // BFS-based layer assignment (Kahn's algorithm variant)
-    const layers: string[][] = [];
-    const assigned = new Set<string>();
-    const queue: string[] = [];
-
-    // Start with root nodes (in-degree 0)
-    for (const [id, deg] of inDegree) {
-      if (deg === 0) queue.push(id);
-    }
-
-    let currentLayer = [...queue];
-    for (const id of queue) assigned.add(id);
-
-    while (currentLayer.length > 0) {
-      layers.push(currentLayer);
-      const nextLayer: string[] = [];
-
-      for (const id of currentLayer) {
-        for (const neighbor of adjList.get(id) ?? []) {
-          if (!assigned.has(neighbor)) {
-            // Check if all predecessors are assigned
-            const preds = wf.edges.filter(e => e.target === neighbor).map(e => e.source);
-            if (preds.every(p => assigned.has(p))) {
-              nextLayer.push(neighbor);
-              assigned.add(neighbor);
-            }
-          }
-        }
-      }
-
-      currentLayer = nextLayer;
-    }
-
-    // Handle unassigned nodes (orphaned or in cycles)
-    const unassigned = wf.nodes.filter(n => !assigned.has(n.id));
-    if (unassigned.length > 0) {
-      layers.push(unassigned.map(n => n.id));
-    }
-
-    // Position nodes: columns for layers, center-aligned
-    for (let col = 0; col < layers.length; col++) {
-      const layer = layers[col];
-      const layerHeight = layer.length * VERTICAL_SPACING;
-      const startY = -layerHeight / 2;
-
-      for (let row = 0; row < layer.length; row++) {
-        const node = nodeMap.get(layer[row]);
-        if (node) {
-          node.position = {
-            x: col * HORIZONTAL_SPACING,
-            y: startY + row * VERTICAL_SPACING,
-          };
-        }
-      }
-    }
-
-    takeSnapshot(); // Save state after layout
-  }
-
-  // ══════════════════════════════════════════════
-  // Edge Validation (inspired by Langflow)
-  // ══════════════════════════════════════════════
-
-  type EdgeValidationError =
-    | 'self-loop'
-    | 'duplicate'
-    | 'no-active-workflow'
-    | 'missing-source'
-    | 'missing-target'
-    | 'type-incompatible'
-    | 'cycle-detected';
-
-  interface EdgeValidationResult {
-    valid: boolean;
-    error?: EdgeValidationError;
-    message?: string;
-  }
-
-  /** Type compatibility matrix — which node types can connect to which */
-  const TYPE_COMPAT: Record<string, string[]> = {
-    input: ['agent', 'output', 'condition'],
-    agent: ['agent', 'output', 'condition'],
-    condition: ['agent', 'output'],
-    output: [],
-  };
-
-  /**
-   * Validate a proposed edge between two nodes.
-   * Returns { valid: true } if the edge is allowed.
-   */
-  function validateEdge(source: string, target: string): EdgeValidationResult {
-    // Self-loop check
-    if (source === target) {
-      return { valid: false, error: 'self-loop', message: '不能连接自身' };
-    }
-
-    const wf = activeWorkflow.value;
-    if (!wf) {
-      return { valid: false, error: 'no-active-workflow', message: '没有活跃工作流' };
-    }
-
-    // Node existence check
-    const sourceNode = wf.nodes.find(n => n.id === source);
-    const targetNode = wf.nodes.find(n => n.id === target);
-    if (!sourceNode) {
-      return { valid: false, error: 'missing-source', message: '源节点不存在' };
-    }
-    if (!targetNode) {
-      return { valid: false, error: 'missing-target', message: '目标节点不存在' };
-    }
-
-    // Duplicate check
-    if (wf.edges.some(e => e.source === source && e.target === target)) {
-      return { valid: false, error: 'duplicate', message: '连接已存在' };
-    }
-
-    // Type compatibility check
-    const allowed = TYPE_COMPAT[sourceNode.type] ?? [];
-    if (!allowed.includes(targetNode.type)) {
-      return {
-        valid: false,
-        error: 'type-incompatible',
-        message: `${sourceNode.type} 不能连接到 ${targetNode.type}`,
-      };
-    }
-
-    // Cycle detection (would adding this edge create a cycle?)
-    const wouldCycle = detectCycle(wf, source, target);
-    if (wouldCycle) {
-      return { valid: false, error: 'cycle-detected', message: '会产生循环依赖' };
-    }
-
-    return { valid: true };
-  }
-
-  /** Quick cycle detection using DFS from target to source */
-  function detectCycle(wf: Workflow, newSource: string, newTarget: string): boolean {
-    const adj = new Map<string, string[]>();
-    for (const n of wf.nodes) adj.set(n.id, []);
-    for (const e of wf.edges) adj.get(e.source)?.push(e.target);
-    // Add the proposed edge
-    adj.get(newSource)?.push(newTarget);
-
-    // DFS: can we reach newSource from newTarget?
-    const visited = new Set<string>();
-    const stack = [newTarget];
-    while (stack.length > 0) {
-      const current = stack.pop()!;
-      if (current === newSource) return true;
-      if (visited.has(current)) continue;
-      visited.add(current);
-      for (const neighbor of adj.get(current) ?? []) {
-        stack.push(neighbor);
-      }
-    }
-    return false;
-  }
-
-  function createWorkflow(name: string): Workflow {
-    const wf: Workflow = {
-      id: `wf_${Date.now()}`,
-      name,
-      nodes: [],
-      edges: [],
+  // -------------------- Schema / I/O --------------------
+  function toJSON(): WorkflowSchema {
+    return {
+      version: schemaVersion.value,
+      kind: "workflow/v1",
+      meta: { ...meta.value, updatedAt: Date.now() },
+      nodes: structuredClone(nodes.value),
+      edges: structuredClone(edges.value),
     };
-    workflows.value.push(wf);
-    activeWorkflowId.value = wf.id;
-    activeWorkflow.value = wf;
-    historyStack.value = [];
-    historyIndex.value = -1;
-    return wf;
   }
 
-  function setActiveWorkflow(id: string) {
-    activeWorkflowId.value = id;
-    activeWorkflow.value = workflows.value.find(w => w.id === id) ?? null;
-    // Reset history for the new workflow
-    historyStack.value = [];
-    historyIndex.value = -1;
+  function loadJSON(schema: WorkflowSchema) {
+    schemaVersion.value = schema.version;
+    meta.value = { ...schema.meta };
+    nodes.value = schema.nodes.map((n) => ({
+      ...n,
+      data: { ...n.data },
+    }));
+    edges.value = schema.edges.map((e) => ({
+      ...e,
+      data: { ...e.data },
+    }));
   }
 
-  function addNode(type: WorkflowNodeData['nodeType'], position: { x: number; y: number }, label?: string) {
-    const wf = activeWorkflow.value;
-    if (!wf) return;
+  function serialize(): string {
+    return JSON.stringify(toJSON(), null, 2);
+  }
 
-    takeSnapshot();
+  function deserialize(raw: string): boolean {
+    try {
+      const parsed = JSON.parse(raw) as Partial<WorkflowSchema>;
+      if (!Array.isArray(parsed.nodes) || !Array.isArray(parsed.edges)) return false;
+      loadJSON({
+        version: parsed.version ?? 1,
+        kind: parsed.kind ?? "workflow/v1",
+        meta: parsed.meta,
+        nodes: parsed.nodes as Node<WorkflowNodeData>[],
+        edges: parsed.edges as Edge<WorkflowEdgeData>[],
+      });
+      snapshot();
+      return true;
+    } catch {
+      return false;
+    }
+  }
 
-    const defaultLabels: Record<string, string> = {
-      agent: 'Agent',
-      input: '输入',
-      output: '输出',
-      condition: '条件',
-    };
-
-    const id = genNodeId();
-    const node: WorkflowNode = {
+  // -------------------- Mutation --------------------
+  function addNode(kind: WorkflowNodeData["kind"], position?: { x: number; y: number }) {
+    const id = `${kind}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const node: Node<WorkflowNodeData> = {
       id,
-      type,
-      position,
+      type: kind,
+      position: position ?? { x: 220 + Math.random() * 60, y: 80 + Math.random() * 60 },
       data: {
-        label: label ?? defaultLabels[type] ?? type,
-        nodeType: type,
+        label: kind.toUpperCase(),
+        kind,
+        agentId: kind === "agent" ? "" : undefined,
+        prompt: kind === "prompt" ? "" : undefined,
+        condition: kind === "condition" ? "" : undefined,
+        trueLabel: kind === "condition" ? "成立" : undefined,
+        falseLabel: kind === "condition" ? "不成立" : undefined,
+        description: kind === "output" ? "结果输出" : undefined,
       },
     };
-    wf.nodes.push(node);
-    nodeStatuses[id] = 'idle';
-
-    takeSnapshot();
-    return node;
+    nodes.value.push(node);
+    snapshot();
   }
 
-  function removeNode(nodeId: string) {
-    const wf = activeWorkflow.value;
-    if (!wf) return;
-
-    takeSnapshot();
-
-    wf.nodes = wf.nodes.filter(n => n.id !== nodeId);
-    wf.edges = wf.edges.filter(e => e.source !== nodeId && e.target !== nodeId);
-    delete nodeStatuses[nodeId];
-
-    takeSnapshot();
+  function removeNode(id: string) {
+    nodes.value = nodes.value.filter((n) => n.id !== id);
+    edges.value = edges.value.filter((e) => e.source !== id && e.target !== id);
+    snapshot();
   }
 
-  function addEdge(source: string, target: string): WorkflowEdge | undefined {
-    const wf = activeWorkflow.value;
-    if (!wf) return undefined;
-
-    // Full validation (replaces old duplicate/self-loop checks)
-    const validation = validateEdge(source, target);
-    if (!validation.valid) {
-      console.warn(`[Workflow] Edge rejected: ${validation.message}`);
-      return undefined;
-    }
-
-    takeSnapshot();
-
-    const id = genEdgeId();
-    const sourceNode = wf.nodes.find(n => n.id === source);
-    const targetNode = wf.nodes.find(n => n.id === target);
-    const edge: WorkflowEdge = {
-      id,
-      source,
-      target,
-      sourceType: sourceNode?.type,
-      targetType: targetNode?.type,
-      animated: true,
-    };
-    wf.edges.push(edge);
-
-    takeSnapshot();
-    return edge;
+  function setNodes(next: Node<WorkflowNodeData>[]) {
+    nodes.value = next;
+    snapshot();
   }
 
-  function removeEdge(edgeId: string) {
-    const wf = activeWorkflow.value;
-    if (!wf) return;
-
-    takeSnapshot();
-
-    wf.edges = wf.edges.filter(e => e.id !== edgeId);
-
-    takeSnapshot();
+  function setEdges(next: Edge<WorkflowEdgeData>[]) {
+    edges.value = next;
+    snapshot();
   }
 
-  /** Topological sort (Kahn's algorithm) */
-  function topologicalSort(nodes: WorkflowNode[], edges: WorkflowEdge[]): WorkflowNode[] | null {
-    const inDegree = new Map<string, number>();
-    const adjList = new Map<string, string[]>();
+  function clear() {
+    nodes.value = [];
+    edges.value = [];
+    meta.value = {};
+    snapshot();
+  }
 
-    for (const n of nodes) {
-      inDegree.set(n.id, 0);
-      adjList.set(n.id, []);
+  // -------------------- Validation (分两层) --------------------
+  interface ValidationResult {
+    valid: boolean;
+    errors: string[];
+    warnings: string[];
+  }
+
+  function validateStructure(): Pick<ValidationResult, "errors" | "warnings"> {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    if (schemaVersion.value !== 1) {
+      warnings.push(`非预期 schema 版本：${schemaVersion.value}`);
+    }
+    if (nodes.value.length === 0) errors.push("至少需要一个节点");
+    for (const n of nodes.value) {
+      if (!n.id) errors.push("存在未命名节点");
+      if (n.data.kind === "agent" && !n.data.agentId) errors.push(`节点 ${n.id} 未选择 Agent`);
+      if (n.data.kind === "prompt" && !n.data.prompt?.trim()) errors.push(`节点 ${n.id} 的提示词为空`);
+      if (n.data.kind === "condition" && !n.data.condition?.trim()) {
+        warnings.push(`条件节点 ${n.id} 条件为空`);
+      }
+    }
+    const ids = new Set(nodes.value.map((n) => n.id));
+    for (const e of edges.value) {
+      if (!ids.has(e.source)) errors.push(`连线起点不存在: ${e.source}`);
+      if (!ids.has(e.target)) errors.push(`连线终点不存在: ${e.target}`);
+      if (e.source === e.target) errors.push(`自环连接: ${e.source}`);
+    }
+    return { errors, warnings };
+  }
+
+  function validateExecutable(): Pick<ValidationResult, "errors" | "warnings"> {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    if (nodes.value.length === 0) {
+      errors.push("空白工作流无法执行");
+      return { errors, warnings };
     }
 
-    for (const e of edges) {
-      adjList.get(e.source)?.push(e.target);
-      inDegree.set(e.target, (inDegree.get(e.target) ?? 0) + 1);
+    // 至少一个输出节点
+    if (!nodes.value.some((n) => n.data.kind === "output")) {
+      warnings.push("未检测到 Output 节点，执行结果将不落地");
     }
 
-    const queue: string[] = [];
-    for (const [id, deg] of inDegree) {
-      if (deg === 0) queue.push(id);
-    }
-
-    const sorted: WorkflowNode[] = [];
-    const nodeMap = new Map(nodes.map(n => [n.id, n]));
-
-    while (queue.length > 0) {
-      const id = queue.shift()!;
-      sorted.push(nodeMap.get(id)!);
-      for (const neighbor of adjList.get(id) ?? []) {
-        const newDeg = (inDegree.get(neighbor) ?? 1) - 1;
-        inDegree.set(neighbor, newDeg);
-        if (newDeg === 0) queue.push(neighbor);
+    // 条件节点必须有两个出口
+    for (const n of nodes.value) {
+      if (n.data.kind === "condition") {
+        const outs = edges.value.filter((e) => e.source === n.id);
+        if (outs.length === 0) errors.push(`条件节点 ${n.id} 无出口`);
+        if (outs.length === 1) warnings.push(`条件节点 ${n.id} 仅有一个出口，建议 true/false 均连接`);
       }
     }
 
-    // Cycle detection
-    if (sorted.length !== nodes.length) return null;
-    return sorted;
-  }
-
-  /** Execute workflow: topological sort then sequential execution with status tracking */
-  async function executeWorkflow(): Promise<boolean> {
-    const wf = activeWorkflow.value;
-    if (!wf || wf.nodes.length === 0) return false;
-
-    // Reset all statuses
-    for (const n of wf.nodes) {
-      nodeStatuses[n.id] = 'idle';
+    // 检测是否为 DAG（简单环检测）
+    const visited = new Set<string>();
+    const stack = new Set<string>();
+    const adj = new Map<string, string[]>();
+    for (const n of nodes.value) adj.set(n.id, []);
+    for (const e of edges.value) {
+      if (adj.has(e.source) && adj.has(e.target)) adj.get(e.source)!.push(e.target);
     }
 
-    const sorted = topologicalSort(wf.nodes, wf.edges);
-    if (!sorted) {
-      console.error('[Workflow] Cycle detected — cannot execute');
+    function dfs(id: string): boolean {
+      visited.add(id);
+      stack.add(id);
+      for (const child of adj.get(id) || []) {
+        if (stack.has(child)) return true;
+        if (!visited.has(child) && dfs(child)) return true;
+      }
+      stack.delete(id);
       return false;
     }
 
-    for (const node of sorted) {
-      nodeStatuses[node.id] = 'running';
-      try {
-        // Simulate per-node execution (real implementation would dispatch to agent/runtime)
-        await executeNode(node);
-        nodeStatuses[node.id] = 'done';
-      } catch (err) {
-        nodeStatuses[node.id] = 'failed';
-        console.error(`[Workflow] Node "${node.data.label}" failed:`, err);
-        return false;
+    for (const n of nodes.value) {
+      if (!visited.has(n.id) && dfs(n.id)) {
+        errors.push("工作流存在环路，无法执行");
+        break;
       }
     }
 
-    return true;
+    return { errors, warnings };
   }
 
-  async function executeNode(node: WorkflowNode): Promise<void> {
-    // Placeholder: real implementation would call Tauri commands per node type
-    const delay = 200 + Math.random() * 300;
-    await new Promise(resolve => setTimeout(resolve, delay));
-
-    if (node.type === 'condition') {
-      // Simulate random condition evaluation
-      if (Math.random() < 0.1) {
-        throw new Error(`Condition "${node.data.label}" evaluated to false`);
-      }
-    }
-  }
-
-  function resetStatuses() {
-    const wf = activeWorkflow.value;
-    if (!wf) return;
-    for (const n of wf.nodes) {
-      nodeStatuses[n.id] = 'idle';
-    }
+  function validate() {
+    const structure = validateStructure();
+    const executable = validateExecutable();
+    return {
+      valid: structure.errors.length === 0 && executable.errors.length === 0,
+      errors: [...structure.errors, ...executable.errors],
+      warnings: [...structure.warnings, ...executable.warnings],
+    } as ValidationResult;
   }
 
   return {
-    workflows,
-    activeWorkflowId,
-    activeWorkflow,
-    nodeStatuses,
-    // Undo/Redo
-    canUndo,
-    canRedo,
-    takeSnapshot,
+    schemaVersion,
+    meta,
+    nodes,
+    edges,
+    readOnly,
+    dirty,
+    history,
+    historyIndex,
     undo,
     redo,
-    // Auto-layout
-    autoLayout,
-    // Existing
-    createWorkflow,
-    setActiveWorkflow,
+    canUndo,
+    canRedo,
+    snapshot,
+    toJSON,
+    loadJSON,
+    serialize,
+    deserialize,
     addNode,
     removeNode,
-    addEdge,
-    removeEdge,
-    executeWorkflow,
-    topologicalSort,
-    resetStatuses,
-    validateEdge,
-    detectCycle: (source: string, target: string) =>
-      activeWorkflow.value ? detectCycle(activeWorkflow.value, source, target) : false,
+    setNodes,
+    setEdges,
+    clear,
+    validate,
   };
 });

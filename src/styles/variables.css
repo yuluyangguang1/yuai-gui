@@ -101,3 +101,6 @@
 
   color-scheme: light;
 }
+/* Migration: transition-fast/normal/slow have been superseded by design-system.css spring vars.
+   Replace --transition-* with --ease-spring-* for consistent kinetic feel.
+   Legacy aliases are kept for backward compatibility and will be removed in a future phase.

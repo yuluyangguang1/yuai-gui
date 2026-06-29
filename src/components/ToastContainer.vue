@@ -61,7 +61,7 @@ const icons: Record<ToastType, string> = {
   pointer-events: auto;
   font-size: 13px;
   color: var(--silver, #c0c0c0);
-  transition: all 0.2s ease;
+  transition: all 0.2s var(--ease-spring-fast);
 }
 
 .toast-item:hover {
@@ -158,6 +158,6 @@ const icons: Record<ToastType, string> = {
 }
 
 .toast-slide-move {
-  transition: transform 0.3s ease;
+  transition: transform 0.3s var(--ease-spring-normal);
 }
 </style>

@@ -368,7 +368,7 @@ onMounted(() => {
   height: 100%;
   background: var(--accent);
   border-radius: 2px;
-  transition: width 0.3s ease;
+  transition: width 0.3s var(--ease-spring-fast);
 }
 
 /* Toolbar */

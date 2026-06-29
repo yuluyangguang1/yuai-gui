@@ -1,7 +1,7 @@
 <template>
   <nav class="app-rail">
     <!-- Top: Agent buttons (梅兰竹菊) -->
-    <div class="rail-section rail-section-top">
+    <div class="rail-section rail-section-top stagger-container">
       <div class="rail-section-label">四友</div>
       <button
         v-for="agent in agentsStore.agents"
@@ -11,8 +11,16 @@
           active: agentsStore.activeAgentId === agent.id,
           disabled: !agent.enabled
         }"
-        :style="{ '--agent-color': agent.color, color: agent.enabled ? agent.color : 'var(--silver)' }"
-        :title="agent.chinese_name + ' — ' + agent.specialty + (agent.enabled ? '' : ' (已禁用)')"
+        :style="{
+          '--agent-color': agent.color,
+          color: agent.enabled ? agent.color : 'var(--silver)'
+        }"
+        :title="
+          agent.chinese_name +
+          ' — ' +
+          agent.specialty +
+          (agent.enabled ? '' : ' (已禁用)')
+        "
         @click="handleAgentClick(agent)"
       >
         {{ agent.glyph }}
@@ -23,7 +31,8 @@
             'dot-idle': agent.enabled && agent.status === 'idle',
             'dot-running': agent.enabled && agent.status === 'running',
             'dot-error': agent.enabled && agent.status === 'error',
-            'dot-disabled': !agent.enabled || agent.status === 'disabled'
+            'dot-disabled':
+              !agent.enabled || agent.status === 'disabled'
           }"
         />
       </button>
@@ -65,7 +74,19 @@
 
     <div class="rail-spacer" />
 
-    <!-- Bottom: workspace, settings -->
+    <!-- Bottom: tools, workspace, settings -->
+    <div class="rail-section rail-section-tools">
+      <button
+        class="rail-nav-btn"
+        title="设备 — 局域网发现与配对"
+        @click="emit('open-lan')"
+      >
+        <span class="rail-glyph">{{ ICONS.devices }}</span>
+        <span class="rail-label">设</span>
+      </button>
+    </div>
+
+    <div class="rail-spacer" />
     <div class="rail-section rail-section-bottom">
       <button
         class="rail-nav-btn"
@@ -75,12 +96,14 @@
       >
         <span class="rail-glyph">{{ ICONS.folder }}</span>
         <span class="rail-label">区</span>
-        <span v-if="workspace.inboxCount > 0" class="rail-badge">{{ workspace.inboxCount }}</span>
+        <span v-if="workspace.inboxCount > 0" class="rail-badge">
+          {{ workspace.inboxCount }}
+        </span>
       </button>
       <button
         class="rail-nav-btn"
         title="配置 — API 密钥、Agent 设置"
-        @click="openSettings"
+        @click="emit('open-settings')"
       >
         <span class="rail-glyph">{{ ICONS.settings }}</span>
         <span class="rail-label">置</span>
@@ -97,30 +120,25 @@ import { useWorkspaceStore } from "../../stores/workspace";
 import { ICONS } from "../../utils/icons";
 import type { AgentDef } from "../../stores/agents";
 
-const emit = defineEmits<{ 'open-settings': []; 'open-skills': [] }>();
+const emit = defineEmits<{
+  "open-settings": [];
+  "open-skills": [];
+  "open-lan": [];
+}>();
 
 const agentsStore = useAgentsStore();
 const chatStore = useChatStore();
 const workspace = useWorkspaceStore();
 const skillsPanelOpen = ref(false);
+const lanPanelOpen = ref(false);
 
 function handleAgentClick(agent: AgentDef) {
   if (!agent.enabled) {
-    // Toggle to re-enable
     agentsStore.toggleAgent(agent.id);
     return;
   }
   agentsStore.setActiveAgent(agent.id);
   chatStore.setChatTarget(agent.id);
-}
-
-function openSettings() {
-  emit('open-settings');
-}
-
-function openSkills() {
-  skillsPanelOpen.value = !skillsPanelOpen.value;
-  emit('open-skills');
 }
 </script>
 
@@ -241,8 +259,12 @@ function openSkills() {
 }
 
 @keyframes pulse-green {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); }
-  50% { box-shadow: 0 0 4px 2px rgba(76, 175, 80, 0.2); }
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 4px 2px rgba(76, 175, 80, 0.2);
+  }
 }
 
 .rail-nav-btn {

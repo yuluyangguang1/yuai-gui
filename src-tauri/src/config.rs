@@ -137,6 +137,14 @@ pub fn normalize_url(app_type: &str, base_url: &str) -> String {
     }
 }
 
+fn decrypt_key(raw: &str) -> String {
+    if raw.is_empty() {
+        return raw.to_string();
+    }
+    // Try to decrypt; if it fails (e.g. old plaintext key), return as-is
+    crate::secure::unseal(raw).unwrap_or_else(|_| raw.to_string())
+}
+
 fn parse_settings(app_type: &str, json_str: &str) -> (String, String, String) {
     let val: serde_json::Value = serde_json::from_str(json_str).unwrap_or_default();
 
@@ -187,12 +195,14 @@ fn parse_settings(app_type: &str, json_str: &str) -> (String, String, String) {
 }
 
 fn build_settings(app_type: &str, base_url: &str, api_key: &str, model: &str) -> String {
+    // Encrypt API key before storing
+    let encrypted_key = crate::secure::seal(api_key).unwrap_or_else(|_| api_key.to_string());
     match app_type {
         "claude" => {
             serde_json::json!({
                 "env": {
                     "ANTHROPIC_BASE_URL": base_url,
-                    "ANTHROPIC_API_KEY": api_key,
+                    "ANTHROPIC_API_KEY": encrypted_key,
                     "ANTHROPIC_MODEL": model
                 }
             }).to_string()
@@ -203,7 +213,7 @@ fn build_settings(app_type: &str, base_url: &str, api_key: &str, model: &str) ->
                 model, base_url
             );
             serde_json::json!({
-                "auth": { "OPENAI_API_KEY": api_key },
+                "auth": { "OPENAI_API_KEY": encrypted_key },
                 "config": config_toml
             }).to_string()
         }
@@ -211,7 +221,7 @@ fn build_settings(app_type: &str, base_url: &str, api_key: &str, model: &str) ->
             serde_json::json!({
                 "env": {
                     "OPENAI_BASE_URL": base_url,
-                    "OPENAI_API_KEY": api_key,
+                    "OPENAI_API_KEY": encrypted_key,
                     "OPENAI_MODEL": model
                 }
             }).to_string()
