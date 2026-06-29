@@ -23,7 +23,8 @@
         "
         @click="handleAgentClick(agent)"
       >
-        {{ agent.glyph }}
+        <component :is="getAgentIcon(agent.id)" :size="22" :color="agent.enabled ? agent.color : 'var(--silver)'" />
+        <span class="agent-glyph-char">{{ agent.glyph }}</span>
         <span class="agent-en-name">{{ agent.name }}</span>
         <span
           class="agent-dot"
@@ -118,7 +119,12 @@ import { useAgentsStore } from "../../stores/agents";
 import { useChatStore } from "../../stores/chat";
 import { useWorkspaceStore } from "../../stores/workspace";
 import { ICONS } from "../../utils/icons";
+import { AGENT_ICONS } from "../../utils/agent-icons";
 import type { AgentDef } from "../../stores/agents";
+
+function getAgentIcon(agentId: string) {
+  return AGENT_ICONS[agentId] || null
+}
 
 const emit = defineEmits<{
   "open-settings": [];
@@ -181,6 +187,13 @@ function handleAgentClick(agent: AgentDef) {
 
 .rail-spacer {
   flex: 1;
+}
+
+.agent-glyph-char {
+  font-family: var(--font-brush, 'Ma Shan Zheng', cursive);
+  font-size: 14px;
+  line-height: 1;
+  margin-top: 2px;
 }
 
 .agent-en-name {
