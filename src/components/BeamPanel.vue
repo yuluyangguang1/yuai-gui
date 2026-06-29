@@ -2,7 +2,7 @@
   <div class="beam-panel">
     <!-- Header -->
     <div class="beam-header">
-      <span class="beam-glyph">束</span>
+      <TIcon name="bolt" :size="28" />
       <div class="beam-header-text">
         <span class="beam-title">并行提问</span>
         <span class="beam-desc">同时向所有 Agent 发送问题，对比方案</span>
@@ -36,7 +36,7 @@
         </div>
       </template>
       <div v-else class="beam-empty">
-        <span class="beam-empty-glyph">束</span>
+        <TIcon name="bolt" :size="48" />
         <span class="beam-empty-hint">输入问题，并行发送给所有 Agent</span>
       </div>
 

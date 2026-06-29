@@ -7,7 +7,7 @@
         :style="{ background: chatStore.chatMode === 'group' ? 'var(--gold)' : currentAgent.color }"
       />
       <span class="chat-agent-name">
-        {{ chatStore.chatMode === 'group' ? ICONS.group : currentAgent.glyph }}
+        <TIcon v-if="chatStore.chatMode === 'group'" name="users" :size="16" /><span v-else>{{ currentAgent.glyph }}</span>
       </span>
       <span class="chat-mode-label">
         {{ chatStore.chatMode === 'group' ? '群聊' : currentAgent.chinese_name }}
@@ -30,11 +30,11 @@
       <span class="chat-spacer" />
       <!-- Beam mode toggle -->
       <button class="chat-mode-btn" :class="{ active: chatStore.chatMode === 'beam' }" @click="chatStore.setChatMode(chatStore.chatMode === 'beam' ? 'single' : 'beam')" title="并行提问模式">
-        {{ ICONS.beam }}
+        <TIcon name="bolt" :size="16" />
       </button>
       <!-- Room manager toggle (only in group mode) -->
       <button v-if="chatStore.chatMode === 'group'" class="room-toggle-btn" @click="showRoomManager = !showRoomManager" title="讨论组管理">
-        {{ showRoomManager ? ICONS.collapse : ICONS.expand }} 组
+        <TIcon :name="showRoomManager ? 'chevronDown' : 'chevronRight'" :size="14" /> 组
       </button>
       <ContextPanel />
     </div>
@@ -163,7 +163,7 @@
           :disabled="!chatStore.inputText.trim()"
           @click="handleSend"
         >
-          {{ ICONS.play }}
+          <TIcon name="play" :size="14" />
         </button>
       </div>
     </div>

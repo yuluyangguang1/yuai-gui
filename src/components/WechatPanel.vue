@@ -17,7 +17,7 @@
     <!-- Login View -->
     <div v-if="!wechatStore.connected" class="wechat-login">
       <div v-if="wechatStore.loginStatus === 'idle'" class="wechat-login-idle">
-        <div class="wechat-login-icon">微</div>
+        <TIcon name="messageCircle" :size="32" />
         <p class="wechat-login-hint">连接微信 ClawBot</p>
         <button class="wechat-login-btn" @click="wechatStore.login()">
           扫码登录
@@ -97,7 +97,7 @@
             </div>
           </template>
           <div v-else class="wechat-chat-empty">
-            <span class="wechat-empty-glyph">微</span>
+            <TIcon name="messageCircle" :size="48" />
             <span class="wechat-empty-hint">选择一个对话开始</span>
           </div>
         </div>

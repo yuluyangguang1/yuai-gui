@@ -27,7 +27,7 @@
 
       <span class="tree-icon">
         <template v-if="node.is_dir">
-          {{ expanded ? ICONS.folder : ICONS.folderOpen }}
+          <TIcon :name="expanded ? 'folderOpen' : 'folder'" :size="14" />
         </template>
         <template v-else-if="thumbnailUrl">
           <img class="tree-thumb" :src="thumbnailUrl" alt="" @error="thumbnailFailed = true" />
@@ -44,7 +44,7 @@
         @click.stop="workspace.toggleFavorite(node.path)"
         :title="workspace.isFavorite(node.path) ? '取消收藏' : '收藏'"
       >
-        {{ workspace.isFavorite(node.path) ? ICONS.starFilled : ICONS.starEmpty }}
+        <TIcon :name="workspace.isFavorite(node.path) ? 'starFilled' : 'star'" :size="14" />
       </button>
     </div>
 

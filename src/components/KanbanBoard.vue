@@ -74,10 +74,10 @@ const newPriority = ref(0);
 
 // Display only the 4 requested columns
 const displayColumns = [
-  { status: 'todo' as KanbanTaskStatus, label: '待办', icon: KANBAN_STATUS_ICONS.todo, color: KANBAN_STATUS_COLORS.todo },
-  { status: 'running' as KanbanTaskStatus, label: '进行中', icon: KANBAN_STATUS_ICONS.running, color: KANBAN_STATUS_COLORS.running },
-  { status: 'review' as KanbanTaskStatus, label: '审查', icon: KANBAN_STATUS_ICONS.review, color: KANBAN_STATUS_COLORS.review },
-  { status: 'done' as KanbanTaskStatus, label: '完成', icon: KANBAN_STATUS_ICONS.done, color: KANBAN_STATUS_COLORS.done },
+  { status: 'todo' as KanbanTaskStatus, label: '待办', icon: 'circle', color: KANBAN_STATUS_COLORS.todo },
+  { status: 'running' as KanbanTaskStatus, label: '进行中', icon: 'loader', color: KANBAN_STATUS_COLORS.running },
+  { status: 'review' as KanbanTaskStatus, label: '审查', icon: 'eye', color: KANBAN_STATUS_COLORS.review },
+  { status: 'done' as KanbanTaskStatus, label: '完成', icon: 'check', color: KANBAN_STATUS_COLORS.done },
 ];
 
 onMounted(() => store.refreshAll());

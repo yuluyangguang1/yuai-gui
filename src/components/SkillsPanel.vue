@@ -4,7 +4,7 @@
     <div class="skills-header">
       <span class="skills-title">技 技能管理</span>
       <button class="skills-refresh" @click="skillsStore.loadSkills()" :disabled="skillsStore.loading">
-        {{ skillsStore.loading ? '加载中...' : ICONS.refresh + ' 刷新' }}
+        <TIcon name="refresh" :size="14" :class="{ 'spin': skillsStore.loading }" /> {{ skillsStore.loading ? '加载中...' : '刷新' }}
       </button>
     </div>
 
@@ -95,7 +95,7 @@
           >
             <span class="skills-toggle-dot" />
           </button>
-          <span class="skills-chevron" :class="{ open: skillsStore.isRowOpen(skill.dir) }">{{ ICONS.expand }}</span>
+          <span class="skills-chevron" :class="{ open: skillsStore.isRowOpen(skill.dir) }"><TIcon name="chevronRight" :size="14" /></span>
         </div>
 
         <!-- Expanded Content -->

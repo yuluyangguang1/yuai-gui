@@ -1,7 +1,7 @@
 <template>
   <div class="agent-usage" v-if="hasUsage || loading">
     <div class="agent-usage-header" @click="showPopup = !showPopup">
-      <span class="agent-usage-icon">量</span>
+      <TIcon name="chart" :size="20" />
       <span class="agent-usage-label">令牌用量</span>
     </div>
 

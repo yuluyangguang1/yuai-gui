@@ -52,7 +52,7 @@
         title="群聊模式 — 多 Agent 协作讨论，轮流发言"
         @click="chatStore.setChatMode('group')"
       >
-        <span class="rail-glyph">{{ ICONS.group }}</span>
+        <TIcon name="users" :size="22" />
         <span class="rail-label">合</span>
       </button>
       <button
@@ -61,7 +61,7 @@
         title="并行提问 — 同时向所有 Agent 发送，对比方案"
         @click="chatStore.setChatMode('beam')"
       >
-        <span class="rail-glyph">{{ ICONS.beam }}</span>
+        <TIcon name="bolt" :size="22" />
         <span class="rail-label">束</span>
       </button>
       <button
@@ -70,7 +70,7 @@
         title="技能管理 — 查看、搜索、启停 Agent 技能"
         @click="openSkills"
       >
-        <span class="rail-glyph">{{ ICONS.skills }}</span>
+        <TIcon name="sparkles" :size="22" />
         <span class="rail-label">技</span>
       </button>
     </div>
@@ -84,7 +84,7 @@
         title="设备 — 局域网发现与配对"
         @click="emit('open-lan')"
       >
-        <span class="rail-glyph">{{ ICONS.devices }}</span>
+        <TIcon name="deviceDesktop" :size="22" />
         <span class="rail-label">设</span>
       </button>
     </div>
@@ -97,7 +97,7 @@
         title="工作区 — 文件浏览与管理"
         @click="workspace.toggleWorkspace()"
       >
-        <span class="rail-glyph">{{ ICONS.folder }}</span>
+        <TIcon name="folder" :size="22" />
         <span class="rail-label">区</span>
         <span v-if="workspace.inboxCount > 0" class="rail-badge">
           {{ workspace.inboxCount }}
@@ -108,7 +108,7 @@
         title="配置 — API 密钥、Agent 设置"
         @click="emit('open-settings')"
       >
-        <span class="rail-glyph">{{ ICONS.settings }}</span>
+        <TIcon name="settings" :size="22" />
         <span class="rail-label">置</span>
       </button>
     </div>
