@@ -13,7 +13,7 @@
         :class="entry.changeType"
         @click="handleClick(entry.filePath)"
       >
-        <span class="change-inbox-type">{{ typeIcon(entry.changeType) }}</span>
+        <span class="change-inbox-type"><TIcon :name="typeIcon(entry.changeType)" :size="14" /></span>
         <span class="change-inbox-name">{{ entry.fileName }}</span>
         <span class="change-inbox-time">{{ timeAgo(entry.timestamp) }}</span>
       </div>
@@ -30,7 +30,7 @@ const workspaceStore = useWorkspaceStore();
 
 function typeIcon(type: string): string {
   switch (type) {
-    case "created": return "+";
+    case "created": return "plus";
     case "modified": return "edit";
     case "deleted": return "close";
     default: return "point";
