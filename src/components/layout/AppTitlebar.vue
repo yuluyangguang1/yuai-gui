@@ -4,8 +4,8 @@
 
     <span class="titlebar-spacer" />
 
-    <span class="titlebar-status" v-if="workspace.hasWorkspace">
-      {{ workspace.currentFileName || "—" }}
+    <span class="titlebar-status" v-if="workspace.hasWorkspace && workspace.currentFileName">
+      {{ workspace.currentFileName }}
     </span>
 
     <div class="titlebar-actions">
