@@ -89,7 +89,7 @@ const allItems = computed<CommandItem[]>(() => {
         items.push({
           id: `file-${node.path}`,
           label: node.name,
-          icon: ICONS.file,
+          icon: "file",
           hint: prefix + node.name,
           category: "file",
           action: () => {
