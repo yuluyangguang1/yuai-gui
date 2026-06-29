@@ -116,6 +116,7 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, watch } from 'vue';
+import { TIcon } from "../utils/icons";
 import { useBeamStore } from '../stores/beam';
 import { useAgentsStore } from '../stores/agents';
 

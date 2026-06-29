@@ -121,6 +121,7 @@ import { useAgentsStore } from "../../stores/agents";
 import { useChatStore } from "../../stores/chat";
 import { useWorkspaceStore } from "../../stores/workspace";
 import { ICONS } from "../../utils/icons";
+import { TIcon } from "../../utils/tabler-icons";
 import { Plum, Orchid, Bamboo, Chrysanthemum } from "../../utils/agent-icons";
 import type { AgentDef } from "../../stores/agents";
 

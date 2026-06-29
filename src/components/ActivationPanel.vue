@@ -28,6 +28,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { TIcon } from "../utils/icons";
 import { useActivationStore } from '../stores/activation';
 
 const activationStore = useActivationStore();

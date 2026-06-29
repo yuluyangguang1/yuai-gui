@@ -91,6 +91,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
+import { TIcon } from "../utils/icons";
 import { invoke } from '@tauri-apps/api/core';
 import LoginPanel from './LoginPanel.vue';
 import ActivationPanel from './ActivationPanel.vue';

@@ -103,6 +103,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted } from "vue";
+import { TIcon } from "../utils/icons";
 import { useHardwareStore } from "../stores/hardware";
 
 const hw = useHardwareStore();

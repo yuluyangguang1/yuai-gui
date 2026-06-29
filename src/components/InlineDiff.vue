@@ -41,6 +41,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import { TIcon } from "../utils/icons";
 import { findDiffs } from '../utils/diffEngine';
 import type { DiffOp } from '../utils/diffEngine';
 

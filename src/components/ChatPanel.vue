@@ -172,6 +172,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, nextTick, watch, onMounted, onUnmounted } from "vue";
+import { TIcon } from "../utils/icons";
 import { useChatStore } from "../stores/chat";
 import { useAgentsStore } from "../stores/agents";
 import { useWorkspaceStore } from "../stores/workspace";

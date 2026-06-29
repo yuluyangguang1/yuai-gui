@@ -44,6 +44,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import { TIcon } from "../utils/icons";
 import { invoke } from "@tauri-apps/api/core";
 import { useChatStore } from "../stores/chat";
 import { formatTokens } from "../utils/format";

@@ -214,6 +214,7 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue';
+import { TIcon } from "../utils/icons";
 import { useTeamsStore, type Team, type AgentRole, type ProcessType, type TeamExecutionResult } from '../stores/teams';
 import { useAgentsStore } from '../stores/agents';
 

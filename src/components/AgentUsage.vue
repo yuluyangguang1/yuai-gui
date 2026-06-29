@@ -79,6 +79,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import { TIcon } from "../utils/icons";
 import { useAgentUsage, type UsageStats } from "../composables/useAgentUsage";
 import { formatTokens } from "../utils/format";
 

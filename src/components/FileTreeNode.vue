@@ -64,6 +64,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
+import { TIcon } from "../utils/icons";
 import type { FileNode } from "../stores/workspace";
 import { useWorkspaceStore } from "../stores/workspace";
 import { invoke } from "@tauri-apps/api/core";

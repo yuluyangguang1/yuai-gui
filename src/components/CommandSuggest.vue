@@ -98,6 +98,7 @@
 
 <script setup lang="ts">
 import { reactive, ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { TIcon } from "../utils/icons";
 import type { AgentId, CommandDef, FlagDef } from '../utils/agentCommands'
 import {
   filterCommands, filterFlags, findCommand, allCommands, allFlags

@@ -23,6 +23,7 @@
 
 <script setup lang="ts">
 import { useWorkspaceStore } from "../stores/workspace";
+import { TIcon } from "../utils/icons";
 import { timeAgo } from "../utils/format";
 
 const workspaceStore = useWorkspaceStore();

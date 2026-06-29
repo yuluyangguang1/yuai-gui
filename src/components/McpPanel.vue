@@ -77,6 +77,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
+import { TIcon } from "../utils/icons";
 import { useMcpStore } from '../stores/mcp';
 
 const store = useMcpStore();

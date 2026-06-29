@@ -54,6 +54,7 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue';
+import { TIcon } from "../utils/icons";
 import { useWriteGateStore } from '../stores/writeGate';
 
 const store = useWriteGateStore();

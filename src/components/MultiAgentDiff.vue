@@ -136,6 +136,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { TIcon } from "../utils/icons";
 import { useMultiDiffStore, type FileConflict } from '../stores/multiDiff';
 import { useAgentsStore } from '../stores/agents';
 
