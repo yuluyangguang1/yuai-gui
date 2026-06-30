@@ -79,8 +79,8 @@ const currentPage = ref(1)
 // 加载索引
 onMounted(async () => {
   try {
-    const data = await import('../data/agency/index.json')
-    index.value = data.default || data
+    const response = await fetch('/agency/index.json')
+    index.value = await response.json()
   } catch (e) {
     console.error('Failed to load builtin agents:', e)
   }

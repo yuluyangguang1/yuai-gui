@@ -148,6 +148,19 @@
 
     <!-- Input -->
     <div class="chat-input-area">
+      <!-- 内置 Agent 浏览面板 -->
+      <Transition name="slide-up">
+        <div v-if="showAgentBrowser" class="agent-browser-overlay">
+          <div class="browser-header">
+            <span class="browser-title"><TIcon name="users" :size="16" /> 内置 Agent 人格库</span>
+            <button class="browser-close" @click="showAgentBrowser = false">
+              <TIcon name="close" :size="14" />
+            </button>
+          </div>
+          <AgentBrowser @select="handleAgentSelect" />
+        </div>
+      </Transition>
+
       <div class="chat-input-wrapper">
         <PromptSuggest
           v-if="suggestVisible"
@@ -174,6 +187,14 @@
           @input="handleInput"
         />
         <button
+          class="chat-agent-btn"
+          :class="{ active: showAgentBrowser }"
+          @click="showAgentBrowser = !showAgentBrowser"
+          title="内置 Agent 人格库"
+        >
+          <TIcon name="users" :size="14" />
+        </button>
+        <button
           class="chat-send-btn"
           :disabled="!chatStore.inputText.trim()"
           aria-label="发送消息"
@@ -199,6 +220,7 @@ import BeamPanel from "./BeamPanel.vue";
 import CommandSuggest from "./CommandSuggest.vue";
 import SlashCommandMenu from "./SlashCommandMenu.vue";
 import PromptSuggest from "./PromptSuggest.vue";
+import AgentBrowser from "./AgentBrowser.vue";
 import type { AgentDef } from "../stores/agents";
 import type { SlashCommand } from "../utils/slash-commands";
 import { analyzePrompt, autoEnhancePrompt, type PromptSuggestion } from "../utils/prompt-enhancer";
@@ -220,6 +242,9 @@ const commandSuggestRef = ref<InstanceType<typeof CommandSuggest> | null>(null);
 const slashMenuVisible = ref(false);
 const slashMenuPosition = ref({ top: 0, left: 0 });
 const slashTrigger = ref<{ startIndex: number } | null>(null);
+
+// ── 内置 Agent 浏览 ──
+const showAgentBrowser = ref(false);
 
 // ── 提示词优化建议状态 ──
 const promptSuggestions = ref<PromptSuggestion[]>([]);
@@ -354,6 +379,18 @@ async function handleSlashSelect(command: SlashCommand) {
     const newPos = before.length + result.text.length;
     textarea.setSelectionRange(newPos, newPos);
     textarea.focus();
+  }
+}
+
+async function handleAgentSelect(agent: { id: string; name: string; emoji: string }) {
+  // 加载 Agent 内容并注入到输入框
+  try {
+    const response = await fetch(`/agency/${agent.id}.md`);
+    const text = await response.text();
+    chatStore.inputText = `[使用 ${agent.emoji} ${agent.name} 人格]\n\n${text}\n\n---\n\n`;
+    showAgentBrowser.value = false;
+  } catch (e) {
+    console.error('Failed to load agent:', e);
   }
 }
 
@@ -859,6 +896,92 @@ watch(
 
 .chat-send-btn:not(:disabled):hover {
   opacity: 0.85;
+}
+
+.chat-agent-btn {
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.chat-agent-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
+.chat-agent-btn.active {
+  background: var(--accent);
+  color: var(--text-inverse);
+  border-color: var(--accent);
+}
+
+.agent-browser-overlay {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  max-height: 400px;
+  margin-bottom: 4px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.browser-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+
+.browser-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.browser-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.browser-close:hover {
+  color: var(--text-primary);
+}
+
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
 }
 
 /* Abort bar */
