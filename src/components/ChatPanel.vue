@@ -185,7 +185,7 @@
           rows="1"
           @keydown="handleKeydown"
           @input="handleInput"
-        />
+        ></textarea>
         <button
           class="chat-agent-btn"
           :class="{ active: showAgentBrowser }"
