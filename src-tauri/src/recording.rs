@@ -187,13 +187,33 @@ pub fn list_recordings() -> Result<Vec<RecordingInfo>, String> {
 /// Read the raw content of a .cast file.
 #[tauri::command]
 pub fn read_recording(path: String) -> Result<String, String> {
-    std::fs::read_to_string(&path).map_err(|e| format!("read recording {}: {}", path, e))
+    let p = std::path::Path::new(&path);
+    let dir = recordings_dir();
+    // Path traversal protection
+    if let Ok(canonical) = p.canonicalize() {
+        if let Ok(dir_canonical) = dir.canonicalize() {
+            if !canonical.starts_with(&dir_canonical) {
+                return Err("access denied: path outside recordings directory".into());
+            }
+        }
+    }
+    std::fs::read_to_string(p).map_err(|e| format!("read recording: {}: {}", path, e))
 }
 
 /// Delete a recording file.
 #[tauri::command]
 pub fn delete_recording(path: String) -> Result<(), String> {
-    std::fs::remove_file(&path).map_err(|e| format!("delete {}: {}", path, e))
+    let p = std::path::Path::new(&path);
+    let dir = recordings_dir();
+    // Path traversal protection
+    if let Ok(canonical) = p.canonicalize() {
+        if let Ok(dir_canonical) = dir.canonicalize() {
+            if !canonical.starts_with(&dir_canonical) {
+                return Err("access denied: path outside recordings directory".into());
+            }
+        }
+    }
+    std::fs::remove_file(p).map_err(|e| format!("delete recording: {}: {}", path, e))
 }
 
 fn compute_cast_duration(path: &PathBuf) -> f64 {

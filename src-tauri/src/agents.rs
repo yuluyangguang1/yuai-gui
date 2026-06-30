@@ -117,6 +117,10 @@ fn find_in_path(name: &str) -> Option<PathBuf> {
 /// This catches binaries installed via Homebrew, nvm, etc. that are only
 /// available in a login shell environment.
 fn find_in_login_shell_path(name: &str) -> Option<PathBuf> {
+    // Shell injection protection: reject suspicious names
+    if !name.chars().all(|c| c.is_alphanumeric() || c == '.' || c == '-' || c == '_') {
+        return None;
+    }
     #[cfg(target_os = "windows")]
     {
         // On Windows, use `where`
