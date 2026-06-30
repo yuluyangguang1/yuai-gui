@@ -149,6 +149,13 @@
     <!-- Input -->
     <div class="chat-input-area">
       <div class="chat-input-wrapper">
+        <SlashCommandMenu
+          v-model:visible="slashMenuVisible"
+          :commands="promptStore.allCommands"
+          :position="slashMenuPosition"
+          @select="handleSlashSelect"
+          @close="slashMenuVisible = false"
+        />
         <textarea
           ref="inputRef"
           class="chat-input"
@@ -176,15 +183,18 @@ import { TIcon } from "../utils/icons";
 import { useChatStore } from "../stores/chat";
 import { useAgentsStore } from "../stores/agents";
 import { useWorkspaceStore } from "../stores/workspace";
+import { usePromptStore } from "../stores/prompt";
 import ContextPanel from "./ContextPanel.vue";
 import RoomManager from "./RoomManager.vue";
 import BeamPanel from "./BeamPanel.vue";
 import CommandSuggest from "./CommandSuggest.vue";
+import SlashCommandMenu from "./SlashCommandMenu.vue";
 import type { AgentDef } from "../stores/agents";
-import { ICONS } from "../utils/icons";
+import type { SlashCommand } from "../utils/slash-commands";
 
 const chatStore = useChatStore();
 const agentsStore = useAgentsStore();
+const promptStore = usePromptStore();
 
 // Current agent for single mode (uses chatTarget)
 const currentAgent = computed(() => {
@@ -194,6 +204,11 @@ const currentAgent = computed(() => {
 const workspaceStore = useWorkspaceStore();
 const showRoomManager = ref(false);
 const commandSuggestRef = ref<InstanceType<typeof CommandSuggest> | null>(null);
+
+// ── Slash Command 状态 ──
+const slashMenuVisible = ref(false);
+const slashMenuPosition = ref({ top: 0, left: 0 });
+const slashTrigger = ref<{ startIndex: number } | null>(null);
 
 async function handleConfirmExec() {
   await chatStore.confirmExecution();
@@ -272,7 +287,57 @@ async function scrollToBottom() {
 
 function handleInput() {
   checkMentionTrigger();
+  checkSlashTrigger();
   commandSuggestRef.value?.onInput();
+}
+
+function checkSlashTrigger() {
+  const textarea = inputRef.value;
+  if (!textarea) return;
+
+  const text = textarea.value;
+  const cursorPos = textarea.selectionStart;
+
+  const trigger = promptStore.detectSlashTrigger(text, cursorPos);
+  if (trigger) {
+    // 计算菜单位置（在输入框上方）
+    const rect = textarea.getBoundingClientRect();
+    slashMenuPosition.value = {
+      top: rect.height,
+      left: 8,
+    };
+    slashTrigger.value = trigger;
+    slashMenuVisible.value = true;
+  } else {
+    slashMenuVisible.value = false;
+    slashTrigger.value = null;
+  }
+}
+
+async function handleSlashSelect(command: SlashCommand) {
+  const textarea = inputRef.value;
+  if (!textarea) return;
+
+  const text = textarea.value;
+  const cursorPos = textarea.selectionStart;
+
+  // 移除 /command 部分
+  const before = text.slice(0, slashTrigger.value?.startIndex ?? 0);
+  const after = text.slice(cursorPos);
+
+  // 执行命令，获取渲染后的文本
+  const result = await promptStore.executeCommand(command.id);
+  if (result) {
+    chatStore.inputText = before + result.text + after;
+    slashMenuVisible.value = false;
+    slashTrigger.value = null;
+
+    // 聚焦到输入框末尾
+    await nextTick();
+    const newPos = before.length + result.text.length;
+    textarea.setSelectionRange(newPos, newPos);
+    textarea.focus();
+  }
 }
 
 function checkMentionTrigger() {
