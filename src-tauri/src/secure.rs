@@ -10,21 +10,11 @@ use std::fs;
 use std::io::{Read, Write};
 use std::path::PathBuf;
 
-static KEY_PATH: &str = ".yuai/secure.key";
-static DATA_PATH: &str = ".yuai/secure.secrets.json";
+static KEY_PATH: &str = "secure.key";
+static DATA_PATH: &str = "secure.secrets.json";
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[allow(dead_code)]
-pub struct SecretEntry {
-    pub key: String,
-    pub ciphertext: String,
-}
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-#[allow(dead_code)]
-pub struct SecretStore {
-    pub secrets: Vec<SecretEntry>,
-}
 
 #[derive(Debug, thiserror::Error)]
 pub enum SecureError {

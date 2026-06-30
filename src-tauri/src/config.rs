@@ -198,7 +198,7 @@ fn parse_settings(app_type: &str, json_str: &str) -> (String, String, String) {
 
 fn build_settings(app_type: &str, base_url: &str, api_key: &str, model: &str) -> String {
     // Encrypt API key before storing
-    let encrypted_key = crate::secure::seal(api_key).unwrap_or_else(|_| api_key.to_string());
+    let encrypted_key = crate::secure::seal(api_key).unwrap_or_else(|e| { log::warn!("API key encryption failed: {}, storing plaintext", e); api_key.to_string() });
     match app_type {
         "claude" => {
             serde_json::json!({
