@@ -429,6 +429,58 @@ export const useProviderStore = defineStore('provider', () => {
     return true
   }
 
+  // ─── 实时模型发现 ───
+  async function discoverModels(providerId: string): Promise<ModelDef[]> {
+    const provider = allProviders.value.find(p => p.id === providerId)
+    if (!provider || !provider.api_key) return []
+
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+      // 根据供应商类型设置认证头
+      if (provider.id === 'anthropic') {
+        headers['x-api-key'] = provider.api_key
+        headers['anthropic-version'] = '2023-06-01'
+      } else {
+        headers['Authorization'] = `Bearer ${provider.api_key}`
+      }
+
+      const baseUrl = provider.base_url.replace(/\/+$/, '')
+      const modelsUrl = provider.id === 'anthropic'
+        ? `${baseUrl}/v1/models`
+        : `${baseUrl}/models`
+
+      const resp = await fetch(modelsUrl, { headers, signal: AbortSignal.timeout(10000) })
+      if (!resp.ok) return []
+
+      const data = await resp.json()
+      const modelList = data.data ?? data.models ?? data ?? []
+
+      const discovered: ModelDef[] = modelList.map((m: any) => ({
+        id: m.id ?? m.name ?? String(m),
+        name: m.id ?? m.name ?? String(m),
+        provider_id: providerId,
+        aliases: [],
+        context_length: m.context_length ?? m.max_context_length ?? undefined,
+        supports_vision: m.capabilities?.vision ?? false,
+        supports_tools: m.capabilities?.function_calling ?? true,
+      }))
+
+      // 合并到现有模型列表（不覆盖已有的）
+      for (const dm of discovered) {
+        if (!models.value.find(m => m.id === dm.id && m.provider_id === providerId)) {
+          models.value.push(dm)
+        }
+      }
+
+      return discovered
+    } catch (e) {
+      console.warn(`[Provider] Model discovery failed for ${providerId}:`, e)
+      return []
+    }
+  }
+
   // ─── 持久化 ───
   function saveToStorage() {
     try {
@@ -492,6 +544,7 @@ export const useProviderStore = defineStore('provider', () => {
     switchProvider,
     switchModel,
     switchByAlias,
+    discoverModels,
     saveToStorage,
     loadFromStorage,
   }
