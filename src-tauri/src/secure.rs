@@ -90,7 +90,20 @@ pub fn load_or_create_key() -> Result<[u8; 32], SecureError> {
     } else {
         let mut k = [0u8; 32];
         OsRng.fill_bytes(&mut k);
-        fs::File::create(p)?.write_all(&k)?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            fs::OpenOptions::new()
+                .mode(0o600)
+                .write(true)
+                .create(true)
+                .open(p)?
+                .write_all(&k)?;
+        }
+        #[cfg(not(unix))]
+        {
+            fs::File::create(p)?.write_all(&k)?;
+        }
         Ok(k)
     }
 }
