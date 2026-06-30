@@ -254,6 +254,36 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
+/* 统一禁用样式 */
+.btn:disabled,
+button:disabled {
+  opacity: var(--input-disabled-opacity, 0.4);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Loading 状态 */
+.btn-loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+
+.btn-loading::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--text-primary);
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* 输入框错误状态 */
 .input-error {
   border-color: var(--error);
