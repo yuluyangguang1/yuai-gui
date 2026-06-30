@@ -257,6 +257,7 @@ export const useProviderStore = defineStore('provider', () => {
   const models = ref<ModelDef[]>([...BUILTIN_MODELS])
   const credentialPools = reactive<Map<string, CredentialEntry[]>>(new Map())
   const fallbackChain = ref<FallbackEntry[]>([])
+  const EXHAUSTED_TTL = 3600_000 // 1h 冷却 (参考 Hermes)
 
   // 当前激活的供应商和模型
   const activeProviderId = ref<string>('openai')
@@ -322,9 +323,14 @@ export const useProviderStore = defineStore('provider', () => {
     return null
   }
 
-  // ─── Credential Pool ───
+  // ─── Credential Pool (参考 Hermes credential_pool.py) ───
+  const LEASE_TTL = 300_000 // 5min 租借超时
+  const activeLeases = reactive<Map<string, number>>(new Map()) // credentialId → count
+
   function addCredential(providerId: string, apiKey: string, label?: string) {
     const pool = credentialPools.get(providerId) ?? []
+    // 避免重复
+    if (pool.find(c => c.api_key === apiKey)) return
     pool.push({
       api_key: apiKey,
       label,
@@ -337,16 +343,27 @@ export const useProviderStore = defineStore('provider', () => {
   function getNextCredential(providerId: string): string | null {
     const pool = credentialPools.get(providerId)
     if (!pool || pool.length === 0) return null
+
+    const now = Date.now()
+    // 清理过期冷却
+    for (const entry of pool) {
+      if (entry.is_exhausted && entry.last_used && (now - entry.last_used) > EXHAUSTED_TTL) {
+        entry.is_exhausted = false
+        entry.error_count = 0
+      }
+    }
+
     const available = pool.filter(c => !c.is_exhausted)
     if (available.length === 0) {
-      // Reset all exhausted credentials
+      // 全部 exhausted, 强制重置
       pool.forEach(c => { c.is_exhausted = false; c.error_count = 0 })
       return pool[0].api_key
     }
-    // Round-robin: pick least recently used
+
+    // least_used 策略: 选择使用次数最少的
     available.sort((a, b) => (a.last_used ?? 0) - (b.last_used ?? 0))
     const chosen = available[0]
-    chosen.last_used = Date.now()
+    chosen.last_used = now
     return chosen.api_key
   }
 
@@ -359,6 +376,35 @@ export const useProviderStore = defineStore('provider', () => {
       if (entry.error_count >= 3) {
         entry.is_exhausted = true
       }
+    }
+  }
+
+  // 租借机制 (参考 Hermes acquire_lease/release_lease)
+  function acquireLease(providerId: string): string | null {
+    const pool = credentialPools.get(providerId)
+    if (!pool) return null
+
+    const available = pool.filter(c => !c.is_exhausted)
+    if (available.length === 0) return null
+
+    // 选择租借数最少的
+    const chosen = available.reduce((min, c) => {
+      const minLeases = activeLeases.get(c.api_key) ?? 0
+      const curLeases = activeLeases.get(c.api_key) ?? 0
+      return curLeases < minLeases ? c : min
+    }, available[0])
+
+    const current = activeLeases.get(chosen.api_key) ?? 0
+    activeLeases.set(chosen.api_key, current + 1)
+    return chosen.api_key
+  }
+
+  function releaseLease(apiKey: string) {
+    const current = activeLeases.get(apiKey) ?? 0
+    if (current <= 1) {
+      activeLeases.delete(apiKey)
+    } else {
+      activeLeases.set(apiKey, current - 1)
     }
   }
 
@@ -556,6 +602,8 @@ export const useProviderStore = defineStore('provider', () => {
     addCredential,
     getNextCredential,
     markCredentialExhausted,
+    acquireLease,
+    releaseLease,
     setFallbackChain,
     addToFallback,
     getNextFallback,
