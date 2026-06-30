@@ -22,11 +22,11 @@
       </div>
 
       <div
-        v-for="provider in providers"
+        v-for="provider in activeProviders"
         :key="provider.id"
         class="provider-item"
         :class="{
-          active: provider.id === currentProviderId,
+          active: provider.id === currentId,
           connected: provider.status === 'connected',
           error: provider.status === 'error',
         }"
@@ -57,10 +57,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { TIcon } from "../utils/icons";
+import { useProviderStore } from '../stores/provider";
 
-// ══════════════════════════════════════════════
-// Types
-// ══════════════════════════════════════════════
+const providerStore = useProviderStore();
 
 export type ProviderStatus = 'connected' | 'error' | 'unknown';
 
@@ -73,15 +72,11 @@ export interface Provider {
   status: ProviderStatus;
 }
 
-// ══════════════════════════════════════════════
-// Props & Emits
-// ══════════════════════════════════════════════
-
 const props = defineProps<{
-  /** List of configured providers */
-  providers: Provider[];
-  /** Currently active provider ID */
-  currentProviderId: string;
+  /** Override providers list (optional, uses store if not provided) */
+  providers?: Provider[];
+  /** Currently active provider ID (optional, uses store if not provided) */
+  currentProviderId?: string;
 }>();
 
 const emit = defineEmits<{
@@ -90,64 +85,78 @@ const emit = defineEmits<{
   (e: 'testAll'): void;
 }>();
 
-// ══════════════════════════════════════════════
-// State
-// ══════════════════════════════════════════════
-
 const isOpen = ref(false);
 const testing = ref(false);
 const containerRef = ref<HTMLElement | null>(null);
 
-const currentProvider = computed(() =>
-  props.providers.find(p => p.id === props.currentProviderId) ?? null
+// 优先使用 props，否则从 store 获取
+const activeProviders = computed(() => {
+  if (props.providers) return props.providers;
+  return providerStore.allProviders.map(p => ({
+    id: p.id,
+    name: p.name,
+    icon: '',
+    model: providerStore.models.find(m => m.provider_id === p.id)?.name ?? '',
+    baseUrl: p.base_url,
+    status: (p.status === 'testing' ? 'unknown' : p.status) as ProviderStatus,
+  }));
+});
+
+const currentId = computed(() =>
+  props.currentProviderId ?? providerStore.activeProviderId
 );
 
-// ══════════════════════════════════════════════
-// Actions
-// ══════════════════════════════════════════════
+const currentProvider = computed(() =>
+  activeProviders.value.find(p => p.id === currentId.value) ?? null
+);
 
 function toggleDropdown() {
   isOpen.value = !isOpen.value;
 }
 
 function switchProvider(providerId: string) {
-  emit('switch', providerId);
+  if (props.providers) {
+    emit('switch', providerId);
+  } else {
+    providerStore.switchProvider(providerId);
+  }
   isOpen.value = false;
 }
 
 function testProvider(providerId: string) {
-  emit('test', providerId);
+  if (props.providers) {
+    emit('test', providerId);
+  } else {
+    providerStore.testProvider(providerId);
+  }
 }
 
 async function testAllConnectivity() {
   testing.value = true;
-  emit('testAll');
-  // Reset testing state after a timeout
+  if (props.providers) {
+    emit('testAll');
+  } else {
+    await providerStore.testAllProviders();
+  }
   setTimeout(() => { testing.value = false; }, 3000);
 }
 
 function statusLabel(status: ProviderStatus): string {
   switch (status) {
-    case 'connected': return 'Connected';
-    case 'error': return 'Connection Error';
-    case 'unknown': return 'Unknown';
+    case 'connected': return '已连接';
+    case 'error': return '连接失败';
+    case 'unknown': return '未知';
   }
 }
 
-/** Close dropdown on outside click */
 function handleClickOutside(e: MouseEvent) {
   if (containerRef.value && !containerRef.value.contains(e.target as Node)) {
     isOpen.value = false;
   }
 }
 
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside);
-});
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside);
-});
+onMounted(() => { document.addEventListener('click', handleClickOutside); });
+onUnmounted(() => { document.removeEventListener('click', handleClickOutside); });
 </script>
 
 <style scoped>
