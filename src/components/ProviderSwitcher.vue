@@ -17,7 +17,7 @@
       <div class="dropdown-header">
         <span class="dropdown-title">Providers</span>
         <button class="test-btn" @click.stop="testAllConnectivity" :disabled="testing">
-          {{ testing ? 'Testing...' : '🔗 Test All' }}
+          {{ testing ? 'Testing...' : 'Test All' }}
         </button>
       </div>
 
