@@ -11,16 +11,21 @@
       <HomeView v-show="workspaceStore.showWorkspace" />
 
       <div class="preview-col" id="main-content" role="main">
-        <div class="col-header">
+        <div class="col-header" role="tablist" aria-label="面板标签">
           <span
             v-for="tab in previewTabs"
             :key="tab.id"
             class="preview-mode-tab"
             :class="{ active: previewMode === tab.id }"
+            role="tab"
+            :aria-selected="previewMode === tab.id"
+            :tabindex="previewMode === tab.id ? 0 : -1"
             @click="previewMode = tab.id"
+            @keydown.enter="previewMode = tab.id"
+            @keydown.space.prevent="previewMode = tab.id"
           ><TIcon :name="tab.icon" :size="12" /> {{ tab.label }}</span>
         </div>
-        <div class="preview-body">
+        <div class="preview-body" role="tabpanel">
           <PreviewView v-if="previewMode === 'code'" />
           <DiffViewer v-else-if="previewMode === 'diff'" />
           <div v-else-if="previewMode === 'terminal'" class="terminal-host">

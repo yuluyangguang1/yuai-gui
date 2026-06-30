@@ -168,7 +168,7 @@
           ref="inputRef"
           class="chat-input"
           v-model="chatStore.inputText"
-          placeholder="输入消息... (输入 @ 提及代理)"
+          placeholder="输入消息... (输入 @ 提及代理)" aria-label="消息输入" aria-describedby="input-hint"
           rows="1"
           @keydown="handleKeydown"
           @input="handleInput"
@@ -176,6 +176,7 @@
         <button
           class="chat-send-btn"
           :disabled="!chatStore.inputText.trim()"
+          aria-label="发送消息"
           @click="handleSend"
         >
           <TIcon name="play" :size="14" />
