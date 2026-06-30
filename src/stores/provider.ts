@@ -6,6 +6,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed, reactive } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
+import { fetchModelsDev, getProviderMeta, getModelMeta, lookupContextLength, type ModelMeta, PROVIDER_TO_MODELS_DEV } from '../utils/models-dev'
 
 // ══════════════════════════════════════════════
 // Types
@@ -438,7 +439,6 @@ export const useProviderStore = defineStore('provider', () => {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       }
-      // 根据供应商类型设置认证头
       if (provider.id === 'anthropic') {
         headers['x-api-key'] = provider.api_key
         headers['anthropic-version'] = '2023-06-01'
@@ -467,7 +467,6 @@ export const useProviderStore = defineStore('provider', () => {
         supports_tools: m.capabilities?.function_calling ?? true,
       }))
 
-      // 合并到现有模型列表（不覆盖已有的）
       for (const dm of discovered) {
         if (!models.value.find(m => m.id === dm.id && m.provider_id === providerId)) {
           models.value.push(dm)
@@ -478,6 +477,27 @@ export const useProviderStore = defineStore('provider', () => {
     } catch (e) {
       console.warn(`[Provider] Model discovery failed for ${providerId}:`, e)
       return []
+    }
+  }
+
+  // ─── models.dev 元数据同步 ───
+  async function syncModelsDev(): Promise<void> {
+    try {
+      await fetchModelsDev()
+      // 用 models.dev 元数据丰富现有模型
+      for (const model of models.value) {
+        const meta = getModelMeta(model.provider_id, model.id)
+        if (meta) {
+          if (!model.context_length && meta.context_window > 0) {
+            model.context_length = meta.context_window
+          }
+          if (meta.attachment) model.supports_vision = true
+          if (meta.tool_call) model.supports_tools = true
+        }
+      }
+      console.log(`[Provider] Synced models.dev metadata for ${models.value.length} models`)
+    } catch (e) {
+      console.warn('[Provider] models.dev sync failed:', e)
     }
   }
 
@@ -545,6 +565,7 @@ export const useProviderStore = defineStore('provider', () => {
     switchModel,
     switchByAlias,
     discoverModels,
+    syncModelsDev,
     saveToStorage,
     loadFromStorage,
   }
