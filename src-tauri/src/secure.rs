@@ -13,7 +13,7 @@ use std::path::PathBuf;
 static KEY_PATH: &str = "secure.key";
 static DATA_PATH: &str = "secure.secrets.json";
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 
 
 #[derive(Debug, thiserror::Error)]
