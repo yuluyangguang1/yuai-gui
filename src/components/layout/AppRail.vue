@@ -240,20 +240,20 @@ function handleAgentClick(agent: AgentDef) {
 }
 
 .dot-idle {
-  background: #888;
+  background: var(--status-idle);
 }
 
 .dot-running {
-  background: #4caf50;
+  background: var(--status-running);
   animation: pulse-green 1.5s ease-in-out infinite;
 }
 
 .dot-error {
-  background: #f44336;
+  background: var(--status-error);
 }
 
 .dot-disabled {
-  background: #555;
+  background: var(--status-disabled);
   opacity: 0.5;
 }
 

@@ -1084,6 +1084,7 @@ html, body {
   font-family: var(--font-mono); font-size: .62rem; letter-spacing: .1em;
   color: var(--text-muted); cursor: pointer; padding: 2px 6px;
   border-bottom: 2px solid transparent; transition: all .2s;
+  white-space: nowrap; flex-shrink: 0;
 }
 .preview-mode-tab:hover { color: var(--text-primary); border-color: var(--hairline-warm); }
 .preview-mode-tab.active { color: var(--text-primary); border-color: var(--jade); }
@@ -1091,12 +1092,15 @@ html, body {
 /* ═══ Column Header (tabs) ═══ */
 .col-header {
   height: 38px; display: flex; align-items: center;
-  padding: 0 16px; gap: 12px;
+  padding: 0 16px; gap: 8px;
   border-bottom: 1px solid var(--border-light);
   font-family: var(--font-serif); font-size: .75rem;
   color: var(--bone-dim); letter-spacing: .08em;
   flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+.col-header::-webkit-scrollbar { display: none; }
 
 /* ═══ Terminal Host ═══ */
 .terminal-host { display: flex; flex-direction: column; height: 100%; }
