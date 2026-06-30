@@ -43,9 +43,9 @@ function formatAge(secs: number): string {
 }
 
 function glyphFor(device: LanDevice) {
-  if (device.paired) return "✓";
-  if (device.inbound) return "←";
-  return "→";
+  if (device.paired) return 'check';
+  if (device.inbound) return 'arrowLeft';
+  return 'arrowRight';
 }
 </script>
 

@@ -54,7 +54,7 @@
             <button class="mcp-btn" @click.stop="testSrv(srv.name)" :disabled="testing === srv.name">
               {{ testing === srv.name ? '测试中…' : '桥 测试' }}
             </button>
-            <button class="mcp-btn mcp-btn-remove" @click.stop="removeSrv(srv.name)">✕ 移除</button>
+            <button class="mcp-btn mcp-btn-remove" @click.stop="removeSrv(srv.name)"><TIcon name="close" :size="14" /> 移除</button>
           </div>
         </div>
       </div>

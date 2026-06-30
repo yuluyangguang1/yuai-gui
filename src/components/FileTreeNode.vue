@@ -213,7 +213,7 @@ watch(() => props.node.path, async (newPath) => {
 
 const fileIcon = computed(() => {
   const ext = props.node.name.split(".").pop()?.toLowerCase() ?? "";
-  return FILE_ICONS[ext] ?? ICONS.file;
+  return FILE_ICONS[ext] ?? 'file';
 });
 
 const richIcon = computed(() => {

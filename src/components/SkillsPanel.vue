@@ -17,7 +17,7 @@
         placeholder="搜索技能名称或描述..."
         spellcheck="false"
       />
-      <button v-if="searchQuery" class="skills-search-clear" @click="searchQuery = ''">✕</button>
+      <button v-if="searchQuery" class="skills-search-clear" @click="searchQuery = ''"><TIcon name="close" :size="12" /></button>
     </div>
 
     <!-- Stats Cards -->

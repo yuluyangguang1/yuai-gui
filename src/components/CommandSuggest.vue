@@ -30,7 +30,7 @@
           </div>
         </div>
         <div class="suggest-footer">
-          <span class="suggest-key">↑↓</span> 导航
+          <span class="suggest-key"><TIcon name="arrowUp" :size="10" /><TIcon name="arrowDown" :size="10" /></span> 导航
           <span class="suggest-key">Tab</span> 补全
           <span class="suggest-key">Enter</span> 选择
           <span class="suggest-key">Esc</span> 关闭

@@ -11,7 +11,7 @@
         >
           <span class="toast-icon">{{ icons[toast.type] }}</span>
           <span class="toast-message">{{ toast.message }}</span>
-          <button class="toast-close" @click.stop="dismiss(toast.id)">×</button>
+          <button class="toast-close" @click.stop="dismiss(toast.id)"><TIcon name="close" :size="14" /></button>
         </div>
       </TransitionGroup>
     </div>

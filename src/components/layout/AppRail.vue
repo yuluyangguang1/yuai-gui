@@ -120,7 +120,6 @@ import { ref } from "vue";
 import { useAgentsStore } from "../../stores/agents";
 import { useChatStore } from "../../stores/chat";
 import { useWorkspaceStore } from "../../stores/workspace";
-import { ICONS } from "../../utils/icons";
 import { TIcon } from "../../utils/tabler-icons";
 import { Plum, Orchid, Bamboo, Chrysanthemum } from "../../utils/agent-icons";
 import type { AgentDef } from "../../stores/agents";
@@ -186,13 +185,6 @@ function handleAgentClick(agent: AgentDef) {
 
 .rail-spacer {
   flex: 1;
-}
-
-.agent-glyph-char {
-  font-family: var(--font-brush, 'Ma Shan Zheng', cursive);
-  font-size: 14px;
-  line-height: 1;
-  margin-top: 2px;
 }
 
 .agent-en-name {

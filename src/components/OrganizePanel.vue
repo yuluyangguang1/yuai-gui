@@ -17,7 +17,7 @@
           class="organize-pref-tag"
         >
           <span>{{ pref }}</span>
-          <button class="organize-tag-remove" @click="organizeStore.removePreference(i)">×</button>
+          <button class="organize-tag-remove" @click="organizeStore.removePreference(i)"><TIcon name="close" :size="12" /></button>
         </div>
       </div>
       <div v-else class="organize-empty">暂无偏好</div>

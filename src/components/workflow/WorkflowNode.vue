@@ -101,8 +101,8 @@ const cssClass = computed(
       <div v-if="data.kind === 'condition'" class="node-field">
         <input v-model="data.condition" class="node-input" placeholder="if ... else ..." />
         <div class="condition-labels">
-          <span class="cond-true">✓ {{ data.trueLabel || 'true' }}</span>
-          <span class="cond-false">✗ {{ data.falseLabel || 'false' }}</span>
+          <span class="cond-true"><TIcon name="check" :size="12" /> {{ data.trueLabel || 'true' }}</span>
+          <span class="cond-false"><TIcon name="close" :size="12" /> {{ data.falseLabel || 'false' }}</span>
         </div>
       </div>
 

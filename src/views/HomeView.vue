@@ -55,7 +55,7 @@
     <!-- Favorites section -->
     <div v-if="workspace.hasWorkspace && workspace.favorites.length > 0" class="sidebar-section">
       <div class="sidebar-section-header">
-        <span class="sidebar-section-icon">{{ ICONS.starFilled }}</span>
+        <span class="sidebar-section-icon">{{ 'star' }}</span>
         <span class="sidebar-section-title">收藏</span>
       </div>
       <div
@@ -72,7 +72,7 @@
           @click.stop="workspace.toggleFavorite(fav)"
           title="取消收藏"
         >
-          {{ ICONS.starFilled }}
+          {{ 'star' }}
         </button>
       </div>
     </div>
@@ -98,7 +98,7 @@
           @click.stop="workspace.toggleFavorite(recent.path)"
           :title="workspace.isFavorite(recent.path) ? '取消收藏' : '收藏'"
         >
-          {{ workspace.isFavorite(recent.path) ? ICONS.starFilled : ICONS.starEmpty }}
+          {{ workspace.isFavorite(recent.path) ? 'star' : 'starOff' }}
         </button>
       </div>
     </div>
@@ -149,7 +149,7 @@
           @contextmenu.prevent="onFileContextMenu($event, node)"
         >
           <span class="grid-item-icon">
-            <template v-if="node.is_dir">{{ ICONS.folder }}</template>
+            <template v-if="node.is_dir">{{ 'folder' }}</template>
             <template v-else><span class="grid-rich-icon" v-html="getRichFileIcon(node.name)"></span></template>
           </span>
           <span class="grid-item-name" :title="node.name">{{ node.name }}</span>
@@ -183,7 +183,7 @@
         选择一个文件夹开始
       </span>
       <button class="workspace-empty-btn" @click="workspace.openWorkspace()">
-        {{ ICONS.folder }} 打开文件夹
+        {{ 'folder' }} 打开文件夹
       </button>
     </div>
 
@@ -251,27 +251,27 @@ const contextMenuItems = computed<ContextMenuItem[]>(() => {
 
   if (node.is_dir) {
     return [
-      { icon: ICONS.folder, label: '打开', action: 'open' },
-      { icon: ICONS.terminal, label: '在终端打开', action: 'open-in-terminal' },
-      { icon: '板', label: '复制路径', action: 'copy-path' },
-      { icon: '🔍', label: '在 Finder 显示', action: 'reveal-in-finder' },
-      { icon: '✏️', label: '重命名', action: 'rename' },
+      { icon: 'folder', label: '打开', action: 'open' },
+      { icon: 'terminal', label: '在终端打开', action: 'open-in-terminal' },
+      { icon: 'copy', label: '复制路径', action: 'copy-path' },
+      { icon: 'eye', label: '在 Finder 显示', action: 'reveal-in-finder' },
+      { icon: 'edit', label: '重命名', action: 'rename' },
       { divider: true, icon: '', label: '' },
-      { icon: '✕', label: '移到废纸篓', action: 'trash', danger: true },
+      { icon: 'trash', label: '移到废纸篓', action: 'trash', danger: true },
     ];
   }
 
   return [
-    { icon: ICONS.file, label: '打开', action: 'open' },
-    { icon: '显', label: '预览', action: 'preview' },
-    { icon: ICONS.terminal, label: '在终端打开', action: 'open-in-terminal' },
-    { icon: '板', label: '复制路径', action: 'copy-path' },
-    { icon: '🔍', label: '在 Finder 显示', action: 'reveal-in-finder' },
+    { icon: 'file', label: '打开', action: 'open' },
+    { icon: 'eye', label: '预览', action: 'preview' },
+    { icon: 'terminal', label: '在终端打开', action: 'open-in-terminal' },
+    { icon: 'copy', label: '复制路径', action: 'copy-path' },
+    { icon: 'eye', label: '在 Finder 显示', action: 'reveal-in-finder' },
     { divider: true, icon: '', label: '' },
-    { icon: isFav ? ICONS.starFilled : ICONS.starEmpty, label: isFav ? '取消收藏' : '收藏', action: 'toggle-favorite' },
-    { icon: '✏️', label: '重命名', action: 'rename' },
+    { icon: isFav ? 'star' : 'starOff', label: isFav ? '取消收藏' : '收藏', action: 'toggle-favorite' },
+    { icon: 'edit', label: '重命名', action: 'rename' },
     { divider: true, icon: '', label: '' },
-    { icon: '✕', label: '移到废纸篓', action: 'trash', danger: true },
+    { icon: 'trash', label: '移到废纸篓', action: 'trash', danger: true },
   ];
 });
 

@@ -67,7 +67,7 @@ const BUILTIN_TOOLS: Tool[] = [
     ],
     permissions: ['read'],
     enabled: true,
-    icon: '📄',
+    icon: 'fileText',
   },
   {
     id: 'file_write',
@@ -80,7 +80,7 @@ const BUILTIN_TOOLS: Tool[] = [
     ],
     permissions: ['write'],
     enabled: true,
-    icon: '✏️',
+    icon: 'edit',
   },
   {
     id: 'file_edit',
@@ -94,7 +94,7 @@ const BUILTIN_TOOLS: Tool[] = [
     ],
     permissions: ['write'],
     enabled: true,
-    icon: '🔧',
+    icon: 'tool',
   },
   // Git tools
   {
@@ -107,7 +107,7 @@ const BUILTIN_TOOLS: Tool[] = [
     ],
     permissions: ['read'],
     enabled: true,
-    icon: '📊',
+    icon: 'chartBar',
   },
   {
     id: 'git_commit',
@@ -120,7 +120,7 @@ const BUILTIN_TOOLS: Tool[] = [
     ],
     permissions: ['execute'],
     enabled: true,
-    icon: '📝',
+    icon: 'pencil',
   },
   {
     id: 'git_branch',
@@ -134,7 +134,7 @@ const BUILTIN_TOOLS: Tool[] = [
     ],
     permissions: ['execute'],
     enabled: true,
-    icon: '🔀',
+    icon: 'arrowsShuffle',
   },
   // Search tools
   {
@@ -149,7 +149,7 @@ const BUILTIN_TOOLS: Tool[] = [
     ],
     permissions: ['read'],
     enabled: true,
-    icon: '🔍',
+    icon: 'search',
   },
   {
     id: 'search_files',
@@ -162,7 +162,7 @@ const BUILTIN_TOOLS: Tool[] = [
     ],
     permissions: ['read'],
     enabled: true,
-    icon: '📁',
+    icon: 'folder',
   },
   // Web tools
   {
@@ -176,7 +176,7 @@ const BUILTIN_TOOLS: Tool[] = [
     ],
     permissions: ['read', 'execute'],
     enabled: true,
-    icon: '🌐',
+    icon: 'world',
   },
   {
     id: 'web_search',
@@ -188,7 +188,7 @@ const BUILTIN_TOOLS: Tool[] = [
     ],
     permissions: ['read'],
     enabled: true,
-    icon: '🔎',
+    icon: 'search',
   },
 ];
 

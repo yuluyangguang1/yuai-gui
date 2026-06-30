@@ -4,7 +4,7 @@
       <div class="replay-header">
         <span class="replay-title">终端回放</span>
         <button class="replay-refresh" @click="recordingStore.loadRecordings()">
-          ↻ 刷新
+          <TIcon name="refresh" :size="14" /> 刷新
         </button>
       </div>
       <div v-if="recordingStore.loading" class="replay-empty">加载中...</div>
@@ -39,7 +39,7 @@
 
     <div v-else class="replay-player">
       <div class="replay-toolbar">
-        <button class="replay-back" @click="backToList">← 返回</button>
+        <button class="replay-back" @click="backToList"><TIcon name="arrowLeft" :size="14" /> 返回</button>
         <span class="replay-session-id">{{ selectedRecording.sessionId }}</span>
         <span class="replay-spacer" />
         <button class="replay-ctrl" @click="togglePlay">

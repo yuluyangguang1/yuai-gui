@@ -78,13 +78,13 @@ export const KANBAN_STATUS_LABELS: Record<string, string> = {
 };
 
 export const KANBAN_STATUS_ICONS: Record<string, string> = {
-  triage: "◇",
+  triage: "circle",
   todo: "○",
-  scheduled: "◐",
-  ready: "◎",
-  running: "●",
-  blocked: "⊘",
-  review: "◑",
+  scheduled: "loader",
+  ready: "eye",
+  running: "check",
+  blocked: "ban",
+  review: "archive",
   done: "✓",
   archived: "▪",
 };

@@ -5,7 +5,7 @@
         <div class="screenshot-toast-header">
           <TIcon name="camera" :size="20" />
           <span class="screenshot-toast-title">截图检测</span>
-          <button class="screenshot-toast-close" @click="dismiss">×</button>
+          <button class="screenshot-toast-close" @click="dismiss"><TIcon name="close" :size="16" /></button>
         </div>
         <div class="screenshot-toast-body">
           <div class="screenshot-preview" v-if="thumbnailUrl">
