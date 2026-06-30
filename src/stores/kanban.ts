@@ -79,14 +79,14 @@ export const KANBAN_STATUS_LABELS: Record<string, string> = {
 
 export const KANBAN_STATUS_ICONS: Record<string, string> = {
   triage: "circle",
-  todo: "○",
+  todo: "circle",
   scheduled: "loader",
   ready: "eye",
   running: "check",
   blocked: "ban",
   review: "archive",
-  done: "✓",
-  archived: "▪",
+  done: "check",
+  archived: "minus",
 };
 
 export const KANBAN_STATUS_COLORS: Record<string, string> = {
