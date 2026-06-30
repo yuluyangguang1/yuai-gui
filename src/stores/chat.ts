@@ -106,7 +106,7 @@ export const useChatStore = defineStore("chat", () => {
 
   /** Get messages grouped by thread. */
   function getThreadMessages(threadId: string) {
-    return messages.value.filter((m: { threadId?: string }) => (m as any).threadId === threadId);
+    return messages.value.filter((m) => (m as Record<string, unknown>).threadId === threadId);
   }
 
   /** Navigate to parent thread. */

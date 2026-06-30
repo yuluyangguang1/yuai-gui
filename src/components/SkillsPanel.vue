@@ -139,7 +139,6 @@
 import { ref, computed, onMounted } from "vue";
 import { TIcon } from "../utils/icons";
 import { useSkillsStore, type SkillInfo } from "../stores/skills";
-import { ICONS } from "../utils/icons";
 
 const emit = defineEmits<{
   "invoke-skill": [content: string];

@@ -161,19 +161,19 @@ onUnmounted(() => {
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background: var(--surface, #1e1e1e);
+  background: var(--bg-surface, #1e1e1e);
   border: 1px solid var(--border, #333);
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
-  color: var(--text, #eee);
+  color: var(--text-primary, #eee);
   transition: border-color 0.15s, background 0.15s;
   min-width: 160px;
 }
 
 .switcher-trigger:hover {
   border-color: var(--accent, #50c878);
-  background: var(--surface-hover, #252525);
+  background: var(--bg-hover, #252525);
 }
 
 .trigger-icon {
@@ -210,7 +210,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   min-width: 240px;
-  background: var(--surface, #1e1e1e);
+  background: var(--bg-surface, #1e1e1e);
   border: 1px solid var(--border, #333);
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
@@ -264,7 +264,7 @@ onUnmounted(() => {
 }
 
 .provider-item:hover {
-  background: var(--surface-hover, #252525);
+  background: var(--bg-hover, #252525);
 }
 
 .provider-item.active {

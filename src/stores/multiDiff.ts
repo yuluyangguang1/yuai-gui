@@ -5,7 +5,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed, readonly } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
-import { useAgentsStore, type AgentDef } from './agents';
+import { useAgentsStore } from './agents';
 
 // ── Types ──
 
