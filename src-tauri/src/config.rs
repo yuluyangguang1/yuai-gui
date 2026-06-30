@@ -137,7 +137,6 @@ pub fn normalize_url(app_type: &str, base_url: &str) -> String {
     }
 }
 
-#[allow(dead_code)]
 fn decrypt_key(raw: &str) -> String {
     if raw.is_empty() {
         return raw.to_string();
@@ -157,6 +156,7 @@ fn parse_settings(app_type: &str, json_str: &str) -> (String, String, String) {
                 let key = env.get("ANTHROPIC_AUTH_TOKEN").and_then(|v| v.as_str())
                     .or_else(|| env.get("ANTHROPIC_API_KEY").and_then(|v| v.as_str()))
                     .unwrap_or("").to_string();
+                let key = decrypt_key(&key);
                 let model = env.get("ANTHROPIC_MODEL").and_then(|v| v.as_str()).unwrap_or("claude-sonnet-4").to_string();
                 return (url, key, model);
             }
@@ -186,6 +186,7 @@ fn parse_settings(app_type: &str, json_str: &str) -> (String, String, String) {
             if let Some(env) = env {
                 let url = env.get("OPENAI_BASE_URL").and_then(|v| v.as_str()).unwrap_or("").to_string();
                 let key = env.get("OPENAI_API_KEY").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                let key = decrypt_key(&key);
                 let model = env.get("OPENAI_MODEL").and_then(|v| v.as_str()).unwrap_or("").to_string();
                 return (url, key, model);
             }
