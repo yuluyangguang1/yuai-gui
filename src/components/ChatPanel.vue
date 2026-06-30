@@ -28,6 +28,38 @@
         </span>
       </span>
       <span class="chat-spacer" />
+      <!-- Model indicator (click to switch) -->
+      <button
+        class="chat-model-btn"
+        @click="showModelSwitcher = !showModelSwitcher"
+        :title="`${providerStore.activeProvider?.name ?? '未配置'} / ${providerStore.activeModel?.name ?? '未选择'}`"
+      >
+        <TIcon name="cpu" :size="12" />
+        <span class="model-btn-name">{{ providerStore.activeModel?.name ?? '模型' }}</span>
+        <TIcon name="chevronDown" :size="10" />
+      </button>
+      <!-- Model quick switcher dropdown -->
+      <div v-if="showModelSwitcher" class="model-switcher-dropdown">
+        <input
+          v-model="modelSwitchSearch"
+          class="model-switcher-search"
+          placeholder="输入模型名或别名 (sonnet, gpt5, mimo...)"
+          @keydown.escape="showModelSwitcher = false"
+          @input="onModelSwitchInput"
+        />
+        <div class="model-switcher-list">
+          <button
+            v-for="m in recentModels"
+            :key="m.id"
+            class="model-switcher-item"
+            :class="{ active: m.id === providerStore.activeModelId }"
+            @click="switchModel(m.id)"
+          >
+            <span class="model-switcher-name">{{ m.name }}</span>
+            <span class="model-switcher-provider">{{ providerStore.providers.find(p => p.id === m.provider_id)?.name ?? m.provider_id }}</span>
+          </button>
+        </div>
+      </div>
       <!-- Beam mode toggle -->
       <button class="chat-mode-btn" :class="{ active: chatStore.chatMode === 'beam' }" @click="chatStore.setChatMode(chatStore.chatMode === 'beam' ? 'single' : 'beam')" title="并行提问模式">
         <TIcon name="bolt" :size="16" />
@@ -212,6 +244,7 @@ import { ref, reactive, computed, nextTick, watch, onMounted, onUnmounted } from
 import { TIcon } from "../utils/icons";
 import { useChatStore } from "../stores/chat";
 import { useAgentsStore } from "../stores/agents";
+import { useProviderStore } from "../stores/provider";
 import { useWorkspaceStore } from "../stores/workspace";
 import { usePromptStore } from "../stores/prompt";
 import ContextPanel from "./ContextPanel.vue";
@@ -227,6 +260,7 @@ import { analyzePrompt, autoEnhancePrompt, type PromptSuggestion } from "../util
 
 const chatStore = useChatStore();
 const agentsStore = useAgentsStore();
+const providerStore = useProviderStore();
 const promptStore = usePromptStore();
 
 // Current agent for single mode (uses chatTarget)
@@ -236,6 +270,39 @@ const currentAgent = computed(() => {
 });
 const workspaceStore = useWorkspaceStore();
 const showRoomManager = ref(false);
+const showModelSwitcher = ref(false);
+const modelSwitchSearch = ref('');
+
+// 最近使用的模型 + 常用模型
+const recentModels = computed(() => {
+  const q = modelSwitchSearch.value.toLowerCase().trim();
+  let list = providerStore.models;
+  if (q) {
+    list = list.filter(m =>
+      m.id.includes(q) || m.name.toLowerCase().includes(q) || m.aliases.some(a => a.includes(q))
+    );
+  }
+  // 按供应商分组，最多显示 15 个
+  return list.slice(0, 15);
+});
+
+function switchModel(modelId: string) {
+  providerStore.switchModel(modelId);
+  showModelSwitcher.value = false;
+  modelSwitchSearch.value = '';
+}
+
+function onModelSwitchInput(e: Event) {
+  const val = (e.target as HTMLInputElement).value;
+  // 尝试别名解析
+  const resolved = providerStore.resolveAlias(val);
+  if (resolved) {
+    providerStore.switchProvider(resolved.provider_id);
+    providerStore.switchModel(resolved.model_id);
+    showModelSwitcher.value = false;
+    modelSwitchSearch.value = '';
+  }
+}
 const commandSuggestRef = ref<InstanceType<typeof CommandSuggest> | null>(null);
 
 // ── Slash Command 状态 ──
@@ -710,6 +777,42 @@ watch(
   background: color-mix(in srgb, var(--gold) 10%, transparent);
   color: var(--text-primary);
 }
+
+/* Model switcher */
+.chat-model-btn {
+  display: flex; align-items: center; gap: 3px;
+  padding: 2px 6px; border-radius: 4px;
+  background: transparent; border: 1px solid var(--border-light);
+  color: var(--text-muted); font-size: .58rem; font-family: var(--font-mono);
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.chat-model-btn:hover { border-color: var(--accent); color: var(--accent); }
+.model-btn-name { max-width: 80px; overflow: hidden; text-overflow: ellipsis; }
+
+.model-switcher-dropdown {
+  position: absolute; top: 100%; right: 8px; z-index: 100;
+  width: 280px; max-height: 320px;
+  background: var(--bg-surface); border: 1px solid var(--border-light);
+  border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.3);
+  overflow: hidden; display: flex; flex-direction: column;
+}
+.model-switcher-search {
+  width: 100%; padding: 8px 10px;
+  background: var(--bg-primary); border: none; border-bottom: 1px solid var(--border-light);
+  color: var(--bone); font-family: var(--font-mono); font-size: .62rem; outline: none;
+}
+.model-switcher-search::placeholder { color: var(--silver); }
+.model-switcher-list { overflow-y: auto; max-height: 260px; }
+.model-switcher-item {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; padding: 6px 10px; background: transparent; border: none;
+  color: var(--bone-dim); font-size: .62rem; cursor: pointer; text-align: left;
+  transition: background .1s;
+}
+.model-switcher-item:hover { background: var(--bg-hover); }
+.model-switcher-item.active { color: var(--jade); background: rgba(80,200,120,.06); }
+.model-switcher-name { font-family: var(--font-body); }
+.model-switcher-provider { font-family: var(--font-mono); font-size: .5rem; color: var(--silver); }
 
 .chat-messages {
   flex: 1;
