@@ -8,61 +8,24 @@
    3. 呼吸感：充足留白，不拥挤
    4. 一致性：同类元素相同样式
    5. 可读性：高对比度，清晰层次
+   颜色/阴影/Agent 变量定义在 variables.css（单一来源）
 */
 
 /* ══════════════════════════════════════════════
-   1. 颜色系统
+   1. 颜色补充（variables.css 未覆盖的语义色）
    ══════════════════════════════════════════════ */
 
-/* 主色调 */
 :root {
-  /* 背景层次（5级） */
-  --bg-base: #0b1a1a;        /* 最深 — 页面底色 */
-  --bg-surface: #0f2424;     /* 面板/卡片 */
-  --bg-raised: #132e2e;      /* 悬浮/弹窗 */
-  --bg-overlay: #1a3c3c;     /* 下拉/菜单 */
-  --bg-hover: #1e4c4c;       /* 悬停态 */
-
-  /* 文字层次（4级） */
-  --text-primary: #e8ddd0;   /* 主文字 — 象牙白 */
-  --text-secondary: #b8a898; /* 次文字 — 暖灰 */
-  --text-muted: #887868;     /* 辅助文字 — 暗灰 */
-  --text-inverse: #0b1a1a;   /* 反色文字 — 深色底上 */
-
-  /* 强调色 */
-  --accent: #5ccfb8;         /* 翡翠绿 — 主强调 */
-  --accent-soft: rgba(92, 207, 184, 0.12); /* 弱化 */
-  --accent-hover: #7adbc9;   /* 悬停 */
-  --accent-muted: #3a9980;   /* 禁用 */
-
-  /* 金色 */
-  --gold: #c9a85c;           /* 赤金 — 次强调 */
+  --accent-soft: rgba(92, 207, 184, 0.12);
   --gold-soft: rgba(201, 168, 92, 0.12);
-  --gold-hover: #d4b970;
 
   /* 语义色 */
-  --success: #5ccfb8;        /* 成功 — 同 accent */
-  --error: #ff6464;          /* 错误 — 红 */
+  --success: #5ccfb8;
+  --error: #ff6464;
   --error-soft: rgba(255, 100, 100, 0.12);
-  --warning: #e6c07b;        /* 警告 — 琥珀 */
+  --warning: #e6c07b;
   --warning-soft: rgba(230, 192, 123, 0.12);
-  --info: #64b5f6;           /* 信息 — 蓝 */
-
-  /* 边框 */
-  --border: #2a4a4a;         /* 主边框 */
-  --border-light: #1e3a3a;   /* 细线 */
-  --border-accent: rgba(92, 207, 184, 0.3); /* 强调边框 */
-
-  /* 阴影（3级） */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
-
-  /* Agent 颜色 */
-  --agent-mei: #d4577b;      /* 梅 — 暖橙 */
-  --agent-lan: #6a994e;      /* 兰 — 翠绿 */
-  --agent-zhu: #4caf50;      /* 竹 — 珊瑚红 */
-  --agent-ju: #f0a830;       /* 菊 — 紫罗兰 */
+  --info: #64b5f6;
 
   color-scheme: dark;
 }
@@ -70,13 +33,12 @@
 /* ══════════════════════════════════════════════
    2. 字体系统
    ══════════════════════════════════════════════ */
+/* font-body, font-brush, font-mono, font-serif 定义在 variables.css */
 
 :root {
-  /* 字体族 */
-  --font-display: "Ma Shan Zheng", cursive;          /* 品牌/标题 — 毛笔 */
-  --font-body: "LXGW WenKai", "Noto Serif SC", serif; /* 正文 — 楷体 */
-  --font-ui: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; /* UI */
-  --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace; /* 代码 */
+  /* 字体族（variables.css 未覆盖的） */
+  --font-display: "Ma Shan Zheng", cursive;
+  --font-ui: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
 
   /* 字号 scale（1.25 倍） */
   --text-xs: 0.625rem;   /* 10px — 极小 */
@@ -123,12 +85,10 @@
 /* ══════════════════════════════════════════════
    4. 圆角系统
    ══════════════════════════════════════════════ */
+/* radius-sm/md/lg 定义在 variables.css */
 
 :root {
-  --radius-sm: 4px;    /* 小元素 — 按钮、标签 */
-  --radius-md: 8px;    /* 中元素 — 卡片、输入框 */
-  --radius-lg: 12px;   /* 大元素 — 面板、弹窗 */
-  --radius-full: 9999px; /* 圆形 — 头像、状态点 */
+  --radius-full: 9999px;
 }
 
 /* ══════════════════════════════════════════════
@@ -153,13 +113,10 @@
 /* ══════════════════════════════════════════════
    6. 布局常量
    ══════════════════════════════════════════════ */
+/* rail-width, chat-width, titlebar-height, statusbar-height 定义在 variables.css */
 
 :root {
-  --rail-width: 56px;
   --sidebar-width: 260px;
-  --chat-width: 400px;
-  --titlebar-height: 42px;
-  --statusbar-height: 28px;
 }
 
 /* ══════════════════════════════════════════════
