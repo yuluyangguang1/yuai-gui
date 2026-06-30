@@ -36,7 +36,17 @@
           <span class="tree-rich-icon" v-html="richIcon"></span>
         </template>
       </span>
-      <span class="tree-label">{{ node.name }}</span>
+      <span v-if="!renaming" class="tree-label">{{ node.name }}</span>
+      <input
+        v-else
+        ref="renameInput"
+        class="rename-input"
+        :value="node.name"
+        @keydown.enter="commitRename"
+        @keydown.escape="cancelRename"
+        @blur="commitRename"
+        @click.stop
+      />
       <button
         v-if="!node.is_dir"
         class="star-btn"
@@ -55,8 +65,10 @@
         :node="child"
         :depth="depth + 1"
         :selected-paths="selectedPaths"
+        :renaming-path="renamingPath"
         @contextmenu="(e: MouseEvent, n: FileNode) => emit('contextmenu', e, n)"
         @toggle-select="(path: string) => emit('toggleSelect', path)"
+        @rename="(oldPath: string, newName: string) => emit('rename', oldPath, newName)"
       />
     </template>
   </div>
@@ -79,11 +91,13 @@ const props = defineProps<{
   node: FileNode;
   depth: number;
   selectedPaths?: Set<string>;
+  renamingPath?: string | null;
 }>();
 
 const emit = defineEmits<{
   (e: 'contextmenu', event: MouseEvent, node: FileNode): void;
   (e: 'toggleSelect', path: string): void;
+  (e: 'rename', oldPath: string, newName: string): void;
 }>();
 
 const workspace = useWorkspaceStore();
@@ -231,6 +245,52 @@ function handleClick() {
 function handleContextMenu(e: MouseEvent) {
   emit('contextmenu', e, props.node);
 }
+
+// ── Inline Rename ──
+const renaming = ref(false);
+const renameInput = ref<HTMLInputElement | null>(null);
+
+function startRename() {
+  renaming.value = true;
+  // Focus the input after Vue renders it
+  setTimeout(() => {
+    if (renameInput.value) {
+      renameInput.value.focus();
+      // Select filename without extension
+      const name = props.node.name;
+      const dotIdx = name.lastIndexOf('.');
+      if (dotIdx > 0 && !props.node.is_dir) {
+        renameInput.value.setSelectionRange(0, dotIdx);
+      } else {
+        renameInput.value.select();
+      }
+    }
+  }, 50);
+}
+
+function commitRename(e?: Event) {
+  const input = renameInput.value;
+  if (!input) { renaming.value = false; return; }
+  const newName = input.value.trim();
+  renaming.value = false;
+  if (newName && newName !== props.node.name) {
+    emit('rename', props.node.path, newName);
+  }
+}
+
+function cancelRename() {
+  renaming.value = false;
+}
+
+// Expose startRename for parent context menu
+defineExpose({ startRename });
+
+// Watch for external rename trigger
+watch(() => props.renamingPath, (path) => {
+  if (path === props.node.path) {
+    startRename();
+  }
+});
 </script>
 
 <style scoped>
@@ -312,5 +372,19 @@ function handleContextMenu(e: MouseEvent) {
 .star-btn:hover {
   color: var(--gold, #e0b0ff);
   transform: scale(1.2);
+}
+
+.rename-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  font-family: inherit;
+  background: var(--bg-primary, #1a1a2e);
+  color: var(--text-primary, #e0e0e0);
+  border: 1px solid var(--accent, #5ccfb8);
+  border-radius: 3px;
+  padding: 1px 4px;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(92, 207, 184, 0.2);
 }
 </style>

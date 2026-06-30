@@ -206,6 +206,7 @@ pub fn run() {
             files::copy_file_to_workspace,
             files::write_file_content,
             files::read_file_bytes,
+            files::rename_file,
             thumbnail::get_thumbnail,
             git::get_git_diff,
             git::get_changed_files,

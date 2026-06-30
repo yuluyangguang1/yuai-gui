@@ -35,6 +35,8 @@ export class EmbeddedBrowserManager {
   private activeTabId: string | null = null
   private eventHandlers: Map<string, ((event: BrowserEvent) => void)[]> = new Map()
   private config: BrowserConfig
+  private history: Map<string, string[]> = new Map() // tabId → url history stack
+  private historyIndex: Map<string, number> = new Map() // tabId → current position
 
   constructor(config: BrowserConfig) {
     this.config = config
@@ -52,6 +54,8 @@ export class EmbeddedBrowserManager {
 
     this.tabs.set(tab.id, tab)
     this.activeTabId = tab.id
+    this.history.set(tab.id, [tab.url])
+    this.historyIndex.set(tab.id, 0)
 
     return tab
   }
@@ -63,6 +67,14 @@ export class EmbeddedBrowserManager {
 
     tab.url = url
     tab.isLoading = true
+
+    // Push to navigation history (truncate forward history)
+    const hist = this.history.get(tabId) ?? []
+    const idx = this.historyIndex.get(tabId) ?? 0
+    const trimmed = hist.slice(0, idx + 1)
+    trimmed.push(url)
+    this.history.set(tabId, trimmed)
+    this.historyIndex.set(tabId, trimmed.length - 1)
 
     this.emitEvent({
       type: 'navigation',
@@ -119,14 +131,33 @@ export class EmbeddedBrowserManager {
 
   /** 后退 */
   goBack(tabId: string): boolean {
-    // TODO: 实现历史记录后退
-    return false
+    const tab = this.tabs.get(tabId)
+    if (!tab) return false
+    const idx = this.historyIndex.get(tabId) ?? 0
+    if (idx <= 0) return false
+    const newIdx = idx - 1
+    this.historyIndex.set(tabId, newIdx)
+    const url = this.history.get(tabId)![newIdx]
+    tab.url = url
+    tab.isLoading = true
+    setTimeout(() => { tab.isLoading = false; tab.title = this.extractTitle(url) }, 500)
+    return true
   }
 
   /** 前进 */
   goForward(tabId: string): boolean {
-    // TODO: 实现历史记录前进
-    return false
+    const tab = this.tabs.get(tabId)
+    if (!tab) return false
+    const hist = this.history.get(tabId) ?? []
+    const idx = this.historyIndex.get(tabId) ?? 0
+    if (idx >= hist.length - 1) return false
+    const newIdx = idx + 1
+    this.historyIndex.set(tabId, newIdx)
+    const url = hist[newIdx]
+    tab.url = url
+    tab.isLoading = true
+    setTimeout(() => { tab.isLoading = false; tab.title = this.extractTitle(url) }, 500)
+    return true
   }
 
   /** 刷新 */

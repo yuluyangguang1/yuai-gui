@@ -67,23 +67,40 @@
 import { computed } from 'vue'
 import { TIcon } from '../utils/icons'
 import { useAgentsStore } from '../stores/agents'
+import { useUsageStore } from '../stores/usage'
 import type { AgentState } from '../utils/agent-state-machine'
 
 const agentsStore = useAgentsStore()
+const usageStore = useUsageStore()
 
 const agents = computed(() => {
-  return agentsStore.agents.map(agent => ({
-    ...agent,
-    state: (agent.status || 'idle') as AgentState,
-    messageCount: 0, // TODO: 从 store 获取
-    totalDuration: 0, // TODO: 从 store 获取
-    tokenCount: 0, // TODO: 从 store 获取
-    progress: 0, // TODO: 从 store 获取
-  }))
+  return agentsStore.agents.map(agent => {
+    const session = agentsStore.sessions.get(agent.id)
+    const messages = session?.messages ?? []
+    const messageCount = messages.length
+    // Estimate tokens from message content (chars / 4)
+    const tokenCount = messages.reduce((sum, m) => sum + Math.ceil(m.content.length / 4), 0)
+    // Duration: time span from first to last message
+    const totalDuration = messages.length >= 2
+      ? messages[messages.length - 1].timestamp - messages[0].timestamp
+      : 0
+    return {
+      ...agent,
+      state: (agent.status || 'idle') as AgentState,
+      messageCount,
+      totalDuration,
+      tokenCount,
+      progress: agent.status === 'running' ? undefined : 0,
+    }
+  })
 })
 
 const totalMessages = computed(() => agents.value.reduce((sum, a) => sum + a.messageCount, 0))
-const totalTokens = computed(() => agents.value.reduce((sum, a) => sum + a.tokenCount, 0))
+const totalTokens = computed(() => {
+  // Use usage store total if available, otherwise sum from agents
+  const tracked = usageStore.totalTokens
+  return tracked > 0 ? tracked : agents.value.reduce((sum, a) => sum + a.tokenCount, 0)
+})
 const runningCount = computed(() => agents.value.filter(a => a.state === 'running').length)
 const errorCount = computed(() => agents.value.filter(a => a.state === 'error').length)
 
@@ -107,7 +124,7 @@ function formatDuration(ms: number): string {
 }
 
 function refresh() {
-  // TODO: 刷新数据
+  usageStore.fetchStats()
 }
 </script>
 

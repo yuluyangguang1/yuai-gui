@@ -115,7 +115,9 @@
           :key="node.path"
           :node="node"
           :depth="0"
+          :renaming-path="renamingPath"
           @contextmenu="onFileContextMenu"
+          @rename="handleRename"
         />
       </template>
       <div v-else-if="workspace.loading" class="workspace-empty">
@@ -218,6 +220,7 @@ import { getRichFileIcon } from "../utils/richIcons";
 const workspace = useWorkspaceStore();
 const toast = useToast();
 const isDragOver = ref(false);
+const renamingPath = ref<string | null>(null);
 let dragCounter = 0;
 
 const homePath = ref<string>('');
@@ -329,8 +332,7 @@ async function handleContextAction(action: string) {
       toast.info(workspace.isFavorite(node.path) ? '已收藏' : '已取消收藏');
       break;
     case 'rename':
-      // TODO: implement inline rename
-      toast.info('重命名功能开发中');
+      renamingPath.value = node.path;
       break;
     case 'trash':
       try {
@@ -341,6 +343,17 @@ async function handleContextAction(action: string) {
         toast.error('移到废纸篓失败');
       }
       break;
+  }
+}
+
+async function handleRename(oldPath: string, newName: string) {
+  renamingPath.value = null;
+  try {
+    await invoke('rename_file', { oldPath, newName });
+    toast.success(`已重命名为 ${newName}`);
+    workspace.refreshFileTree();
+  } catch (e) {
+    toast.error(`重命名失败: ${String(e).slice(0, 100)}`);
   }
 }
 

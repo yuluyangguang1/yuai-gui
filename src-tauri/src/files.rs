@@ -247,3 +247,18 @@ pub fn read_dir_recursive(dir: &std::path::Path, depth: u32) -> Result<Vec<FileN
 
     Ok(entries)
 }
+
+/// Rename a file or directory within the same parent directory.
+#[tauri::command]
+pub fn rename_file(old_path: String, new_name: String) -> Result<(), String> {
+    let old = std::path::Path::new(&old_path);
+    if !old.exists() {
+        return Err(format!("path does not exist: {}", old_path));
+    }
+    let parent = old.parent().ok_or("cannot determine parent directory")?;
+    let new_path = parent.join(&new_name);
+    if new_path.exists() {
+        return Err(format!("target already exists: {}", new_name));
+    }
+    std::fs::rename(old, &new_path).map_err(|e| format!("rename failed: {}", e))
+}
