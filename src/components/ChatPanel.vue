@@ -149,6 +149,14 @@
     <!-- Input -->
     <div class="chat-input-area">
       <div class="chat-input-wrapper">
+        <PromptSuggest
+          v-if="suggestVisible"
+          :suggestions="promptSuggestions"
+          @close="suggestVisible = false"
+          @apply="handleApplySuggestion"
+          @autoFix="handleAutoFix"
+          @enhance="handleEnhance"
+        />
         <SlashCommandMenu
           v-model:visible="slashMenuVisible"
           :commands="promptStore.allCommands"
@@ -189,8 +197,10 @@ import RoomManager from "./RoomManager.vue";
 import BeamPanel from "./BeamPanel.vue";
 import CommandSuggest from "./CommandSuggest.vue";
 import SlashCommandMenu from "./SlashCommandMenu.vue";
+import PromptSuggest from "./PromptSuggest.vue";
 import type { AgentDef } from "../stores/agents";
 import type { SlashCommand } from "../utils/slash-commands";
+import { analyzePrompt, autoEnhancePrompt, type PromptSuggestion } from "../utils/prompt-enhancer";
 
 const chatStore = useChatStore();
 const agentsStore = useAgentsStore();
@@ -209,6 +219,11 @@ const commandSuggestRef = ref<InstanceType<typeof CommandSuggest> | null>(null);
 const slashMenuVisible = ref(false);
 const slashMenuPosition = ref({ top: 0, left: 0 });
 const slashTrigger = ref<{ startIndex: number } | null>(null);
+
+// ── 提示词优化建议状态 ──
+const promptSuggestions = ref<PromptSuggestion[]>([]);
+const suggestVisible = ref(false);
+let suggestDebounce: ReturnType<typeof setTimeout> | null = null;
 
 async function handleConfirmExec() {
   await chatStore.confirmExecution();
@@ -288,6 +303,7 @@ async function scrollToBottom() {
 function handleInput() {
   checkMentionTrigger();
   checkSlashTrigger();
+  checkPromptSuggestions();
   commandSuggestRef.value?.onInput();
 }
 
@@ -338,6 +354,49 @@ async function handleSlashSelect(command: SlashCommand) {
     textarea.setSelectionRange(newPos, newPos);
     textarea.focus();
   }
+}
+
+function checkPromptSuggestions() {
+  // 防抖：输入停止 800ms 后才分析
+  if (suggestDebounce) clearTimeout(suggestDebounce);
+  suggestDebounce = setTimeout(() => {
+    const text = chatStore.inputText.trim();
+    if (text.length > 5) {
+      const suggestions = analyzePrompt(text);
+      promptSuggestions.value = suggestions;
+      suggestVisible.value = suggestions.length > 0;
+    } else {
+      suggestVisible.value = false;
+    }
+  }, 800);
+}
+
+function handleApplySuggestion(s: PromptSuggestion) {
+  // 显示建议的修复文本
+  const textarea = inputRef.value;
+  if (!textarea) return;
+  // 在输入框末尾追加提示
+  chatStore.inputText += '\n' + s.fix;
+  suggestVisible.value = false;
+  nextTick(() => {
+    textarea.scrollTop = textarea.scrollHeight;
+    textarea.focus();
+  });
+}
+
+function handleAutoFix(s: PromptSuggestion) {
+  if (s.autoFix) {
+    chatStore.inputText = s.autoFix(chatStore.inputText);
+    // 重新分析
+    const suggestions = analyzePrompt(chatStore.inputText);
+    promptSuggestions.value = suggestions;
+    suggestVisible.value = suggestions.length > 0;
+  }
+}
+
+function handleEnhance() {
+  chatStore.inputText = autoEnhancePrompt(chatStore.inputText);
+  suggestVisible.value = false;
 }
 
 function checkMentionTrigger() {
