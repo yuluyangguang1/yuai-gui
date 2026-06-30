@@ -1,7 +1,7 @@
 <template>
   <div class="change-inbox" v-if="workspaceStore.changeHistory.length > 0">
     <div class="change-inbox-header">
-      <span class="change-inbox-title">收 变更收件箱</span>
+      <span class="change-inbox-title"><TIcon name="inbox" :size="14" /> 变更收件箱</span>
       <span class="change-inbox-count">{{ workspaceStore.inboxCount }}</span>
       <button class="change-inbox-clear" @click="workspaceStore.clearInbox()"><TIcon name="close" :size="14" /></button>
     </div>

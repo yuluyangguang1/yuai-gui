@@ -55,7 +55,7 @@
     <!-- Favorites section -->
     <div v-if="workspace.hasWorkspace && workspace.favorites.length > 0" class="sidebar-section">
       <div class="sidebar-section-header">
-        <span class="sidebar-section-icon">{{ 'star' }}</span>
+        <span class="sidebar-section-icon"><TIcon name="star" :size="14" /></span>
         <span class="sidebar-section-title">收藏</span>
       </div>
       <div
@@ -72,7 +72,7 @@
           @click.stop="workspace.toggleFavorite(fav)"
           title="取消收藏"
         >
-          {{ 'star' }}
+          <TIcon name="star" :size="14" />
         </button>
       </div>
     </div>
@@ -149,7 +149,7 @@
           @contextmenu.prevent="onFileContextMenu($event, node)"
         >
           <span class="grid-item-icon">
-            <template v-if="node.is_dir">{{ 'folder' }}</template>
+            <template v-if="node.is_dir"><TIcon name="folder" :size="14" /></template>
             <template v-else><span class="grid-rich-icon" v-html="getRichFileIcon(node.name)"></span></template>
           </span>
           <span class="grid-item-name" :title="node.name">{{ node.name }}</span>
@@ -183,7 +183,7 @@
         选择一个文件夹开始
       </span>
       <button class="workspace-empty-btn" @click="workspace.openWorkspace()">
-        {{ 'folder' }} 打开文件夹
+        <TIcon name="folder" :size="14" /> 打开文件夹
       </button>
     </div>
 
