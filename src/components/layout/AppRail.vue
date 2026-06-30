@@ -43,9 +43,8 @@
 
     <div class="rail-divider" />
 
-    <!-- Middle: 合束技 buttons -->
+    <!-- Middle: 合束技 设区 置 -->
     <div class="rail-section rail-section-middle">
-      <div class="rail-section-label">合束技</div>
       <button
         class="rail-nav-btn"
         :class="{ active: chatStore.chatMode === 'group' }"
@@ -53,7 +52,7 @@
         @click="chatStore.setChatMode('group')"
       >
         <TIcon name="users" :size="22" />
-        <span class="rail-label">合</span>
+        <span class="rail-label">群聊</span>
       </button>
       <button
         class="rail-nav-btn"
@@ -62,7 +61,7 @@
         @click="chatStore.setChatMode('beam')"
       >
         <TIcon name="bolt" :size="22" />
-        <span class="rail-label">束</span>
+        <span class="rail-label">并行</span>
       </button>
       <button
         class="rail-nav-btn"
@@ -71,25 +70,21 @@
         @click="openSkills"
       >
         <TIcon name="sparkles" :size="22" />
-        <span class="rail-label">技</span>
+        <span class="rail-label">技能</span>
       </button>
-    </div>
-
-    <div class="rail-spacer" />
-
-    <!-- Bottom: tools, workspace, settings -->
-    <div class="rail-section rail-section-tools">
       <button
         class="rail-nav-btn"
         title="设备 — 局域网发现与配对"
         @click="emit('open-lan')"
       >
         <TIcon name="deviceDesktop" :size="22" />
-        <span class="rail-label">设</span>
+        <span class="rail-label">设备</span>
       </button>
     </div>
 
     <div class="rail-spacer" />
+
+    <!-- Bottom: 工作区, 配置 -->
     <div class="rail-section rail-section-bottom">
       <button
         class="rail-nav-btn"
@@ -98,7 +93,7 @@
         @click="workspace.toggleWorkspace()"
       >
         <TIcon name="folder" :size="22" />
-        <span class="rail-label">区</span>
+        <span class="rail-label">工作</span>
         <span v-if="workspace.inboxCount > 0" class="rail-badge">
           {{ workspace.inboxCount }}
         </span>
@@ -109,7 +104,7 @@
         @click="emit('open-settings')"
       >
         <TIcon name="settings" :size="22" />
-        <span class="rail-label">置</span>
+        <span class="rail-label">配置</span>
       </button>
     </div>
   </nav>
