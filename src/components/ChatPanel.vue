@@ -847,6 +847,7 @@ watch(
 .chat-input-area {
   padding: 8px 12px;
   border-top: 1px solid var(--border-light);
+  position: relative;
 }
 
 .chat-input-wrapper {
