@@ -246,6 +246,38 @@
 .input:focus {
   border-color: var(--accent);
 }
+
+/* 按钮键盘焦点样式 */
+.btn:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* 输入框错误状态 */
+.input-error {
+  border-color: var(--error);
+}
+
+.input-error:focus {
+  border-color: var(--error);
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+/* 输入框禁用状态 */
+.input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--bg-primary);
+}
+
+/* 统一禁用样式 */
+.is-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .input::placeholder {
   color: var(--text-muted);
 }

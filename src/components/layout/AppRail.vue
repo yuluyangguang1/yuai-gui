@@ -48,7 +48,7 @@
       <button
         class="rail-nav-btn"
         :class="{ active: chatStore.chatMode === 'group' }"
-        title="群聊模式 — 多 Agent 协作讨论，轮流发言"
+        title="群聊模式 — 多 Agent 协作讨论，轮流发言" aria-label="群聊模式"
         @click="chatStore.setChatMode('group')"
       >
         <TIcon name="users" :size="22" />
@@ -57,7 +57,7 @@
       <button
         class="rail-nav-btn"
         :class="{ active: chatStore.chatMode === 'beam' }"
-        title="并行提问 — 同时向所有 Agent 发送，对比方案"
+        title="并行提问 — 同时向所有 Agent 发送，对比方案" aria-label="并行提问"
         @click="chatStore.setChatMode('beam')"
       >
         <TIcon name="bolt" :size="22" />
@@ -66,7 +66,7 @@
       <button
         class="rail-nav-btn"
         :class="{ active: skillsPanelOpen }"
-        title="技能管理 — 查看、搜索、启停 Agent 技能"
+        title="技能管理 — 查看、搜索、启停 Agent 技能" aria-label="技能管理"
         @click="openSkills"
       >
         <TIcon name="sparkles" :size="22" />
@@ -74,7 +74,7 @@
       </button>
       <button
         class="rail-nav-btn"
-        title="设备 — 局域网发现与配对"
+        title="设备 — 局域网发现与配对" aria-label="设备"
         @click="emit('open-lan')"
       >
         <TIcon name="deviceDesktop" :size="22" />
@@ -89,7 +89,7 @@
       <button
         class="rail-nav-btn"
         :class="{ active: workspace.showWorkspace }"
-        title="工作区 — 文件浏览与管理"
+        title="工作区 — 文件浏览与管理" aria-label="工作区"
         @click="workspace.toggleWorkspace()"
       >
         <TIcon name="folder" :size="22" />
@@ -100,7 +100,7 @@
       </button>
       <button
         class="rail-nav-btn"
-        title="配置 — API 密钥、Agent 设置"
+        title="配置 — API 密钥、Agent 设置" aria-label="配置"
         @click="emit('open-settings')"
       >
         <TIcon name="settings" :size="22" />
@@ -214,7 +214,7 @@ function handleAgentClick(agent: AgentDef) {
 }
 
 .rail-agent-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-hover);
 }
 
 .rail-agent-btn.active {
@@ -272,7 +272,7 @@ function handleAgentClick(agent: AgentDef) {
 
 .rail-nav-btn:hover {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-hover);
 }
 
 .rail-nav-btn.active {
