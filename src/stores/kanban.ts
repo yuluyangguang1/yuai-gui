@@ -192,60 +192,70 @@ export const useKanbanStore = defineStore("kanban", () => {
     assignee?: string;
     priority?: number;
   }) {
-    const task: KanbanTask = await invoke("kanban_create_task", {
-      data,
-      board: selectedBoard.value,
-    });
-    tasks.value.unshift(task);
-    await Promise.all([fetchStats(), fetchBoards()]);
-    return task;
+    try {
+      const task: KanbanTask = await invoke("kanban_create_task", {
+        data,
+        board: selectedBoard.value,
+      });
+      tasks.value.unshift(task);
+      await Promise.all([fetchStats(), fetchBoards()]);
+      return task;
+    } catch (e) { console.error('[Kanban] createTask failed:', e); }
   }
 
   async function completeTasks(taskIds: string[], summary?: string) {
-    await invoke("kanban_complete_tasks", {
-      taskIds,
-      summary,
-      board: selectedBoard.value,
-    });
-    for (const id of taskIds) {
-      const task = tasks.value.find((t) => t.id === id);
-      if (task) task.status = "done";
-    }
-    await Promise.all([fetchStats(), fetchBoards()]);
+    try {
+      await invoke("kanban_complete_tasks", {
+        taskIds,
+        summary,
+        board: selectedBoard.value,
+      });
+      for (const id of taskIds) {
+        const task = tasks.value.find((t) => t.id === id);
+        if (task) task.status = "done";
+      }
+      await Promise.all([fetchStats(), fetchBoards()]);
+    } catch (e) { console.error('[Kanban] completeTasks failed:', e); }
   }
 
   async function blockTask(taskId: string, reason: string) {
-    await invoke("kanban_block_task", {
-      taskId,
-      reason,
-      board: selectedBoard.value,
-    });
-    const task = tasks.value.find((t) => t.id === taskId);
-    if (task) task.status = "blocked";
-    await Promise.all([fetchStats(), fetchBoards()]);
+    try {
+      await invoke("kanban_block_task", {
+        taskId,
+        reason,
+        board: selectedBoard.value,
+      });
+      const task = tasks.value.find((t) => t.id === taskId);
+      if (task) task.status = "blocked";
+      await Promise.all([fetchStats(), fetchBoards()]);
+    } catch (e) { console.error('[Kanban] blockTask failed:', e); }
   }
 
   async function unblockTasks(taskIds: string[]) {
-    await invoke("kanban_unblock_tasks", {
-      taskIds,
-      board: selectedBoard.value,
-    });
-    for (const id of taskIds) {
-      const task = tasks.value.find((t) => t.id === id);
-      if (task) task.status = "ready";
-    }
-    await Promise.all([fetchStats(), fetchBoards()]);
+    try {
+      await invoke("kanban_unblock_tasks", {
+        taskIds,
+        board: selectedBoard.value,
+      });
+      for (const id of taskIds) {
+        const task = tasks.value.find((t) => t.id === id);
+        if (task) task.status = "ready";
+      }
+      await Promise.all([fetchStats(), fetchBoards()]);
+    } catch (e) { console.error('[Kanban] unblockTasks failed:', e); }
   }
 
   async function assignTask(taskId: string, profile: string) {
-    await invoke("kanban_assign_task", {
-      taskId,
-      profile,
-      board: selectedBoard.value,
-    });
-    const task = tasks.value.find((t) => t.id === taskId);
-    if (task) task.assignee = profile;
-    await Promise.all([fetchStats(), fetchAssignees()]);
+    try {
+      await invoke("kanban_assign_task", {
+        taskId,
+        profile,
+        board: selectedBoard.value,
+      });
+      const task = tasks.value.find((t) => t.id === taskId);
+      if (task) task.assignee = profile;
+      await Promise.all([fetchStats(), fetchAssignees()]);
+    } catch (e) { console.error('[Kanban] assignTask failed:', e); }
   }
 
   async function refreshAll() {

@@ -507,8 +507,9 @@ export const useChatStore = defineStore("chat", () => {
       // Drain the execution queue: get each executor and run it
       let completed = 0;
       let failed = 0;
+      let maxIterations = 100; // 防止无限循环
 
-      while (true) {
+      while (maxIterations-- > 0) {
         const executor = await invoke<string | null>("group_next_executor");
         if (!executor) break;
 

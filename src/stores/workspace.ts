@@ -32,6 +32,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
   const currentFile = ref<string>("");
   const currentFileContent = ref<string>("");
   const changedFiles = ref<Set<string>>(new Set());
+  let clearTimers: Map<string, ReturnType<typeof setTimeout>> | null = null;
   const loading = ref(false);
   const showWorkspace = ref(true);
   let unlistenFileChanged: (() => void) | null = null;
@@ -339,12 +340,17 @@ export const useWorkspaceStore = defineStore("workspace", () => {
           changeTimestamps.value = new Map(changeTimestamps.value);
 
           // Auto-clear the changed indicator after 8 seconds
-          setTimeout(() => {
+          // 使用 Map 跟踪每个文件的定时器，避免累积
+          if (!clearTimers) clearTimers = new Map();
+          const existing = clearTimers.get(filePath);
+          if (existing) clearTimeout(existing);
+          clearTimers.set(filePath, setTimeout(() => {
             changedFiles.value.delete(filePath);
             changedFiles.value = new Set(changedFiles.value);
             changeTimestamps.value.delete(filePath);
             changeTimestamps.value = new Map(changeTimestamps.value);
-          }, 8000);
+            clearTimers?.delete(filePath);
+          }, 8000));
 
           // ── File Follow Mode: auto-navigate to changed file ──
           followOnFileChanged(filePath);
