@@ -32,6 +32,7 @@ import {
   IconArchive, IconSchema, IconFlame, IconWind, IconSnowflake,
   IconDiamond, IconCrown, IconAward, IconTrophy, IconFeather,
   IconWand, IconPaw, IconCompass, IconAnchor,
+  IconInbox, IconLayoutKanban,
 } from '@tabler/icons-vue'
 
 // ── 图标映射表 ──
@@ -50,6 +51,7 @@ const ICONS_MAP: Record<string, any> = {
   heart: IconHeart, star: IconStar, starFilled: IconStarFilled,
   filter: IconFilter, sort: IconSelector, menu: IconMenu, dots: IconDots,
   maximize: IconMaximize, minimize: IconMinimize,
+  inbox: IconInbox, playerPlay: IconPlayerPlay, layoutKanban: IconLayoutKanban,
 
   // 导航
   folder: IconFolder, folderOpen: IconFolderOpen, file: IconFile,
