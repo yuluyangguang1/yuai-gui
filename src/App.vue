@@ -1,5 +1,6 @@
 <template>
   <div class="app-shell pattern-starfield">
+    <a href="#main-content" class="sr-only" style="position:absolute;top:-100px;left:0;z-index:9999;padding:8px 16px;background:var(--accent);color:var(--text-inverse);text-decoration:none;" @focus="$event.target.style.top='0'" @blur="$event.target.style.top='-100px'">跳转到主内容</a>
     <AppTitlebar />
     <div class="app-main">
       <AppRail
@@ -9,7 +10,7 @@
       />
       <HomeView v-show="workspaceStore.showWorkspace" />
 
-      <div class="preview-col">
+      <div class="preview-col" id="main-content" role="main">
         <div class="col-header">
           <span
             v-for="tab in previewTabs"

@@ -1,5 +1,5 @@
 <template>
-  <nav class="app-rail">
+  <nav class="app-rail" role="navigation" aria-label="主导航">
     <!-- Top: Agent buttons (梅兰竹菊) -->
     <div class="rail-section rail-section-top stagger-container">
       <div class="rail-section-label">四友</div>

@@ -1,5 +1,5 @@
 <template>
-  <footer class="app-statusbar">
+  <footer class="app-statusbar" role="status" aria-label="状态栏">
     <span class="statusbar-item">
       <span class="statusbar-dot" :class="statusClass" />
       {{ statusText }}

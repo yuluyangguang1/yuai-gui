@@ -1,6 +1,6 @@
 <template>
   <Transition name="suggest">
-    <div v-if="suggestions.length > 0" class="prompt-suggest">
+    <div v-if="suggestions.length > 0" class="prompt-suggest" role="status" aria-label="提示词优化建议">
       <div class="suggest-header">
         <TIcon name="sparkles" :size="14" />
         <span>提示词优化建议</span>

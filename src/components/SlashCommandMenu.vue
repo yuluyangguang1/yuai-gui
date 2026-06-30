@@ -1,6 +1,6 @@
 <template>
   <Transition name="slash-menu">
-    <div v-if="visible" class="slash-menu" :style="menuStyle">
+    <div v-if="visible" class="slash-menu" :style="menuStyle" role="listbox" aria-label="命令列表">
       <div class="slash-menu-header">
         <TIcon name="terminal" :size="14" />
         <span>Slash Commands</span>

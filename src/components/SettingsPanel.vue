@@ -1,5 +1,5 @@
 <template>
-  <div class="settings-panel">
+  <div class="settings-panel" role="region" aria-label="设置">
     <h2 class="settings-title">设置</h2>
 
     <!-- Account Section -->
