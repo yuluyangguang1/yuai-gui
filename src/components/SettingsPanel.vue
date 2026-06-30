@@ -41,31 +41,43 @@
         <span v-if="activeProviders[selectedType]?.model"> · {{ activeProviders[selectedType]?.model }}</span>
       </div>
 
-      <!-- Preset Selector -->
+      <!-- Preset Selector (改为供应商选择器) -->
       <div class="preset-section">
-        <label><TIcon name="bolt" :size="14" /> 快速预设</label>
-        <div class="preset-selector">
-          <select v-model="selectedPresetIdx" @change="applyPreset">
-            <option :value="-1">自定义</option>
-            <option v-for="(p, i) in PROVIDER_PRESETS" :key="i" :value="i">
-              {{ p.name }}
-            </option>
-          </select>
+        <label><TIcon name="bolt" :size="14" /> 供应商 ({{ providerList.length }})</label>
+        <div class="provider-grid">
+          <button
+            v-for="p in providerList"
+            :key="p.id"
+            class="provider-chip"
+            :class="{ active: selectedProviderId === p.id, connected: p.status === 'connected' }"
+            @click="selectProvider(p.id)"
+            :title="p.base_url"
+          >
+            {{ p.name }}
+          </button>
         </div>
-        <!-- Model dropdown for selected preset -->
-        <div v-if="selectedPresetIdx >= 0 && PROVIDER_PRESETS[selectedPresetIdx]?.models?.length" class="preset-models">
-          <label><TIcon name="cpu" :size="14" /> 模型选择</label>
+        <!-- Model picker for selected provider -->
+        <div v-if="filteredModels.length > 0" class="preset-models">
+          <label><TIcon name="cpu" :size="14" /> 模型选择 ({{ filteredModels.length }})</label>
+          <input
+            v-model="modelSearch"
+            class="model-search"
+            placeholder="搜索模型... (支持别名如 sonnet, gpt5, mimo)"
+          />
           <div class="model-chips">
             <button
-              v-for="m in PROVIDER_PRESETS[selectedPresetIdx].models"
-              :key="m"
+              v-for="m in filteredModels.slice(0, 12)"
+              :key="m.id"
               class="model-chip"
-              :class="{ active: model === m }"
-              @click="model = m"
+              :class="{ active: model === m.id }"
+              @click="selectModel(m.id)"
+              :title="`${m.id}${m.context_length ? ' · ' + (m.context_length/1000) + 'K' : ''}${m.supports_vision ? ' · 视觉' : ''}`"
             >
-              {{ m }}
+              {{ m.name }}
+              <span v-if="m.aliases.length" class="model-alias">{{ m.aliases[0] }}</span>
             </button>
           </div>
+          <span v-if="filteredModels.length > 12" class="model-more">+{{ filteredModels.length - 12 }} 更多</span>
         </div>
       </div>
 
@@ -75,7 +87,7 @@
         <label><TIcon name="key" :size="14" /> 密钥</label>
         <input v-model="apiKey" type="password" placeholder="sk-..." />
         <label><TIcon name="cpu" :size="14" /> 模型</label>
-        <input v-model="model" type="text" placeholder="模型名称 (可选)" />
+        <input v-model="model" type="text" placeholder="模型名称 (支持别名: sonnet, gpt5, mimo)" @input="onModelInput" />
         <div class="settings-actions">
           <button class="save-btn" @click="save"><TIcon name="check" :size="14" /> 保存</button>
           <button class="test-btn" @click="testConn" :disabled="testing">
@@ -90,27 +102,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import { TIcon } from "../utils/icons";
 import { invoke } from '@tauri-apps/api/core';
+import { useProviderStore } from '../stores/provider';
 import LoginPanel from './LoginPanel.vue';
 import ActivationPanel from './ActivationPanel.vue';
 
-// ─── Provider Presets ───
-const PROVIDER_PRESETS = [
-  { name: 'Anthropic', base_url: 'https://api.anthropic.com', models: ['claude-sonnet-4', 'claude-opus-4', 'claude-haiku-4'], env: 'ANTHROPIC' },
-  { name: 'OpenAI', base_url: 'https://api.openai.com/v1', models: ['gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'], env: 'OPENAI' },
-  { name: 'DeepSeek', base_url: 'https://api.deepseek.com/v1', models: ['deepseek-chat', 'deepseek-coder'], env: 'OPENAI' },
-  { name: 'Moonshot', base_url: 'https://api.moonshot.cn/v1', models: ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k'], env: 'OPENAI' },
-  { name: '通义千问', base_url: 'https://dashscope.aliyuncs.com/compatible-mode/v1', models: ['qwen-plus', 'qwen-turbo', 'qwen-max'], env: 'OPENAI' },
-  { name: '智谱 GLM', base_url: 'https://open.bigmodel.cn/api/paas/v4', models: ['glm-4-flash', 'glm-4', 'glm-3-turbo'], env: 'OPENAI' },
-  { name: '百川', base_url: 'https://api.baichuan-ai.com/v1', models: ['Baichuan4', 'Baichuan3-Turbo'], env: 'OPENAI' },
-  { name: '豆包', base_url: 'https://ark.cn-beijing.volces.com/api/v3', models: ['doubao-1.5-pro-32k', 'doubao-lite-32k'], env: 'OPENAI' },
-  { name: '小米 MiMo', base_url: 'https://api.xiaomimimo.com/v1', models: ['MiMo', 'mimo-v2.5-pro'], env: 'OPENAI' },
-  { name: '百度千帆', base_url: 'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop', models: ['ernie-4.0-8k', 'ernie-3.5-8k'], env: 'OPENAI' },
-  { name: '讯飞星火', base_url: 'https://spark-api-open.xf-yun.com/v1', models: ['generalv3.5', 'generalv3'], env: 'OPENAI' },
-  { name: '本地中转', base_url: 'http://localhost:3000/v1', models: [], env: 'OPENAI' },
-];
+const providerStore = useProviderStore();
 
 // ─── State ───
 const selectedType = ref('claude');
@@ -121,21 +120,38 @@ const status = ref('');
 const connStatus = ref('');
 const testing = ref(false);
 const selectedPresetIdx = ref(-1);
+const showModelPicker = ref(false);
+const modelSearch = ref('');
 
-// Track active provider per agent type
-const activeProviders = reactive<Record<string, { name: string; model: string } | null>>({
-  claude: null,
-  codex: null,
-  openclaw: null,
-  hermes: null,
-});
-
+// Agent tabs
 const appTypes = [
   { id: 'claude', label: 'Claude (梅)', glyph: '梅', color: '#d4577b' },
   { id: 'codex', label: 'Codex (兰)', glyph: '兰', color: '#6a994e' },
   { id: 'openclaw', label: 'OpenClaw (竹)', glyph: '竹', color: '#4caf50' },
   { id: 'hermes', label: 'Hermes (菊)', glyph: '菊', color: '#f0a830' },
 ];
+
+// Track active provider per agent type
+const activeProviders = reactive<Record<string, { name: string; model: string } | null>>({
+  claude: null, codex: null, openclaw: null, hermes: null,
+});
+
+// 从 ProviderStore 获取供应商列表（替代旧的 PROVIDER_PRESETS）
+const providerList = computed(() => providerStore.allProviders);
+
+// 过滤后的模型列表
+const filteredModels = computed(() => {
+  const provider = providerStore.allProviders.find(p => p.id === selectedProviderId.value);
+  if (!provider) return [];
+  const models = providerStore.models.filter(m => m.provider_id === provider.id);
+  if (!modelSearch.value) return models;
+  const q = modelSearch.value.toLowerCase();
+  return models.filter(m =>
+    m.id.includes(q) || m.name.toLowerCase().includes(q) || m.aliases.some(a => a.includes(q))
+  );
+});
+
+const selectedProviderId = ref('openai');
 
 // ─── Methods ───
 
@@ -154,7 +170,6 @@ async function loadProviders() {
       model.value = '';
       activeProviders[selectedType.value] = null;
     }
-    // Auto-detect preset from current URL
     detectPreset();
   } catch (e) {
     console.error('loadProviders:', e);
@@ -166,32 +181,48 @@ async function loadAllActiveProviders() {
     try {
       const providers: any[] = await invoke('get_providers', { appType: t.id });
       const active = providers?.find((p: any) => p.is_current);
-      if (active) {
-        activeProviders[t.id] = { name: active.name, model: active.model || '' };
-      } else {
-        activeProviders[t.id] = null;
-      }
-    } catch {
-      // ignore
-    }
+      activeProviders[t.id] = active ? { name: active.name, model: active.model || '' } : null;
+    } catch { /* ignore */ }
   }
 }
 
 function detectPreset() {
-  // Try to match current base_url to a preset
-  const idx = PROVIDER_PRESETS.findIndex(p => {
-    return baseUrl.value.includes(p.base_url.replace('https://', '').replace('http://', ''));
-  });
+  const idx = providerList.value.findIndex(p =>
+    baseUrl.value.includes(p.base_url.replace('https://', '').replace('http://', ''))
+  );
   selectedPresetIdx.value = idx;
+  if (idx >= 0) selectedProviderId.value = providerList.value[idx].id;
 }
 
-function applyPreset() {
-  const idx = selectedPresetIdx.value;
-  if (idx < 0 || idx >= PROVIDER_PRESETS.length) return;
-  const preset = PROVIDER_PRESETS[idx];
-  baseUrl.value = preset.base_url;
-  if (preset.models.length > 0) {
-    model.value = preset.models[0];
+function selectProvider(id: string) {
+  selectedProviderId.value = id;
+  const provider = providerStore.allProviders.find(p => p.id === id);
+  if (provider) {
+    baseUrl.value = provider.base_url;
+    // 选择该供应商的第一个模型
+    const firstModel = providerStore.models.find(m => m.provider_id === id);
+    if (firstModel) model.value = firstModel.id;
+  }
+}
+
+function selectModel(modelId: string) {
+  model.value = modelId;
+  showModelPicker.value = false;
+}
+
+// 别名快速切换
+function onModelInput(e: Event) {
+  const val = (e.target as HTMLInputElement).value;
+  model.value = val;
+  // 尝试别名解析
+  const resolved = providerStore.resolveAlias(val);
+  if (resolved) {
+    const provider = providerStore.allProviders.find(p => p.id === resolved.provider_id);
+    if (provider) {
+      baseUrl.value = provider.base_url;
+      selectedProviderId.value = resolved.provider_id;
+    }
+    model.value = resolved.model_id;
   }
 }
 
@@ -212,6 +243,7 @@ async function save() {
     status.value = '已保存';
     connStatus.value = '';
     activeProviders[selectedType.value] = { name: agent?.label || selectedType.value, model: model.value };
+    providerStore.saveToStorage();
     setTimeout(() => status.value = '', 2000);
   } catch (e) {
     status.value = String(e);
@@ -219,10 +251,7 @@ async function save() {
 }
 
 async function testConn() {
-  if (!baseUrl.value) {
-    connStatus.value = '请先填写地址';
-    return;
-  }
+  if (!baseUrl.value) { connStatus.value = '请先填写地址'; return; }
   testing.value = true;
   connStatus.value = '';
   try {
@@ -298,15 +327,39 @@ onMounted(() => {
 .preset-selector select:focus { border-color: var(--border-accent); }
 .preset-selector select option { background: var(--bg-primary); color: var(--bone); }
 
+/* Provider grid */
+.provider-grid {
+  display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px;
+}
+.provider-chip {
+  padding: 3px 8px; border: 1px solid var(--border-light); border-radius: 4px;
+  background: transparent; color: var(--bone-dim); font-size: .58rem; cursor: pointer;
+  font-family: var(--font-mono); transition: all .15s;
+}
+.provider-chip:hover { border-color: var(--hairline-warm); color: var(--bone); }
+.provider-chip.active { border-color: var(--jade); color: var(--jade); background: rgba(80, 200, 120, .08); }
+.provider-chip.connected::after { content: ''; display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--jade); margin-left: 3px; }
+
+/* Model search */
+.model-search {
+  width: 100%; padding: 4px 8px; margin-bottom: 6px;
+  background: var(--bg-primary); border: 1px solid var(--border-light);
+  border-radius: 4px; color: var(--bone); font-family: var(--font-mono); font-size: .58rem;
+  outline: none;
+}
+.model-search:focus { border-color: var(--border-accent); }
+
 .preset-models { margin-top: 8px; }
 .model-chips { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
 .model-chip {
   padding: 3px 8px; border: 1px solid var(--border-light); border-radius: 4px;
   background: transparent; color: var(--bone-dim); font-size: .58rem; cursor: pointer;
-  font-family: var(--font-mono); transition: all .15s;
+  font-family: var(--font-mono); transition: all .15s; display: flex; align-items: center; gap: 4px;
 }
 .model-chip:hover { border-color: var(--hairline-warm); color: var(--bone); }
 .model-chip.active { border-color: var(--jade); color: var(--jade); background: rgba(80, 200, 120, .08); }
+.model-alias { font-size: .5rem; opacity: .5; }
+.model-more { font-size: .5rem; color: var(--silver); margin-top: 4px; display: block; }
 
 /* Form */
 .settings-form { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
