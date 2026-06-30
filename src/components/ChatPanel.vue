@@ -28,38 +28,8 @@
         </span>
       </span>
       <span class="chat-spacer" />
-      <!-- Model indicator (click to switch) -->
-      <button
-        class="chat-model-btn"
-        @click="showModelSwitcher = !showModelSwitcher"
-        :title="`${providerStore.activeProvider?.name ?? '未配置'} / ${providerStore.activeModel?.name ?? '未选择'}`"
-      >
-        <TIcon name="cpu" :size="12" />
-        <span class="model-btn-name">{{ providerStore.activeModel?.name ?? '模型' }}</span>
-        <TIcon name="chevronDown" :size="10" />
-      </button>
-      <!-- Model quick switcher dropdown -->
-      <div v-if="showModelSwitcher" class="model-switcher-dropdown">
-        <input
-          v-model="modelSwitchSearch"
-          class="model-switcher-search"
-          placeholder="输入模型名或别名 (sonnet, gpt5, mimo...)"
-          @keydown.escape="showModelSwitcher = false"
-          @input="onModelSwitchInput"
-        />
-        <div class="model-switcher-list">
-          <button
-            v-for="m in recentModels"
-            :key="m.id"
-            class="model-switcher-item"
-            :class="{ active: m.id === providerStore.activeModelId }"
-            @click="switchModel(m.id)"
-          >
-            <span class="model-switcher-name">{{ m.name }}</span>
-            <span class="model-switcher-provider">{{ providerStore.providers.find(p => p.id === m.provider_id)?.name ?? m.provider_id }}</span>
-          </button>
-        </div>
-      </div>
+      <!-- Model Selector (参考 Hermes Studio ModelSelector.vue) -->
+      <ModelSelector />
       <!-- Beam mode toggle -->
       <button class="chat-mode-btn" :class="{ active: chatStore.chatMode === 'beam' }" @click="chatStore.setChatMode(chatStore.chatMode === 'beam' ? 'single' : 'beam')" title="并行提问模式">
         <TIcon name="bolt" :size="16" />
@@ -245,6 +215,7 @@ import { TIcon } from "../utils/icons";
 import { useChatStore } from "../stores/chat";
 import { useAgentsStore } from "../stores/agents";
 import { useProviderStore } from "../stores/provider";
+import ModelSelector from "./ModelSelector.vue";
 import { useWorkspaceStore } from "../stores/workspace";
 import { usePromptStore } from "../stores/prompt";
 import ContextPanel from "./ContextPanel.vue";
@@ -262,47 +233,12 @@ const chatStore = useChatStore();
 const agentsStore = useAgentsStore();
 const providerStore = useProviderStore();
 const promptStore = usePromptStore();
-
-// Current agent for single mode (uses chatTarget)
 const currentAgent = computed(() => {
   if (chatStore.chatMode === 'group') return agentsStore.activeAgent;
   return agentsStore.agents.find(a => a.id === chatStore.chatTarget) ?? agentsStore.activeAgent;
 });
 const workspaceStore = useWorkspaceStore();
 const showRoomManager = ref(false);
-const showModelSwitcher = ref(false);
-const modelSwitchSearch = ref('');
-
-// 最近使用的模型 + 常用模型
-const recentModels = computed(() => {
-  const q = modelSwitchSearch.value.toLowerCase().trim();
-  let list = providerStore.models;
-  if (q) {
-    list = list.filter(m =>
-      m.id.includes(q) || m.name.toLowerCase().includes(q) || m.aliases.some(a => a.includes(q))
-    );
-  }
-  // 按供应商分组，最多显示 15 个
-  return list.slice(0, 15);
-});
-
-function switchModel(modelId: string) {
-  providerStore.switchModel(modelId);
-  showModelSwitcher.value = false;
-  modelSwitchSearch.value = '';
-}
-
-function onModelSwitchInput(e: Event) {
-  const val = (e.target as HTMLInputElement).value;
-  // 尝试别名解析
-  const resolved = providerStore.resolveAlias(val);
-  if (resolved) {
-    providerStore.switchProvider(resolved.provider_id);
-    providerStore.switchModel(resolved.model_id);
-    showModelSwitcher.value = false;
-    modelSwitchSearch.value = '';
-  }
-}
 const commandSuggestRef = ref<InstanceType<typeof CommandSuggest> | null>(null);
 
 // ── Slash Command 状态 ──
