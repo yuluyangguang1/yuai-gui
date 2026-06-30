@@ -17,7 +17,7 @@
             class="preview-mode-tab"
             :class="{ active: previewMode === tab.id }"
             @click="previewMode = tab.id"
-          >{{ tab.label }}</span>
+          ><TIcon :name="tab.icon" :size="12" /> {{ tab.label }}</span>
         </div>
         <div class="preview-body">
           <PreviewView v-if="previewMode === 'code'" />
@@ -75,6 +75,7 @@
 
 <script setup lang="ts">
 import { ref, defineAsyncComponent, onMounted } from "vue";
+import { TIcon } from "./utils/icons";
 import AppTitlebar from "./components/layout/AppTitlebar.vue";
 import AppRail from "./components/layout/AppRail.vue";
 import AppStatusbar from "./components/layout/AppStatusbar.vue";
@@ -132,22 +133,22 @@ type PreviewMode =
 
 const previewMode = ref<PreviewMode>('code');
 const activeTerminalAgent = ref<string | null>(null);
-const previewTabs: { id: PreviewMode; label: string }[] = [
-  { id: 'code', label: '代码' },
-  { id: 'diff', label: '变更' },
-  { id: 'terminal', label: '终端' },
-  { id: 'lan', label: '设备' },
-  { id: 'replay', label: '回放' },
-  { id: 'disk', label: '磁盘' },
-  { id: 'wechat', label: '微信' },
-  { id: 'organize', label: '整理' },
-  { id: 'skills', label: '技能' },
-  { id: 'write-gate', label: '写入' },
-  { id: 'kanban', label: '看板' },
-  { id: 'mcp', label: 'MCP' },
-  { id: 'workflow', label: '工作流' },
-  { id: 'hardware', label: '硬件' },
-  { id: 'settings', label: '配置' },
+const previewTabs: { id: PreviewMode; label: string; icon: string }[] = [
+  { id: 'code', label: '代码', icon: 'code' },
+  { id: 'diff', label: '变更', icon: 'gitBranch' },
+  { id: 'terminal', label: '终端', icon: 'terminal' },
+  { id: 'lan', label: '设备', icon: 'deviceDesktop' },
+  { id: 'replay', label: '回放', icon: 'playerPlay' },
+  { id: 'disk', label: '磁盘', icon: 'database' },
+  { id: 'wechat', label: '微信', icon: 'messageCircle' },
+  { id: 'organize', label: '整理', icon: 'sparkles' },
+  { id: 'skills', label: '技能', icon: 'wand' },
+  { id: 'write-gate', label: '写入', icon: 'shield' },
+  { id: 'kanban', label: '看板', icon: 'layoutKanban' },
+  { id: 'mcp', label: 'MCP', icon: 'plug' },
+  { id: 'workflow', label: '工作流', icon: 'schema' },
+  { id: 'hardware', label: '硬件', icon: 'cpu' },
+  { id: 'settings', label: '配置', icon: 'settings' },
 ];
 
 const enabledAgents = () => agentsStore.agents.filter(a => a.enabled);
