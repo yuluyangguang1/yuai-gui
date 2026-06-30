@@ -137,6 +137,7 @@ pub fn normalize_url(app_type: &str, base_url: &str) -> String {
     }
 }
 
+#[allow(dead_code)]
 fn decrypt_key(raw: &str) -> String {
     if raw.is_empty() {
         return raw.to_string();

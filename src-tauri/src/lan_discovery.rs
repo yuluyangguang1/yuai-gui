@@ -27,6 +27,7 @@ pub struct LanDiscoveryState {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(dead_code)]
 pub struct StartScanRequest {
     pub bind_port: Option<u16>,
 }
@@ -52,6 +53,7 @@ pub struct LanDiscoveryService {
 }
 
 impl LanDiscoveryService {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         Self::default()
     }
@@ -85,6 +87,7 @@ impl LanDiscoveryService {
         }
     }
 
+    #[allow(dead_code)]
     pub fn upsert_device(&self, device: LanDevice) {
         let mut guard = self.state.lock().unwrap();
         let state = guard.get_or_insert_with(LanDiscoveryState::default);
@@ -158,11 +161,13 @@ pub fn lan_pair_device(
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(dead_code)]
 pub struct LanEndpointInfo {
     pub kind: String,
     pub label: String,
 }
 
+#[allow(dead_code)]
 pub fn infer_endpoint_kind(http_port: u16) -> LanEndpointInfo {
     match http_port {
         8648 => LanEndpointInfo { kind: "web".into(), label: "Web UI".into() },

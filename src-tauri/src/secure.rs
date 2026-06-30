@@ -14,12 +14,14 @@ static KEY_PATH: &str = ".yuai/secure.key";
 static DATA_PATH: &str = ".yuai/secure.secrets.json";
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[allow(dead_code)]
 pub struct SecretEntry {
     pub key: String,
     pub ciphertext: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[allow(dead_code)]
 pub struct SecretStore {
     pub secrets: Vec<SecretEntry>,
 }
@@ -27,6 +29,7 @@ pub struct SecretStore {
 #[derive(Debug, thiserror::Error)]
 pub enum SecureError {
     #[error("密钥文件不存在，请重新初始化")]
+    #[allow(dead_code)]
     KeyMissing,
     #[error("加解密失败: {0}")]
     CryptoError(String),

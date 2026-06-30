@@ -16,4 +16,13 @@ preloadCommonIcons();
 
 const app = createApp(App);
 app.use(createPinia());
+
+// 全局错误处理
+app.config.errorHandler = (err, instance, info) => {
+  console.error('[Vue Error]', err, info);
+};
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('[Unhandled Rejection]', e.reason);
+});
+
 app.mount("#app");

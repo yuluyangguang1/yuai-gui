@@ -120,7 +120,7 @@ pub fn get_agent_changes(
     agent_id: String,
 ) -> Result<Vec<super::git::ChangedFile>, String> {
     // Look for agent worktree in .worktrees/ directory
-    let worktree_dir = std::path::Path::new(&cwd)
+    let _worktree_dir = std::path::Path::new(&cwd)
         .join(".worktrees")
         .join(format!("{}-*", agent_id));
 

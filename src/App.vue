@@ -187,8 +187,8 @@ useKeyboard({
 });
 
 onMounted(async () => {
-  await agentsStore.loadAgents();
-  workspaceStore.initWorkspace();
+  try { await agentsStore.loadAgents(); } catch (e) { console.error('[App] loadAgents failed:', e); }
+  try { await workspaceStore.initWorkspace(); } catch (e) { console.error('[App] initWorkspace failed:', e); }
   updateStore.startAutoCheck();
 });
 </script>
