@@ -287,6 +287,34 @@ pub fn spawn_agent(
     let session = Arc::new(PtySession { writer, killer, master, pid });
 
     // Auto-accept trust prompt for CLI agents (Claude Code, Codex, etc.)
+    // First: write trust files (Orca pattern — more reliable than sending "1\n")
+    if let Some(ref dir) = cwd {
+        let trust_path = std::path::Path::new(dir);
+        // Codex: add trust entry to ~/.codex/config.toml
+        if agent.config_type == "codex_toml" {
+            let home = dirs::home_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
+            let codex_config = home.join(".codex").join("config.toml");
+            if let Ok(mut content) = std::fs::read_to_string(&codex_config) {
+                let trust_entry = format!("\n[projects.\"{}\"]\ntrust_level = \"trusted\"\n", dir);
+                if !content.contains(dir) {
+                    content.push_str(&trust_entry);
+                    let _ = std::fs::write(&codex_config, content);
+                }
+            }
+        }
+        // Claude: write trust marker
+        if agent.config_type == "anthropic_env" {
+            let home = dirs::home_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
+            let slug = dir.trim_start_matches('/').replace('/', "-");
+            let trust_dir = home.join(".claude").join("projects").join(&slug);
+            let _ = std::fs::create_dir_all(&trust_dir);
+            let _ = std::fs::write(trust_dir.join(".trust"), serde_json::json!({
+                "trustedAt": chrono::Utc::now().timestamp_millis(),
+                "workspacePath": dir,
+            }).to_string());
+        }
+    }
+    // Fallback: also send "1\n" in case trust files weren't enough
     {
         let w = session.writer.clone();
         thread::spawn(move || {

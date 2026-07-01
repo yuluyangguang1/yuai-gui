@@ -232,6 +232,8 @@ import { AttentionManager, type AttentionMode } from "../utils/attention-system"
 import { CompactionEngine, createToolOutputTrimHook } from "../utils/compaction";
 import { TokenBudgetManager, loadBudgets } from "../utils/token-budget";
 import { HookManager, createLoggingHook, createNotificationHook } from "../utils/hook-events";
+import { globalAgentHooks } from "../utils/agent-hooks";
+import { globalSessionRecovery } from "../utils/session-recovery";
 import { OrientationGenerator } from "../utils/orientation-card";
 import { getToolsForRole } from "../utils/tool-surface";
 
@@ -240,6 +242,12 @@ const attentionManager = new AttentionManager();
 const hookManager = new HookManager();
 hookManager.register(createLoggingHook());
 hookManager.register(createNotificationHook());
+
+// Agent hooks — detect state from PTY output
+const agentHooksUnsub = globalAgentHooks.on((event) => {
+  // Update agent status in store
+  agentsStore.updateStatus(event.agentId, event.state === "working" ? "running" : event.state === "error" ? "error" : "idle");
+});
 const orientationGen = new OrientationGenerator();
 const compactionEngine = new CompactionEngine();
 compactionEngine.registerHook(createToolOutputTrimHook());
