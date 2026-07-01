@@ -23,7 +23,7 @@
             @click="previewMode = tab.id"
             @keydown.enter="previewMode = tab.id"
             @keydown.space.prevent="previewMode = tab.id"
-          ><TIcon :name="tab.icon" :size="12" /> {{ tab.label }}</span>
+          ><span class="preview-tab-icon"><TIcon :name="tab.icon" :size="12" /></span><span class="preview-tab-label">{{ tab.label }}</span></span>
         </div>
         <div class="preview-body" role="tabpanel">
           <PreviewView v-if="previewMode === 'code'" />
