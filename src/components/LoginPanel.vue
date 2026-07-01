@@ -120,7 +120,7 @@ function handleRegister() {
   color: var(--bone);
 }
 .profile-email {
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--silver);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -131,7 +131,7 @@ function handleRegister() {
   border-radius: 6px;
   background: rgba(255,80,80,0.1);
   color: var(--vermilion-glow, #ff5050);
-  font-size: 12px;
+  font-size: var(--text-sm);
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -151,7 +151,7 @@ function handleRegister() {
   border-radius: 6px;
   background: transparent;
   color: var(--bone-dim);
-  font-size: 13px;
+  font-size: var(--text-base);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -166,7 +166,7 @@ function handleRegister() {
   border: 1px solid rgba(255,80,80,0.2);
   border-radius: 6px;
   color: var(--vermilion-glow, #ff5050);
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 .auth-form {
   display: flex;
@@ -175,7 +175,7 @@ function handleRegister() {
 }
 .auth-form label {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--silver);
 }
 .auth-form input {
@@ -184,7 +184,7 @@ function handleRegister() {
   border: 1px solid var(--border-light);
   border-radius: 6px;
   color: var(--bone);
-  font-size: 13px;
+  font-size: var(--text-base);
   outline: none;
   transition: border-color 0.2s;
 }
@@ -198,7 +198,7 @@ function handleRegister() {
   border: none;
   border-radius: 6px;
   color: var(--bg-primary);
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 500;
   cursor: pointer;
   transition: background 0.15s;

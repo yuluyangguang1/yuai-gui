@@ -319,8 +319,8 @@ onBeforeUnmount(() => {
 .code-fallback {
   margin: 0;
   padding: 12px;
-  font-family: "JetBrains Mono", "Fira Code", monospace;
-  font-size: 13px;
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
   line-height: 1.5;
   white-space: pre;
   color: var(--ink, #d4d4d4);
@@ -361,7 +361,7 @@ onBeforeUnmount(() => {
 }
 
 .save-status {
-  font-size: 11px;
+  font-size: var(--text-xs);
   padding: 2px 8px;
   border-radius: 4px;
   white-space: nowrap;

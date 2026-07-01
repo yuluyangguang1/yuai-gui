@@ -330,7 +330,7 @@ watch(() => props.renamingPath, (path) => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: var(--text-xs);
   line-height: 1;
   color: var(--bg, #fff);
   transition: background 0.15s, border-color 0.15s;
@@ -377,7 +377,7 @@ watch(() => props.renamingPath, (path) => {
 .rename-input {
   flex: 1;
   min-width: 0;
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-family: inherit;
   background: var(--bg-primary, #1a1a2e);
   color: var(--text-primary, #e0e0e0);

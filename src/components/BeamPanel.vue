@@ -224,7 +224,7 @@ watch(() => beamStore.showComparison, scrollToBottom);
   padding: 2px 8px;
   border: 1px solid;
   border-radius: 10px;
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 
 .beam-agent-dot {
@@ -257,7 +257,7 @@ watch(() => beamStore.showComparison, scrollToBottom);
 .beam-msg.system .beam-msg-bubble {
   background: rgba(255, 165, 0, 0.08);
   color: var(--text-muted, #888);
-  font-size: 12px;
+  font-size: var(--text-sm);
   text-align: center;
 }
 
@@ -269,7 +269,7 @@ watch(() => beamStore.showComparison, scrollToBottom);
 .beam-msg-bubble {
   padding: 8px 12px;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: var(--text-base);
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
@@ -292,7 +292,7 @@ watch(() => beamStore.showComparison, scrollToBottom);
 }
 
 .beam-empty-hint {
-  font-size: 13px;
+  font-size: var(--text-base);
 }
 
 .beam-thinking {
@@ -317,7 +317,7 @@ watch(() => beamStore.showComparison, scrollToBottom);
 }
 
 .beam-thinking-name {
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 500;
 }
 
@@ -339,7 +339,7 @@ watch(() => beamStore.showComparison, scrollToBottom);
 }
 
 .beam-comparison-header {
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 600;
   color: var(--text-muted, #888);
   margin-bottom: 10px;
@@ -372,18 +372,18 @@ watch(() => beamStore.showComparison, scrollToBottom);
 }
 
 .beam-card-name {
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 600;
 }
 
 .beam-card-time {
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: var(--text-muted, #888);
   margin-left: auto;
 }
 
 .beam-card-body {
-  font-size: 12px;
+  font-size: var(--text-sm);
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
@@ -425,7 +425,7 @@ watch(() => beamStore.showComparison, scrollToBottom);
   border-radius: 6px;
   padding: 8px 10px;
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: var(--text-base);
   resize: none;
   font-family: inherit;
   outline: none;
@@ -445,7 +445,7 @@ watch(() => beamStore.showComparison, scrollToBottom);
   border-radius: 6px;
   padding: 8px 14px;
   color: var(--jade, #5ccfb8);
-  font-size: 12px;
+  font-size: var(--text-sm);
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.15s;

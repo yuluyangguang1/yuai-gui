@@ -154,7 +154,7 @@ function selectAgent(agent: BuiltinAgent) {
   background: none;
   border: none;
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: var(--text-base);
   outline: none;
 }
 
@@ -232,13 +232,13 @@ function selectAgent(agent: BuiltinAgent) {
 }
 
 .agent-name {
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .agent-division {
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
 }
 
@@ -277,7 +277,7 @@ function selectAgent(agent: BuiltinAgent) {
   border-radius: 8px;
   color: var(--text-muted);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 
 .load-more:hover {

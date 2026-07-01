@@ -268,7 +268,7 @@ onMounted(() => {
 <style scoped>
 .settings-panel { padding: 16px; }
 .settings-title { font-family: var(--font-serif); font-size: 1rem; color: var(--bone); margin-bottom: 12px; }
-.settings-desc { font-size: .68rem; color: var(--silver); margin-bottom: 16px; }
+.settings-desc { font-size: var(--text-sm); color: var(--silver); margin-bottom: 16px; }
 
 .settings-section {
   margin-bottom: 20px;
@@ -278,7 +278,7 @@ onMounted(() => {
 
 .section-title {
   font-family: var(--font-serif);
-  font-size: .82rem;
+  font-size: var(--text-base);
   color: var(--bone-dim);
   margin-bottom: 12px;
   display: inline-flex; align-items: center; gap: 6px;
@@ -294,7 +294,7 @@ onMounted(() => {
 }
 .account-row {
   display: flex; justify-content: space-between; align-items: center;
-  font-size: .68rem;
+  font-size: var(--text-sm);
 }
 .account-label { color: var(--silver); font-family: var(--font-body); }
 .account-value { color: var(--bone); font-family: var(--font-body); }
@@ -305,7 +305,7 @@ onMounted(() => {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border-light);
   background: transparent; color: var(--bone-dim); cursor: pointer; transition: all .2s;
-  font-family: var(--font-body); font-size: .68rem;
+  font-family: var(--font-body); font-size: var(--text-sm);
   position: relative;
 }
 .settings-tab:hover { border-color: var(--hairline-warm); color: var(--bone); }
@@ -329,11 +329,11 @@ onMounted(() => {
 
 /* Preset selector */
 .preset-section { margin-bottom: 12px; }
-.preset-section label { font-family: var(--font-mono); font-size: .58rem; color: var(--silver); display: block; margin-bottom: 4px; }
+.preset-section label { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--silver); display: block; margin-bottom: 4px; }
 .preset-selector select {
   width: 100%; padding: 6px 10px;
   background: var(--bg-surface); border: 1px solid var(--border-light);
-  border-radius: 6px; color: var(--bone); font-family: var(--font-mono); font-size: .68rem;
+  border-radius: 6px; color: var(--bone); font-family: var(--font-mono); font-size: var(--text-sm);
   outline: none; cursor: pointer;
 }
 .preset-selector select:focus { border-color: var(--border-accent); }
@@ -345,7 +345,7 @@ onMounted(() => {
 }
 .provider-chip {
   padding: 3px 8px; border: 1px solid var(--border-light); border-radius: 4px;
-  background: transparent; color: var(--bone-dim); font-size: .58rem; cursor: pointer;
+  background: transparent; color: var(--bone-dim); font-size: var(--text-xs); cursor: pointer;
   font-family: var(--font-mono); transition: all .15s;
 }
 .provider-chip:hover { border-color: var(--hairline-warm); color: var(--bone); }
@@ -356,7 +356,7 @@ onMounted(() => {
 .model-search {
   width: 100%; padding: 4px 8px; margin-bottom: 6px;
   background: var(--bg-primary); border: 1px solid var(--border-light);
-  border-radius: 4px; color: var(--bone); font-family: var(--font-mono); font-size: .58rem;
+  border-radius: 4px; color: var(--bone); font-family: var(--font-mono); font-size: var(--text-xs);
   outline: none;
 }
 .model-search:focus { border-color: var(--border-accent); }
@@ -365,7 +365,7 @@ onMounted(() => {
 .model-chips { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
 .model-chip {
   padding: 3px 8px; border: 1px solid var(--border-light); border-radius: 4px;
-  background: transparent; color: var(--bone-dim); font-size: .58rem; cursor: pointer;
+  background: transparent; color: var(--bone-dim); font-size: var(--text-xs); cursor: pointer;
   font-family: var(--font-mono); transition: all .15s; display: flex; align-items: center; gap: 4px;
 }
 .model-chip:hover { border-color: var(--hairline-warm); color: var(--bone); }
@@ -375,7 +375,7 @@ onMounted(() => {
 
 /* Form */
 .settings-form { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
-.settings-form label { font-family: var(--font-mono); font-size: .58rem; color: var(--silver); }
+.settings-form label { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--silver); }
 .settings-form input {
   padding: 8px 12px; background: var(--bg-surface); border: 1px solid var(--border-light);
   border-radius: 6px; color: var(--bone); font-family: var(--font-mono); font-size: .72rem;

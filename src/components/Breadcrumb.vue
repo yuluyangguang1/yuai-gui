@@ -65,7 +65,7 @@ function navigate(path: string) {
   align-items: center;
   flex-wrap: nowrap;
   overflow: hidden;
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-family: var(--font-mono, monospace);
 }
 

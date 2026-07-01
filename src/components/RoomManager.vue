@@ -95,7 +95,7 @@ async function kickAgent(agentId: string) {
 <style scoped>
 .room-manager {
   padding: 8px;
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 
 .room-header {
@@ -107,7 +107,7 @@ async function kickAgent(agentId: string) {
 
 .room-title {
   font-weight: 600;
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--text-primary);
 }
 
@@ -143,7 +143,7 @@ async function kickAgent(agentId: string) {
 }
 
 .room-agent-glyph {
-  font-size: 13px;
+  font-size: var(--text-base);
 }
 
 .room-agent-name {
@@ -152,7 +152,7 @@ async function kickAgent(agentId: string) {
 }
 
 .room-agent-status {
-  font-size: 10px;
+  font-size: var(--text-xs);
   padding: 1px 4px;
   border-radius: 3px;
 }
@@ -178,7 +178,7 @@ async function kickAgent(agentId: string) {
   border: none;
   color: var(--text-muted, #666);
   cursor: pointer;
-  font-size: 10px;
+  font-size: var(--text-xs);
   padding: 2px;
   opacity: 0;
   transition: opacity 0.15s, color 0.15s;

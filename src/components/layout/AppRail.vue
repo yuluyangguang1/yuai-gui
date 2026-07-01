@@ -293,7 +293,7 @@ function handleAgentClick(agent: AgentDef) {
 
 .rail-glyph {
   font-family: var(--font-brush, serif);
-  font-size: 16px;
+  font-size: var(--text-lg);
   line-height: 1;
 }
 
@@ -308,7 +308,7 @@ function handleAgentClick(agent: AgentDef) {
   position: absolute;
   top: 2px;
   right: 2px;
-  font-size: 9px;
+  font-size: var(--text-2xs);
   background: var(--vermilion-glow, #ff5050);
   color: var(--text-primary);
   border-radius: 50%;

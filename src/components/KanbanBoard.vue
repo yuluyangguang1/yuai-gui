@@ -235,7 +235,7 @@ async function onDrop(e: DragEvent, targetStatus: KanbanTaskStatus) {
 .kb-col-label { font-size: 0.78rem; color: var(--text-primary); font-weight: 500; }
 .kb-col-count {
   margin-left: auto;
-  font-size: 0.68rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
   background: var(--bg-surface);
   padding: 0 5px;
@@ -280,7 +280,7 @@ async function onDrop(e: DragEvent, targetStatus: KanbanTaskStatus) {
 }
 
 .kb-card-desc {
-  font-size: 0.68rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
   margin-bottom: 4px;
   overflow: hidden;
@@ -292,7 +292,7 @@ async function onDrop(e: DragEvent, targetStatus: KanbanTaskStatus) {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
 }
 
 .kb-assignee {

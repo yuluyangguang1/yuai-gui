@@ -434,7 +434,7 @@ async function onDrop(e: DragEvent) {
 }
 
 .sidebar-section-icon {
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 
 .sidebar-section-title {
@@ -447,7 +447,7 @@ async function onDrop(e: DragEvent) {
   gap: 6px;
   padding: 3px 12px 3px 20px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--text-muted, #aaa);
   transition: background 0.1s;
 }
@@ -462,7 +462,7 @@ async function onDrop(e: DragEvent) {
 }
 
 .sidebar-item-icon {
-  font-size: 12px;
+  font-size: var(--text-sm);
   flex-shrink: 0;
 }
 
@@ -477,7 +477,7 @@ async function onDrop(e: DragEvent) {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--text-muted, #666);
   padding: 0 2px;
   opacity: 0;
@@ -517,7 +517,7 @@ async function onDrop(e: DragEvent) {
   background: transparent;
   color: var(--text-muted, #666);
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--text-base);
   transition: all 0.15s;
 }
 
@@ -624,7 +624,7 @@ async function onDrop(e: DragEvent) {
 }
 
 .grid-item-name {
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: var(--text-secondary, #c0c0c0);
   text-align: center;
   word-break: break-all;

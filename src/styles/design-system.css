@@ -40,9 +40,10 @@
   --font-display: "Ma Shan Zheng", cursive;
   --font-ui: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
 
-  /* 字号 scale（1.25 倍） */
-  --text-xs: 0.625rem;   /* 10px — 极小 */
-  --text-sm: 0.75rem;    /* 12px — 小 */
+  /* 字号 scale（6 级标准阶梯） */
+  --text-2xs: 0.5625rem; /* 9px  — 极微 */
+  --text-xs: 0.625rem;   /* 10px — 微小 (标签/徽章) */
+  --text-sm: 0.75rem;    /* 12px — 小 (辅助文字) */
   --text-base: 0.875rem; /* 14px — 正文 */
   --text-lg: 1rem;       /* 16px — 标题 */
   --text-xl: 1.25rem;    /* 20px — 大标题 */
@@ -537,7 +538,7 @@ code, pre, .text-mono {
 
 /* 图标尺寸 */
 .icon-sm { font-size: 12px; }
-.icon-md { font-size: 14px; }
+.icon-md { font-size: var(--text-base); }
 .icon-lg { font-size: 16px; }
 .icon-xl { font-size: 20px; }
 

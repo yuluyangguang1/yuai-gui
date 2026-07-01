@@ -203,7 +203,7 @@ const modelCompat = computed<ModelCompat[]>(() => {
   padding: 12px;
   height: 100%;
   overflow-y: auto;
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--silver, #aaa);
 }
 
@@ -252,7 +252,7 @@ const modelCompat = computed<ModelCompat[]>(() => {
   padding: 10px 24px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 500;
   transition: all 0.15s;
 }
@@ -307,7 +307,7 @@ const modelCompat = computed<ModelCompat[]>(() => {
 }
 
 .hw-value {
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--ink, #d4d4d4);
   text-align: right;
   overflow: hidden;
@@ -317,7 +317,7 @@ const modelCompat = computed<ModelCompat[]>(() => {
 }
 
 .hw-ua {
-  font-size: 10px;
+  font-size: var(--text-xs);
   max-width: 200px;
   word-break: break-all;
   white-space: normal;
@@ -377,7 +377,7 @@ const modelCompat = computed<ModelCompat[]>(() => {
 }
 
 .hw-compat-icon {
-  font-size: 12px;
+  font-size: var(--text-sm);
   flex-shrink: 0;
 }
 
@@ -399,7 +399,7 @@ const modelCompat = computed<ModelCompat[]>(() => {
 }
 
 .hw-compat-verdict {
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: var(--text-muted, #888);
   text-align: right;
 }

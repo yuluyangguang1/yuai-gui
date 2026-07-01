@@ -458,7 +458,7 @@ onUnmounted(() => {
   border-radius: 8px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04);
   overflow: hidden;
-  font-size: 12px;
+  font-size: var(--text-sm);
   backdrop-filter: blur(12px);
 }
 
@@ -469,13 +469,13 @@ onUnmounted(() => {
   padding: 6px 10px;
   border-bottom: 1px solid var(--border-light, rgba(255, 255, 255, 0.06));
   color: var(--text-muted, #565f89);
-  font-size: 10px;
+  font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .suggest-icon {
-  font-size: 12px;
+  font-size: var(--text-sm);
   opacity: 0.6;
 }
 
@@ -484,7 +484,7 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.06);
   padding: 1px 5px;
   border-radius: 3px;
-  font-size: 9px;
+  font-size: var(--text-2xs);
 }
 
 .suggest-list {
@@ -525,7 +525,7 @@ onUnmounted(() => {
 .suggest-item-name {
   color: var(--jade, #5ccfb8);
   font-family: var(--font-mono, monospace);
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 500;
   white-space: nowrap;
 }
@@ -533,18 +533,18 @@ onUnmounted(() => {
 .suggest-item-args {
   color: var(--text-muted, #565f89);
   font-family: var(--font-mono, monospace);
-  font-size: 10px;
+  font-size: var(--text-xs);
 }
 
 .suggest-item-short {
   color: var(--text-muted, #565f89);
   font-family: var(--font-mono, monospace);
-  font-size: 10px;
+  font-size: var(--text-xs);
 }
 
 .suggest-item-type {
   color: var(--text-muted, #565f89);
-  font-size: 9px;
+  font-size: var(--text-2xs);
   padding: 1px 4px;
   background: rgba(255, 255, 255, 0.04);
   border-radius: 3px;
@@ -561,7 +561,7 @@ onUnmounted(() => {
 
 .suggest-item-aliases {
   color: var(--text-muted, #565f89);
-  font-size: 9px;
+  font-size: var(--text-2xs);
   font-family: var(--font-mono, monospace);
   opacity: 0.6;
 }
@@ -573,7 +573,7 @@ onUnmounted(() => {
   padding: 4px 10px;
   border-top: 1px solid var(--border-light, rgba(255, 255, 255, 0.06));
   color: var(--text-muted, #565f89);
-  font-size: 10px;
+  font-size: var(--text-xs);
 }
 
 .suggest-key {
@@ -581,7 +581,7 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.06);
   border-radius: 3px;
   font-family: var(--font-mono, monospace);
-  font-size: 9px;
+  font-size: var(--text-2xs);
 }
 
 /* Transition */

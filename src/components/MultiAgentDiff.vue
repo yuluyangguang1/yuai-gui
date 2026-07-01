@@ -238,7 +238,7 @@ async function mergeSelected() {
   flex-direction: column;
   height: 100%;
   font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--text-primary, #e0e0e0);
 }
 
@@ -260,7 +260,7 @@ async function mergeSelected() {
 
 .mad-title {
   font-weight: 600;
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--text-muted, #aaa);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -271,7 +271,7 @@ async function mergeSelected() {
   color: #000;
   padding: 1px 6px;
   border-radius: 8px;
-  font-size: 10px;
+  font-size: var(--text-xs);
   font-weight: 600;
 }
 
@@ -387,7 +387,7 @@ async function mergeSelected() {
 
 .mad-file-agents {
   color: var(--text-muted, #888);
-  font-size: 10px;
+  font-size: var(--text-xs);
   flex-shrink: 0;
 }
 
@@ -411,7 +411,7 @@ async function mergeSelected() {
 .mad-diff-file {
   font-family: var(--font-mono, monospace);
   font-weight: 600;
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--text-primary, #e0e0e0);
 }
 
@@ -425,7 +425,7 @@ async function mergeSelected() {
   border: 1px solid var(--border, #444);
   border-radius: 4px;
   cursor: pointer;
-  font-size: 10px;
+  font-size: var(--text-xs);
   font-weight: 500;
   background: transparent;
   color: var(--text-muted, #aaa);
@@ -489,7 +489,7 @@ async function mergeSelected() {
   border: 1px solid var(--border, #444);
   border-radius: 3px;
   cursor: pointer;
-  font-size: 10px;
+  font-size: var(--text-xs);
   background: transparent;
   color: var(--text-muted, #aaa);
   transition: all 0.15s;
@@ -545,7 +545,7 @@ async function mergeSelected() {
   text-align: right;
   padding-right: 6px;
   color: var(--text-muted, #666);
-  font-size: 10px;
+  font-size: var(--text-xs);
   user-select: none;
   flex-shrink: 0;
 }
@@ -643,11 +643,11 @@ async function mergeSelected() {
 
 .mad-result-agent {
   color: var(--text-muted, #888);
-  font-size: 10px;
+  font-size: var(--text-xs);
 }
 
 .mad-result-error {
   color: var(--vermilion-glow, #ff6464);
-  font-size: 10px;
+  font-size: var(--text-xs);
 }
 </style>

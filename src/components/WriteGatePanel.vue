@@ -132,7 +132,7 @@ onMounted(() => store.fetchPending());
 }
 
 .wg-subsystem {
-  font-size: 0.68rem;
+  font-size: var(--text-sm);
   background: var(--bg-surface);
   color: var(--accent);
   padding: 1px 6px;
@@ -148,7 +148,7 @@ onMounted(() => store.fetchPending());
 }
 
 .wg-time {
-  font-size: 0.68rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
 }
 
@@ -159,7 +159,7 @@ onMounted(() => store.fetchPending());
 }
 
 .wg-origin {
-  font-size: 0.68rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
   margin-bottom: 6px;
 }
@@ -172,7 +172,7 @@ onMounted(() => store.fetchPending());
 }
 
 .wg-diff-label {
-  font-size: 0.68rem;
+  font-size: var(--text-sm);
   color: var(--gold);
   background: var(--bg-surface);
   padding: 4px 8px;

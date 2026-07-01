@@ -169,7 +169,7 @@ async function onPaired() {
 }
 
 .lan-section-header {
-  font-size: 0.7rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.1em;

@@ -59,7 +59,7 @@ const icons: Record<ToastType, string> = {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   cursor: pointer;
   pointer-events: auto;
-  font-size: 13px;
+  font-size: var(--text-base);
   color: var(--silver, #c0c0c0);
   transition: all 0.2s var(--ease-spring-fast);
 }
@@ -76,7 +76,7 @@ const icons: Record<ToastType, string> = {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 600;
 }
 
@@ -128,7 +128,7 @@ const icons: Record<ToastType, string> = {
   border: none;
   color: var(--text-muted, #666);
   cursor: pointer;
-  font-size: 16px;
+  font-size: var(--text-lg);
   line-height: 1;
   padding: 0 2px;
   transition: color 0.15s;

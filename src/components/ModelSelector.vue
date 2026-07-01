@@ -253,7 +253,7 @@ onUnmounted(() => {
   border: 1px solid var(--border-light);
   border-radius: 4px;
   color: var(--text-muted);
-  font-size: .58rem;
+  font-size: var(--text-xs);
   font-family: var(--font-mono);
   cursor: pointer;
   transition: all .15s;
@@ -394,7 +394,7 @@ onUnmounted(() => {
   border-radius: 4px;
   color: var(--bone);
   font-family: var(--font-mono);
-  font-size: .58rem;
+  font-size: var(--text-xs);
   outline: none;
 }
 .selector-custom input:focus { border-color: var(--accent); }

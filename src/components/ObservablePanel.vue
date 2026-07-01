@@ -142,7 +142,7 @@ function refresh() {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -189,14 +189,14 @@ function refresh() {
 }
 
 .agent-name {
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 500;
   color: var(--text-primary);
 }
 
 .agent-state {
   margin-left: auto;
-  font-size: 10px;
+  font-size: var(--text-xs);
   padding: 2px 6px;
   border-radius: 4px;
   background: var(--bg-primary);
@@ -238,7 +238,7 @@ function refresh() {
 }
 
 .stat-label {
-  font-size: 10px;
+  font-size: var(--text-xs);
 }
 
 .card-progress {
@@ -275,14 +275,14 @@ function refresh() {
 }
 
 .summary-label {
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .summary-value {
-  font-size: 16px;
+  font-size: var(--text-lg);
   font-weight: 600;
   color: var(--text-primary);
   font-family: var(--font-mono);

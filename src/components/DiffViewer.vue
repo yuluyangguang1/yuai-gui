@@ -120,7 +120,7 @@ watch(() => workspace.path, loadChanges);
   display: flex; align-items: center; justify-content: space-between;
   padding: 8px 12px; border-bottom: 1px solid var(--border-light);
 }
-.diff-title { font-family: var(--font-serif); font-size: .75rem; color: var(--text-muted); }
+.diff-title { font-family: var(--font-serif); font-size: var(--text-sm); color: var(--text-muted); }
 .diff-actions { display: flex; gap: 6px; }
 .diff-btn {
   padding: 3px 10px; border-radius: 4px; font-size: .6rem; cursor: pointer;
@@ -134,7 +134,7 @@ watch(() => workspace.path, loadChanges);
 .diff-file-list { border-bottom: 1px solid var(--border-light); max-height: 200px; overflow-y: auto; }
 .diff-file-item {
   display: flex; align-items: center; gap: 8px; padding: 4px 12px;
-  font-family: var(--font-mono); font-size: .62rem; transition: background .15s;
+  font-family: var(--font-mono); font-size: var(--text-xs); transition: background .15s;
 }
 .diff-file-item:hover { background: var(--bg-hover); }
 .diff-file-status { width: 14px; text-align: center; font-weight: 600; }
@@ -152,11 +152,11 @@ watch(() => workspace.path, loadChanges);
 
 .diff-empty {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 40px; color: var(--text-muted); font-size: .75rem;
+  padding: 40px; color: var(--text-muted); font-size: var(--text-sm);
 }
 .diff-content {
   flex: 1; overflow: auto; padding: 8px 12px;
-  font-family: var(--font-mono); font-size: .62rem; line-height: 1.6;
+  font-family: var(--font-mono); font-size: var(--text-xs); line-height: 1.6;
 }
 .diff-content pre { margin: 0; white-space: pre-wrap; word-break: break-all; }
 .diff-add { color: var(--accent); }

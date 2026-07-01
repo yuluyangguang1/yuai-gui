@@ -688,7 +688,7 @@ watch(
 }
 
 .chat-agent-status {
-  font-size: 10px;
+  font-size: var(--text-xs);
   padding: 2px 6px;
   border-radius: 4px;
   font-family: var(--font-mono);
@@ -729,13 +729,13 @@ watch(
 }
 
 .chat-round {
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: var(--gold, #e0b0ff);
   opacity: 0.8;
 }
 
 .chat-speaking {
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: var(--jade, #5ccfb8);
 }
 
@@ -814,7 +814,7 @@ watch(
 .chat-msg-bubble {
   padding: 8px 12px;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: var(--text-base);
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
@@ -833,7 +833,7 @@ watch(
 .chat-message.system .chat-msg-bubble {
   background: rgba(201,168,92,0.08);
   color: var(--text-muted, var(--silver));
-  font-size: 12px;
+  font-size: var(--text-sm);
   text-align: center;
 }
 
@@ -881,7 +881,7 @@ watch(
 }
 
 .chat-empty-hint {
-  font-size: 13px;
+  font-size: var(--text-base);
 }
 
 /* @Mention dropdown */
@@ -902,7 +902,7 @@ watch(
   padding: 6px 8px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--text-base);
 }
 
 .mention-item:hover,
@@ -920,7 +920,7 @@ watch(
 
 .mention-chinese {
   color: var(--text-muted, var(--silver));
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 
 /* Input area */
@@ -943,7 +943,7 @@ watch(
   border-radius: 8px;
   padding: 8px 12px;
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: var(--text-base);
   font-family: inherit;
   resize: none;
   outline: none;
@@ -1031,7 +1031,7 @@ watch(
 }
 
 .browser-title {
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 600;
   color: var(--text-primary);
   display: flex;
@@ -1078,7 +1078,7 @@ watch(
   border: 1px solid rgba(239,68,68,0.3);
   border-radius: 6px;
   padding: 6px 20px;
-  font-size: 12px;
+  font-size: var(--text-sm);
   cursor: pointer;
   transition: background 0.15s;
 }

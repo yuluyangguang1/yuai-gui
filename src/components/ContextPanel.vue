@@ -146,7 +146,7 @@ async function handleCompress() {
 }
 
 .context-tokens {
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: var(--text-muted, #888);
   white-space: nowrap;
 }
@@ -156,7 +156,7 @@ async function handleCompress() {
   border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--text-muted, #888);
-  font-size: 10px;
+  font-size: var(--text-xs);
   padding: 2px 8px;
   cursor: pointer;
   transition: background 0.15s;
@@ -189,7 +189,7 @@ async function handleCompress() {
 }
 
 .context-prefix-label {
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: var(--text-muted, #888);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -200,7 +200,7 @@ async function handleCompress() {
   border: none;
   color: var(--text-muted, #666);
   cursor: pointer;
-  font-size: 10px;
+  font-size: var(--text-xs);
   padding: 0 2px;
 }
 
@@ -218,7 +218,7 @@ async function handleCompress() {
 }
 
 .context-store-status {
-  font-size: 10px;
+  font-size: var(--text-xs);
   padding: 2px 6px;
   border-radius: 3px;
   text-align: center;

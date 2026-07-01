@@ -152,7 +152,7 @@ onMounted(() => {
 }
 
 .disk-total-label {
-  font-size: 0.68rem;
+  font-size: var(--text-sm);
   color: var(--silver, #887868);
 }
 
@@ -203,7 +203,7 @@ onMounted(() => {
 }
 
 .disk-bar-size {
-  font-size: 0.58rem;
+  font-size: var(--text-xs);
   color: var(--silver, #887868);
   font-family: monospace;
   min-width: 56px;

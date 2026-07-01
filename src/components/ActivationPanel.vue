@@ -103,7 +103,7 @@ function handleActivate() {
   border: 1px solid rgba(92,207,184,0.2);
   border-radius: 6px;
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--text-base);
   color: var(--jade);
   letter-spacing: 1px;
 }
@@ -114,7 +114,7 @@ function handleActivate() {
   border-radius: 6px;
   background: rgba(255,80,80,0.1);
   color: var(--vermilion-glow, #ff5050);
-  font-size: 12px;
+  font-size: var(--text-sm);
   cursor: pointer;
 }
 .deactivate-btn:hover {
@@ -128,7 +128,7 @@ function handleActivate() {
 }
 .activation-inactive label {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--silver);
 }
 .activation-inactive input {
@@ -138,7 +138,7 @@ function handleActivate() {
   border-radius: 6px;
   color: var(--bone);
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--text-base);
   letter-spacing: 1px;
   outline: none;
   transition: border-color 0.2s;
@@ -153,7 +153,7 @@ function handleActivate() {
   border: none;
   border-radius: 6px;
   color: var(--bg-primary);
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 500;
   cursor: pointer;
   transition: background 0.15s;
@@ -171,6 +171,6 @@ function handleActivate() {
   border: 1px solid rgba(255,80,80,0.2);
   border-radius: 6px;
   color: var(--vermilion-glow, #ff5050);
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 </style>

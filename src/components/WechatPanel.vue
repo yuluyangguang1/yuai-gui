@@ -293,7 +293,7 @@ onMounted(() => {
 
 .wechat-title {
   font-family: var(--font-brush);
-  font-size: 16px;
+  font-size: var(--text-lg);
   color: var(--gold);
   letter-spacing: 1px;
 }
@@ -350,7 +350,7 @@ onMounted(() => {
 
 .wechat-login-hint {
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--text-base);
 }
 
 .wechat-login-btn {
@@ -360,7 +360,7 @@ onMounted(() => {
   padding: 8px 24px;
   border-radius: var(--radius-md);
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 500;
   transition: background var(--transition-fast);
 }
@@ -371,7 +371,7 @@ onMounted(() => {
 
 .wechat-login-error {
   color: var(--vermilion-glow);
-  font-size: 12px;
+  font-size: var(--text-sm);
   margin-top: 4px;
 }
 
@@ -402,12 +402,12 @@ onMounted(() => {
 
 .wechat-qr-placeholder {
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: var(--text-base);
 }
 
 .wechat-qr-hint {
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 
 /* Scanned */
@@ -425,7 +425,7 @@ onMounted(() => {
 
 .wechat-scanned-hint {
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--text-base);
 }
 
 /* Expired */
@@ -443,7 +443,7 @@ onMounted(() => {
 
 .wechat-expired-hint {
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--text-base);
 }
 
 /* ── Connected View ── */
@@ -481,7 +481,7 @@ onMounted(() => {
 }
 
 .wechat-conv-name {
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--text-primary);
   flex: 1;
   overflow: hidden;
@@ -490,12 +490,12 @@ onMounted(() => {
 }
 
 .wechat-conv-time {
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
 }
 
 .wechat-conv-badge {
-  font-size: 10px;
+  font-size: var(--text-xs);
   background: var(--accent-muted);
   color: var(--text-inverse);
   padding: 1px 6px;
@@ -506,7 +506,7 @@ onMounted(() => {
   padding: 16px;
   text-align: center;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 
 /* ── Chat Area ── */
@@ -545,7 +545,7 @@ onMounted(() => {
 }
 
 .wechat-msg-meta {
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
   padding: 0 4px;
 }
@@ -554,7 +554,7 @@ onMounted(() => {
   max-width: 85%;
   padding: 6px 10px;
   border-radius: var(--radius-md);
-  font-size: 13px;
+  font-size: var(--text-base);
   line-height: 1.4;
   word-break: break-word;
   white-space: pre-wrap;
@@ -617,7 +617,7 @@ onMounted(() => {
 }
 
 .wechat-empty-hint {
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--text-muted);
 }
 
@@ -638,7 +638,7 @@ onMounted(() => {
   border-radius: var(--radius-md);
   color: var(--text-primary);
   padding: 6px 10px;
-  font-size: 13px;
+  font-size: var(--text-base);
   font-family: var(--font-body);
   resize: none;
   outline: none;
@@ -660,7 +660,7 @@ onMounted(() => {
   border-radius: var(--radius-md);
   padding: 6px 12px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--text-sm);
   transition: background var(--transition-fast);
 }
 
@@ -694,7 +694,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 500;
   color: var(--text-primary);
 }
@@ -729,7 +729,7 @@ onMounted(() => {
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   padding: 6px 8px;
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-family: var(--font-body);
   outline: none;
 }
@@ -740,7 +740,7 @@ onMounted(() => {
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   padding: 6px 8px;
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-family: var(--font-body);
   resize: vertical;
   outline: none;
@@ -753,7 +753,7 @@ onMounted(() => {
   border-radius: var(--radius-sm);
   padding: 8px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--text-sm);
   transition: background var(--transition-fast);
 }
 
@@ -779,7 +779,7 @@ onMounted(() => {
   cursor: pointer;
   padding: 4px 8px;
   border-radius: var(--radius-sm);
-  font-size: 12px;
+  font-size: var(--text-sm);
   transition: all var(--transition-fast);
 }
 
@@ -796,7 +796,7 @@ onMounted(() => {
 
 .wechat-toolbar-status {
   margin-left: auto;
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
 }
 

@@ -156,7 +156,7 @@ onUnmounted(() => {
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   overflow: hidden;
-  font-size: 13px;
+  font-size: var(--text-base);
   color: var(--text-secondary, #c0c0c0);
   z-index: 10001;
 }
@@ -176,7 +176,7 @@ onUnmounted(() => {
   justify-content: center;
   background: rgba(255, 255, 255, 0.12);
   border-radius: 6px;
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 .screenshot-toast-title {
   font-weight: 600;
@@ -186,7 +186,7 @@ onUnmounted(() => {
   background: none;
   border: none;
   color: inherit;
-  font-size: 16px;
+  font-size: var(--text-lg);
   cursor: pointer;
   opacity: 0.7;
 }
@@ -216,7 +216,7 @@ onUnmounted(() => {
 }
 .screenshot-size {
   color: var(--text-muted, #888);
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 .screenshot-toast-actions {
   display: flex;
@@ -231,7 +231,7 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.04);
   color: inherit;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 .screenshot-btn.primary {
   background: rgba(92, 207, 184, 0.2);

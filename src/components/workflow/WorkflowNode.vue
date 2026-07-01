@@ -164,7 +164,7 @@ const cssClass = computed(
 .node-label {
   font-weight: 600;
   flex: 1;
-  font-size: 12px;
+  font-size: var(--text-sm);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -193,7 +193,7 @@ const cssClass = computed(
   padding: 6px 10px 8px;
 }
 .node-type-name {
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: var(--text-muted, #6b7280);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -233,7 +233,7 @@ const cssClass = computed(
 .condition-labels {
   display: flex;
   justify-content: space-between;
-  font-size: 10px;
+  font-size: var(--text-xs);
   margin-top: 2px;
 }
 .cond-true { color: var(--accent); }

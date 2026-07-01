@@ -228,13 +228,13 @@ async function addServer() {
 .mcp-status-dot.disabled { background: var(--text-muted); }
 
 .mcp-srv-name {
-  font-size: 0.82rem;
+  font-size: var(--text-base);
   color: var(--text-primary);
   font-weight: 500;
 }
 
 .mcp-srv-transport {
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   color: var(--text-muted);
   background: var(--bg-surface);
   padding: 1px 5px;
@@ -242,7 +242,7 @@ async function addServer() {
 }
 
 .mcp-srv-tools {
-  font-size: 0.68rem;
+  font-size: var(--text-sm);
   color: var(--accent);
   margin-left: auto;
 }
@@ -253,7 +253,7 @@ async function addServer() {
 }
 
 .mcp-srv-status-label {
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   margin-top: 2px;
   padding-left: 15px;
 }
@@ -262,7 +262,7 @@ async function addServer() {
 .mcp-status-disabled { color: var(--text-muted); }
 
 .mcp-srv-error {
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   color: var(--error);
   padding-left: 15px;
   margin-top: 2px;
@@ -298,7 +298,7 @@ async function addServer() {
 }
 
 .mcp-tool-desc {
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;

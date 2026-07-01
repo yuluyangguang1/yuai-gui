@@ -174,7 +174,7 @@ onUnmounted(() => { document.removeEventListener('click', handleClickOutside); }
   border: 1px solid var(--border, #333);
   border-radius: 6px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--text-base);
   color: var(--text-primary, #eee);
   transition: border-color 0.15s, background 0.15s;
   min-width: 160px;
@@ -186,7 +186,7 @@ onUnmounted(() => { document.removeEventListener('click', handleClickOutside); }
 }
 
 .trigger-icon {
-  font-size: 16px;
+  font-size: var(--text-lg);
 }
 
 .trigger-name {
@@ -205,7 +205,7 @@ onUnmounted(() => { document.removeEventListener('click', handleClickOutside); }
 .trigger-status.unknown { background: #888; }
 
 .trigger-arrow {
-  font-size: 10px;
+  font-size: var(--text-xs);
   transition: transform 0.2s;
 }
 
@@ -294,7 +294,7 @@ onUnmounted(() => { document.removeEventListener('click', handleClickOutside); }
 }
 
 .provider-name {
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 500;
 }
 
@@ -323,7 +323,7 @@ onUnmounted(() => { document.removeEventListener('click', handleClickOutside); }
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--text-sm);
   opacity: 0;
   transition: opacity 0.15s;
 }

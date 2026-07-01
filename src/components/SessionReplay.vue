@@ -293,7 +293,7 @@ onBeforeUnmount(() => {
 }
 
 .replay-refresh {
-  font-size: 0.62rem;
+  font-size: var(--text-xs);
   color: var(--silver, #887868);
   background: none;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -335,7 +335,7 @@ onBeforeUnmount(() => {
 }
 
 .rec-session {
-  font-size: 0.68rem;
+  font-size: var(--text-sm);
   color: var(--jade, #5ccfb8);
   font-family: monospace;
 }
@@ -387,7 +387,7 @@ onBeforeUnmount(() => {
 }
 
 .replay-back {
-  font-size: 0.62rem;
+  font-size: var(--text-xs);
   color: var(--silver, #887868);
   background: none;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -397,7 +397,7 @@ onBeforeUnmount(() => {
 }
 
 .replay-session-id {
-  font-size: 0.62rem;
+  font-size: var(--text-xs);
   color: var(--jade, #5ccfb8);
   font-family: monospace;
 }

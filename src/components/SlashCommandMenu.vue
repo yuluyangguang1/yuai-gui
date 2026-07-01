@@ -156,7 +156,7 @@ function close() {
   border: 1px solid var(--border-light);
   border-radius: 6px;
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: var(--text-sm);
   outline: none;
 }
 
@@ -205,7 +205,7 @@ function close() {
 }
 
 .slash-item-name {
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 500;
   color: var(--text-primary);
   font-family: var(--font-mono);
@@ -220,7 +220,7 @@ function close() {
 }
 
 .slash-item-category {
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
   padding: 2px 6px;
   background: var(--bg-primary);
@@ -232,7 +232,7 @@ function close() {
   padding: 16px;
   text-align: center;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 
 /* 动画 */

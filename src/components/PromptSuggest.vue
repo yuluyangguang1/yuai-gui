@@ -165,7 +165,7 @@ function applyAutoFix(s: PromptSuggestion) {
 }
 
 .suggest-title {
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 500;
   color: var(--text-primary);
   margin-bottom: 2px;
@@ -183,7 +183,7 @@ function applyAutoFix(s: PromptSuggestion) {
   align-items: center;
   gap: 4px;
   padding: 4px 8px;
-  font-size: 10px;
+  font-size: var(--text-xs);
   background: var(--accent);
   color: var(--text-inverse);
   border: none;

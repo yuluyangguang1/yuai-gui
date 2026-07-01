@@ -111,7 +111,7 @@ async function onPair() {
 }
 
 .lan-spec__meta {
-  font-size: 0.7rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
   margin-top: 4px;
 }

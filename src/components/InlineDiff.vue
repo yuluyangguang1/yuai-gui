@@ -218,8 +218,8 @@ function rejectAll() {
   border: 1px solid var(--border, #333);
   border-radius: 6px;
   overflow: hidden;
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 13px;
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
 }
 
 .diff-toolbar {
@@ -233,7 +233,7 @@ function rejectAll() {
 
 .diff-title {
   font-weight: 600;
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--text-muted, #aaa);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -249,7 +249,7 @@ function rejectAll() {
   border: 1px solid var(--border, #444);
   border-radius: 4px;
   cursor: pointer;
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 500;
   transition: all 0.15s;
 }
@@ -306,7 +306,7 @@ function rejectAll() {
   text-align: right;
   padding-right: 8px;
   color: var(--text-muted, #666);
-  font-size: 11px;
+  font-size: var(--text-xs);
   user-select: none;
   flex-shrink: 0;
 }
@@ -335,7 +335,7 @@ function rejectAll() {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 11px;
+  font-size: var(--text-xs);
   padding: 0 4px;
   opacity: 0;
   transition: opacity 0.15s;

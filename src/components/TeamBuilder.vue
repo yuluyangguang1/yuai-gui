@@ -505,7 +505,7 @@ async function runTeam(task: string) {
 }
 
 .tb-template-name {
-  font-size: 0.82rem;
+  font-size: var(--text-base);
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 4px;
@@ -544,7 +544,7 @@ async function runTeam(task: string) {
 }
 
 .tb-empty-text {
-  font-size: 0.82rem;
+  font-size: var(--text-base);
   color: var(--text-secondary);
 }
 
@@ -591,7 +591,7 @@ async function runTeam(task: string) {
 
 .tb-team-name {
   font-weight: 600;
-  font-size: 0.82rem;
+  font-size: var(--text-base);
   color: var(--text-primary);
 }
 
@@ -656,7 +656,7 @@ async function runTeam(task: string) {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
-  font-size: 0.82rem;
+  font-size: var(--text-base);
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -667,13 +667,13 @@ async function runTeam(task: string) {
 
 .tb-label {
   display: block;
-  font-size: 0.68rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
   margin-bottom: 4px;
 }
 
 .tb-label-sm {
-  font-size: 0.62rem;
+  font-size: var(--text-xs);
   color: var(--text-muted);
 }
 
@@ -777,13 +777,13 @@ async function runTeam(task: string) {
 .tb-drag-handle {
   color: var(--text-muted);
   cursor: grab;
-  font-size: 0.82rem;
+  font-size: var(--text-base);
   user-select: none;
 }
 
 .tb-member-glyph {
   font-weight: 600;
-  font-size: 0.82rem;
+  font-size: var(--text-base);
 }
 
 .tb-member-name {
@@ -798,12 +798,12 @@ async function runTeam(task: string) {
   border-radius: 3px;
   background: var(--bg-primary);
   color: var(--text-secondary);
-  font-size: 0.62rem;
+  font-size: var(--text-xs);
   outline: none;
 }
 
 .tb-hint {
-  font-size: 0.62rem;
+  font-size: var(--text-xs);
   color: var(--text-muted);
   font-style: italic;
 }
@@ -843,7 +843,7 @@ async function runTeam(task: string) {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
-  font-size: 0.82rem;
+  font-size: var(--text-base);
   font-weight: 600;
 }
 
@@ -878,12 +878,12 @@ async function runTeam(task: string) {
 }
 
 .tb-result-agent-role {
-  font-size: 0.62rem;
+  font-size: var(--text-xs);
   color: var(--text-muted);
 }
 
 .tb-result-duration {
-  font-size: 0.62rem;
+  font-size: var(--text-xs);
   color: var(--text-muted);
   margin-left: auto;
   font-family: var(--font-mono);

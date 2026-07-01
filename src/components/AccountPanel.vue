@@ -104,10 +104,10 @@ onMounted(async () => {
   color: var(--accent);
 }
 .account-name {
-  font-size: .82rem; color: var(--text-primary); font-weight: 600;
+  font-size: var(--text-base); color: var(--text-primary); font-weight: 600;
 }
 .account-id {
-  font-size: .62rem; color: var(--silver); font-family: var(--font-mono); margin-top: 2px;
+  font-size: var(--text-xs); color: var(--silver); font-family: var(--font-mono); margin-top: 2px;
 }
 
 .account-section {
@@ -127,10 +127,10 @@ onMounted(async () => {
 }
 .account-row {
   display: flex; justify-content: space-between; align-items: center;
-  font-size: .68rem; padding: 4px 0;
+  font-size: var(--text-sm); padding: 4px 0;
 }
 .row-label { color: var(--silver); }
 .row-value { color: var(--bone); }
-.row-mono { font-family: var(--font-mono); font-size: .62rem; opacity: .8; }
+.row-mono { font-family: var(--font-mono); font-size: var(--text-xs); opacity: .8; }
 .row-path { font-family: var(--font-mono); font-size: .6rem; opacity: .7; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>

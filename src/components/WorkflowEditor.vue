@@ -203,7 +203,7 @@ onConnect((edge: Connection) => {
 }
 .log-header {
   padding: 8px 10px;
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
   border-bottom: 1px solid var(--accent-border, #1f212a);
   text-transform: uppercase;
@@ -212,7 +212,7 @@ onConnect((edge: Connection) => {
 .log-body {
   padding: 8px 10px;
   font-family: var(--font-mono, monospace);
-  font-size: 11px;
+  font-size: var(--text-xs);
   line-height: 1.6;
   overflow-y: auto;
   color: var(--text-secondary);
@@ -236,7 +236,7 @@ onConnect((edge: Connection) => {
   border-radius: 8px;
   padding: 8px 14px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 .workflow-toolbar button:disabled {
   opacity: 0.35;
@@ -260,7 +260,7 @@ onConnect((edge: Connection) => {
 .badge {
   margin-left: auto;
   align-self: center;
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--text-secondary, #8b8d98);
   background: var(--bg-canvas, var(--text-inverse));
   border: 1px solid var(--accent-border, #1f212a);
@@ -269,7 +269,7 @@ onConnect((edge: Connection) => {
 }
 .workflow-status {
   padding: 10px 12px;
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--text-secondary, #8b8d98);
   border-top: 1px solid var(--accent-border, #1f212a);
   display: flex;
@@ -288,7 +288,7 @@ onConnect((edge: Connection) => {
   color: var(--text-primary, #e6e8ef);
 }
 .node-header {
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 700;
   letter-spacing: 0.5px;
   color: var(--text-secondary, #8b8d98);
@@ -304,7 +304,7 @@ input {
   border: 1px solid var(--accent-border, #1f212a);
   border-radius: 6px;
   padding: 8px;
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 
 .agent-node {
@@ -321,7 +321,7 @@ input {
 }
 .output-placeholder {
   color: var(--text-secondary, #8b8d98);
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 .ctx-overlay {
   position: fixed;
@@ -340,7 +340,7 @@ input {
 }
 .ctx-item {
   padding: 6px 14px;
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--text-primary, #e6e8ef);
   cursor: pointer;
   transition: background 0.1s;

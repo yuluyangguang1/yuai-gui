@@ -99,7 +99,7 @@ function glyphFor(device: LanDevice) {
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  font-size: 0.68rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
   margin-top: 2px;
 }
@@ -112,7 +112,7 @@ function glyphFor(device: LanDevice) {
 }
 
 .lan-item__age {
-  font-size: 0.68rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
   font-family: var(--font-mono);
 }

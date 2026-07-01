@@ -183,7 +183,7 @@ onUnmounted(() => {
 .context-menu-icon {
   width: 18px;
   text-align: center;
-  font-size: 13px;
+  font-size: var(--text-base);
   flex-shrink: 0;
 }
 
@@ -192,7 +192,7 @@ onUnmounted(() => {
 }
 
 .context-menu-shortcut {
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: var(--text-muted, #666);
   font-family: var(--font-mono, monospace);
   margin-left: 16px;

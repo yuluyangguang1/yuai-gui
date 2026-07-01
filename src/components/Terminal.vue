@@ -347,7 +347,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .terminal-cwd {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--text-muted, #888);
   max-width: 200px;
   overflow: hidden;

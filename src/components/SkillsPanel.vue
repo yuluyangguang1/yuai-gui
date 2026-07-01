@@ -275,7 +275,7 @@ onMounted(() => {
 
 .skills-search-icon {
   color: var(--text-muted);
-  font-size: 0.82rem;
+  font-size: var(--text-base);
   flex-shrink: 0;
 }
 
@@ -344,7 +344,7 @@ onMounted(() => {
 .skills-stat-bad { color: var(--error); }
 
 .skills-stat-label {
-  font-size: 0.62rem;
+  font-size: var(--text-xs);
   color: var(--text-muted);
   letter-spacing: 0.5px;
 }
@@ -394,7 +394,7 @@ onMounted(() => {
   border-radius: 12px;
   background: transparent;
   color: var(--text-muted);
-  font-size: 0.68rem;
+  font-size: var(--text-sm);
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
@@ -417,7 +417,7 @@ onMounted(() => {
   border-radius: 4px;
   background: var(--bg-tertiary);
   color: var(--text-secondary);
-  font-size: 0.68rem;
+  font-size: var(--text-sm);
   cursor: pointer;
   outline: none;
 }
@@ -468,7 +468,7 @@ onMounted(() => {
 
 .skills-name {
   font-weight: 600;
-  font-size: 0.82rem;
+  font-size: var(--text-base);
   color: var(--text-primary);
   min-width: 100px;
   white-space: nowrap;
@@ -529,7 +529,7 @@ onMounted(() => {
 }
 
 .skills-last {
-  font-size: 0.68rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
   min-width: 60px;
   text-align: right;
@@ -616,7 +616,7 @@ onMounted(() => {
   background: var(--error-soft);
   color: var(--error);
   border: 1px solid color-mix(in srgb, var(--error) 30%, transparent);
-  font-size: 0.62rem;
+  font-size: var(--text-xs);
 }
 
 .skills-detail-copies {
@@ -632,7 +632,7 @@ onMounted(() => {
   background: rgba(201, 168, 92, 0.15);
   color: var(--gold);
   border: 1px solid rgba(201, 168, 92, 0.3);
-  font-size: 0.62rem;
+  font-size: var(--text-xs);
 }
 
 .skills-detail-content {
@@ -662,7 +662,7 @@ onMounted(() => {
 }
 
 .skills-stat-item {
-  font-size: 0.68rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
 }
 
@@ -684,7 +684,7 @@ onMounted(() => {
   border-radius: 4px;
   background: var(--bg-secondary);
   color: var(--text-secondary);
-  font-size: 0.68rem;
+  font-size: var(--text-sm);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
@@ -709,6 +709,6 @@ onMounted(() => {
   justify-content: center;
   padding: 40px;
   color: var(--text-muted);
-  font-size: 0.82rem;
+  font-size: var(--text-base);
 }
 </style>

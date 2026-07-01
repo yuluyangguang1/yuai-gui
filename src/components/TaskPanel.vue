@@ -100,19 +100,19 @@ onMounted(() => {
 .task-header { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
 .task-state-icon { flex-shrink: 0; }
 .task-card-title { font-size: .72rem; color: var(--text-primary); flex: 1; }
-.task-priority { font-size: .58rem; padding: 1px 6px; border-radius: 4px; }
+.task-priority { font-size: var(--text-xs); padding: 1px 6px; border-radius: 4px; }
 .priority-low { background: var(--bg-active); color: var(--silver); }
 .priority-medium { background: var(--bg-active); color: var(--gold); }
 .priority-high { background: rgba(92,207,184,.15); color: var(--accent); }
 .priority-urgent { background: rgba(239,68,68,.15); color: var(--error); }
 .task-desc { font-size: .62rem; color: var(--silver); margin-bottom: 4px; }
-.task-meta { display: flex; gap: 8px; font-size: .58rem; color: var(--silver); }
+.task-meta { display: flex; gap: 8px; font-size: var(--text-xs); color: var(--silver); }
 .task-agent { font-family: var(--font-mono); }
 .task-story { color: var(--gold); }
-.task-empty { text-align: center; color: var(--silver); font-size: .68rem; padding: 20px; }
+.task-empty { text-align: center; color: var(--silver); font-size: var(--text-sm); padding: 20px; }
 
 .task-create { display: flex; gap: 6px; }
-.task-input { flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-light); background: var(--bg-input, var(--bg-surface)); color: var(--text-primary); font-size: .68rem; font-family: var(--font-body); }
+.task-input { flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-light); background: var(--bg-input, var(--bg-surface)); color: var(--text-primary); font-size: var(--text-sm); font-family: var(--font-body); }
 .task-btn { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-light); background: transparent; color: var(--accent); cursor: pointer; }
 .task-btn:hover { background: var(--bg-active); }
 </style>
