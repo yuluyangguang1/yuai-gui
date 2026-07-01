@@ -234,6 +234,8 @@ async function save() {
     status.value = '已保存';
     connStatus.value = '';
     activeProviders[selectedType.value] = { name: agent?.label || selectedType.value, model: model.value };
+    // Sync to provider store so ModelSelector updates
+    providerStore.switchModel(model.value);
     providerStore.saveToStorage();
     setTimeout(() => status.value = '', 2000);
   } catch (e) {
