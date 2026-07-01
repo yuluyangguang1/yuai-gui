@@ -102,6 +102,16 @@ yuai-gui 是一个**桌面原生的多 AI Agent 协作平台**。它把 Claude C
 | 数据库 | SQLite (Tauri) |
 | 样式 | CSS Variables + 6 个主题文件 |
 
+### 系统要求
+
+| 平台 | 最低版本 | 架构 | 打包格式 | 说明 |
+|------|---------|------|---------|------|
+| **macOS** | 10.15 (Catalina) | x86_64 (Intel) + aarch64 (Apple Silicon) | .app, .dmg | WebView 使用系统自带 WKWebView |
+| **Windows** | 10 (1809+) | x86_64 | .nsis, .msi | 需要 WebView2 (Win10 1809+ 自带) |
+| **Linux** | Ubuntu 20.04+ / Fedora 34+ / Arch | x86_64 | .deb, .AppImage | 需安装 WebKitGTK 4.0+ |
+
+> **窗口最小尺寸:** 800 × 560 | **默认尺寸:** 1100 × 720
+
 ### 快速开始
 
 ```bash
@@ -226,6 +236,16 @@ The application follows a clean separation between frontend (Vue 3 + TypeScript)
 | Icons | Tabler Icons + Custom SVG |
 | Database | SQLite (Tauri) |
 | Styling | CSS Variables + 6 theme files |
+
+### System Requirements
+
+| Platform | Minimum Version | Architecture | Package Format | Notes |
+|----------|----------------|--------------|----------------|-------|
+| **macOS** | 10.15 (Catalina) | x86_64 (Intel) + aarch64 (Apple Silicon) | .app, .dmg | Uses system WKWebView |
+| **Windows** | 10 (1809+) | x86_64 | .nsis, .msi | Requires WebView2 (built-in on Win10 1809+) |
+| **Linux** | Ubuntu 20.04+ / Fedora 34+ / Arch | x86_64 | .deb, .AppImage | Requires WebKitGTK 4.0+ |
+
+> **Minimum window size:** 800 × 560 | **Default:** 1100 × 720
 
 ### Quick Start
 
