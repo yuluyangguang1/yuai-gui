@@ -228,14 +228,23 @@ import AgentBrowser from "./AgentBrowser.vue";
 import type { AgentDef } from "../stores/agents";
 import type { SlashCommand } from "../utils/slash-commands";
 import { analyzePrompt, autoEnhancePrompt, type PromptSuggestion } from "../utils/prompt-enhancer";
-import { AttentionManager } from "../utils/attention-system";
+import { AttentionManager, type AttentionMode } from "../utils/attention-system";
+import { CompactionEngine, createToolOutputTrimHook } from "../utils/compaction";
+import { TokenBudgetManager, loadBudgets } from "../utils/token-budget";
 import { HookManager, createLoggingHook, createNotificationHook } from "../utils/hook-events";
+import { OrientationGenerator } from "../utils/orientation-card";
+import { getToolsForRole } from "../utils/tool-surface";
 
 const chatStore = useChatStore();
 const attentionManager = new AttentionManager();
 const hookManager = new HookManager();
 hookManager.register(createLoggingHook());
 hookManager.register(createNotificationHook());
+const orientationGen = new OrientationGenerator();
+const compactionEngine = new CompactionEngine();
+compactionEngine.registerHook(createToolOutputTrimHook());
+const tokenBudgetManager = new TokenBudgetManager();
+loadBudgets(tokenBudgetManager);
 const agentsStore = useAgentsStore();
 const providerStore = useProviderStore();
 const promptStore = usePromptStore();
@@ -572,8 +581,34 @@ async function handleSend() {
       || (commandSuggestRef.value as any).subState?.visible;
     if (active) return;
   }
+
+  // Emit hook event for user prompt
+  hookManager.emit('user_prompt', {
+    agent_id: currentAgent.value.id,
+    content: chatStore.inputText.slice(0, 200),
+  });
+
+  // Check token budget before sending
+  const budgetCheck = tokenBudgetManager.checkBudget('chat');
+  if (!budgetCheck.allowed) {
+    console.warn('[ChatPanel] Token budget exceeded:', budgetCheck.reason);
+    // Still allow send but warn
+  }
+
+  // Check attention system — should the target agent wake?
+  const wakeDecision = attentionManager.shouldWake(
+    currentAgent.value.id,
+    'direct',
+    'chat',
+  );
+  if (!wakeDecision.should_wake) {
+    console.log(`[ChatPanel] Agent ${currentAgent.value.id} in mode ${attentionManager.getGlobalMode(currentAgent.value.id)}, deferred`);
+  }
+
   try {
     await chatStore.sendMessage();
+    // Record token usage after send
+    tokenBudgetManager.recordUsage('chat', chatStore.messages.length * 100);
   } catch (e) {
     console.error('handleSend failed:', e);
   }
@@ -1129,3 +1164,5 @@ import { AttentionManager, type AttentionMode } from "../utils/attention-system"
 import { CompactionEngine, createToolOutputTrimHook } from "../utils/compaction";
 import { TokenBudgetManager, loadBudgets } from "../utils/token-budget";
 import { HookManager, createLoggingHook, createNotificationHook } from "../utils/hook-events";
+import { OrientationGenerator } from "../utils/orientation-card";
+import { getToolsForRole } from "../utils/tool-surface";

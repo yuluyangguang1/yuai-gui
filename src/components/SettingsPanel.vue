@@ -94,6 +94,8 @@ import { ref, reactive, onMounted, computed } from 'vue';
 import { TIcon } from "../utils/icons";
 import { invoke } from '@tauri-apps/api/core';
 import { useProviderStore } from '../stores/provider';
+import { PROVIDER_PRESETS } from '../utils/provider-crud';
+import { filterVisibleModels } from '../utils/model-visibility';
 import { useAgentsStore } from '../stores/agents';
 import LoginPanel from './LoginPanel.vue';
 
