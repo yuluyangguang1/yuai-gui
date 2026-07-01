@@ -36,7 +36,7 @@
   /* Sizing */
   --rail-width: 56px;
   --workspace-width: 260px;
-  --chat-width: 400px;
+  --chat-width: min(400px, 35vw);
   --titlebar-height: 42px;
   --statusbar-height: 28px;
 
@@ -104,3 +104,19 @@
 /* Migration: transition-fast/normal/slow have been superseded by design-system.css spring vars.
    Replace --transition-* with --ease-spring-* for consistent kinetic feel.
    Legacy aliases are kept for backward compatibility and will be removed in a future phase.
+
+/* ═══ Responsive breakpoints ═══ */
+@media (max-width: 900px) {
+  :root {
+    --chat-width: 300px;
+    --workspace-width: 200px;
+  }
+}
+@media (max-width: 800px) {
+  :root {
+    --chat-width: 260px;
+    --workspace-width: 0px;
+  }
+  .workspace-panel { display: none; }
+  .workspace-toggle { display: flex; }
+}

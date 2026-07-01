@@ -548,3 +548,34 @@ code, pre, .text-mono {
 .icon-accent { color: var(--accent); }
 .icon-gold { color: var(--gold); }
 .icon-error { color: var(--error); }
+
+
+/* ═══ Active (pressed) states ═══ */
+.btn:active { transform: scale(0.97); opacity: 0.9; transition-duration: 50ms; }
+.rail-nav-btn:active { transform: scale(0.93); }
+.chat-send-btn:active { transform: scale(0.9); }
+.settings-tab:active { transform: scale(0.95); }
+.provider-chip:active { transform: scale(0.95); }
+.model-chip:active { transform: scale(0.95); }
+.task-btn:active { transform: scale(0.95); }
+.spec-btn:active { transform: scale(0.95); }
+
+/* ═══ Loading skeleton ═══ */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-active) 25%, var(--bg-surface) 50%, var(--bg-active) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.skeleton-text { height: 12px; margin-bottom: 8px; border-radius: 3px; }
+.skeleton-text:last-child { width: 60%; }
+.skeleton-circle { border-radius: 50%; }
+
+/* ═══ Panel switch transition ═══ */
+.panel-fade-enter-active { transition: opacity 150ms ease-out; }
+.panel-fade-leave-active { transition: opacity 100ms ease-in; }
+.panel-fade-enter-from, .panel-fade-leave-to { opacity: 0; }

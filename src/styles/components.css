@@ -1019,9 +1019,17 @@ html, body {
   color: var(--bone-dim); letter-spacing: .08em;
   flex-shrink: 0;
   overflow-x: auto;
+  overflow-y: hidden;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 .col-header::-webkit-scrollbar { display: none; }
+.col-header::after {
+  content: ''; position: sticky; right: 0; top: 0; bottom: 0;
+  width: 24px; flex-shrink: 0;
+  background: linear-gradient(to right, transparent, var(--bg-canvas));
+  pointer-events: none;
+}
 
 /* ═══ Terminal Host ═══ */
 .terminal-host { display: flex; flex-direction: column; height: 100%; }
@@ -1479,3 +1487,8 @@ html, body {
   color: var(--text-muted);
   margin-left: 4px;
 }
+
+/* Panel switch transitions */
+.panel-fade-enter-active { transition: opacity 150ms ease-out; }
+.panel-fade-leave-active { transition: opacity 100ms ease-in; }
+.panel-fade-enter-from, .panel-fade-leave-to { opacity: 0; }
