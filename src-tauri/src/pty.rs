@@ -280,6 +280,16 @@ pub fn spawn_agent(
     let killer = Mutex::new(child.clone_killer());
     let master = Mutex::new(pair.master);
     let session = Arc::new(PtySession { writer, killer, master, pid });
+
+    // Auto-accept trust prompt for Claude Code agents
+    if agent.config_type == "anthropic_env" {
+        let w = session.writer.clone();
+        thread::spawn(move || {
+            thread::sleep(Duration::from_millis(2000));
+            let mut lock = w.lock().unwrap_or_else(|e| e.into_inner());
+            let _ = lock.write_all(b"1\n");
+        });
+    }
     // Clone Arc BEFORE inserting — avoids TOCTOU race (H4)
     // H4+M6: Clone reader BEFORE inserting, clone Arc for insert
     let mut reader = session.master.lock().unwrap_or_else(|e| e.into_inner()).try_clone_reader().map_err(|e| e.to_string())?;
