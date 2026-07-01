@@ -84,15 +84,19 @@ onMounted(() => store.refreshAll());
 
 async function createCard() {
   if (!newTitle.value.trim()) return;
-  await store.createTask({
-    title: newTitle.value.trim(),
-    assignee: newAssignee.value.trim() || undefined,
-    priority: newPriority.value,
-  });
-  newTitle.value = '';
-  newAssignee.value = '';
-  newPriority.value = 0;
-  showCreate.value = false;
+  try {
+    await store.createTask({
+      title: newTitle.value.trim(),
+      assignee: newAssignee.value.trim() || undefined,
+      priority: newPriority.value,
+    });
+    newTitle.value = '';
+    newAssignee.value = '';
+    newPriority.value = 0;
+    showCreate.value = false;
+  } catch (e) {
+    console.error('createCard failed:', e);
+  }
 }
 
 function onDragStart(e: DragEvent, task: KanbanTask) {
@@ -106,18 +110,20 @@ async function onDrop(e: DragEvent, targetStatus: KanbanTaskStatus) {
   const task = store.tasks.find(t => t.id === taskId);
   if (!task || task.status === targetStatus) return;
 
-  // Move task to target column
-  if (targetStatus === 'done') {
-    await store.completeTasks([taskId]);
-  } else if (targetStatus === 'review') {
-    // Use invoke directly to move to review
-    await invoke('kanban_update_task', { taskId, data: { status: 'review' } });
-    task.status = 'review';
-    await store.fetchStats();
-  } else {
-    await invoke('kanban_update_task', { taskId, data: { status: targetStatus } });
-    task.status = targetStatus;
-    await store.fetchStats();
+  try {
+    // Move task to target column
+    if (targetStatus === 'done') {
+      await store.completeTasks([taskId]);
+    } else if (targetStatus === 'review') {
+      // Use invoke directly to move to review
+      await invoke('kanban_update_task', { taskId, data: { status: 'review' } });
+      await store.fetchStats();
+    } else {
+      await invoke('kanban_update_task', { taskId, data: { status: targetStatus } });
+      await store.fetchStats();
+    }
+  } catch (e) {
+    console.error('onDrop failed:', e);
   }
 }
 </script>

@@ -224,7 +224,11 @@ function autoResolve() {
 
 async function mergeSelected() {
   const basePath = agentsStore.activeAgent?.id ? '' : '';
-  await multiDiff.mergeSelected(basePath);
+  try {
+    await multiDiff.mergeSelected(basePath);
+  } catch (e) {
+    console.error('mergeSelected failed:', e);
+  }
 }
 </script>
 

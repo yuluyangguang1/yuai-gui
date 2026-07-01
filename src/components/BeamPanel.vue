@@ -141,7 +141,11 @@ async function handleSend() {
   const q = inputText.value.trim();
   if (!q || beamStore.isRunning) return;
   inputText.value = '';
-  await beamStore.sendQuestion(q);
+  try {
+    await beamStore.sendQuestion(q);
+  } catch (e) {
+    console.error('Beam send failed:', e);
+  }
   scrollToBottom();
 }
 
