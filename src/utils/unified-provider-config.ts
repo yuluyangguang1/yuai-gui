@@ -273,8 +273,8 @@ export class ProviderConfigRegistry {
     const spec = this.specs.get(providerId);
     if (!spec) return undefined;
     for (const envVar of spec.apiKeyEnv) {
-      const key = import.meta.env?.[envVar] || undefined;
-      if (key) return key;
+      const key = import.meta.env?.[envVar];
+      if (key !== undefined && key !== '') return key;
     }
     return undefined;
   }

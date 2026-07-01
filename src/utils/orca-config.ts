@@ -89,6 +89,7 @@ export function parseOrcaYaml(content: string): OrcaConfig {
     const topMatch = trimmed.match(/^(\w+):\s*$/);
     if (topMatch && !line.startsWith(' ')) {
       // Save previous section
+      currentItem = null;  // Reset between sections
       if (currentSection === 'agents' && items.length > 0) {
         config.agents = items.map(parseAgentItem);
         items = [];

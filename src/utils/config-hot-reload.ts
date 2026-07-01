@@ -34,6 +34,8 @@ export class ConfigHotReloadManager {
 
   /** Watch a config value for changes */
   watch(key: string, getValue: () => unknown, type: ConfigChangeType = 'settings'): void {
+    // Prevent duplicate watchers
+    this.unwatch(key);
     // Store initial value
     this.lastValues.set(key, getValue());
 

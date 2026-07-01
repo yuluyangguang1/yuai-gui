@@ -39,7 +39,7 @@ export interface AgentSessionRecord {
 // ══════════════════════════════════════════════
 
 const STORAGE_KEY = 'yuai-session-records';
-const MAX_SCROLLBACK_LINES = 200;
+const MAX_SCROLLBACK_LINES = 50;  // Reduced from 200 to prevent localStorage quota exhaustion
 const MAX_RECORDS = 50;
 
 export class SessionRecoveryManager {

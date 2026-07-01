@@ -95,15 +95,15 @@ export class SecretResolver {
   private async resolveFile(path: string): Promise<ResolvedSecret> {
     try {
       const { readTextFile, exists } = await import('@tauri-apps/plugin-fs');
-      if (!(await exists(path))) {
-        return { value: '', source: 'file', ok: false, error: `File not found: ${path}` };
-      }
-      const content = await readTextFile(path);
-      const trimmed = content.trim();
 
       // Try JSON with key path (e.g., "/path/to/file.json:key.name")
       if (path.includes(':')) {
-        const [filePath, keyPath] = path.split(':');
+        const colonIdx = path.indexOf(':');
+        const filePath = path.slice(0, colonIdx);
+        const keyPath = path.slice(colonIdx + 1);
+        if (!(await exists(filePath))) {
+          return { value: '', source: 'file', ok: false, error: `File not found: ${filePath}` };
+        }
         try {
           const json = JSON.parse(await readTextFile(filePath));
           const value = this.getNestedValue(json, keyPath);
@@ -113,7 +113,11 @@ export class SecretResolver {
         }
       }
 
-      return { value: trimmed, source: 'file', ok: true };
+      if (!(await exists(path))) {
+        return { value: '', source: 'file', ok: false, error: `File not found: ${path}` };
+      }
+      const content = await readTextFile(path);
+      return { value: content.trim(), source: 'file', ok: true };
     } catch (e) {
       return { value: '', source: 'file', ok: false, error: String(e) };
     }

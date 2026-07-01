@@ -61,7 +61,8 @@ export class NamedProfileManager {
   update(id: string, changes: Partial<ProviderProfile>): void {
     const existing = this.profiles.get(id);
     if (!existing) return;
-    this.profiles.set(id, { ...existing, ...changes });
+    const { id: _, createdAt: __, ...safeChanges } = changes;
+    this.profiles.set(id, { ...existing, ...safeChanges });
     this.saveToStorage();
   }
 
