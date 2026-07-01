@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue";
 import { invoke, Channel } from "@tauri-apps/api/core";
 import { useAgentsStore } from "./agents";
 import { cleanAnsi } from "../utils/format";
+import { SessionModelManager } from "../utils/session-model";
 
 export type ChatPhase = "idle" | "thinking" | "generating" | "tool_call" | "error";
 

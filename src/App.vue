@@ -142,7 +142,10 @@ type PreviewMode =
   | 'kanban'
   | 'mcp'
   | 'workflow'
-  | 'hardware';
+  | 'hardware'
+  | 'account'
+  | 'task'
+  | 'spec';
 
 const previewMode = ref<PreviewMode>('code');
 const activeTerminalAgent = ref<string | null>(null);

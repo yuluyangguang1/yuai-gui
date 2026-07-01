@@ -74,7 +74,7 @@ const platform = ref(navigator.platform || '未知');
 const agentCount = computed(() => agentsStore.agents.length);
 const configuredProviders = ref(0);
 const activeTasks = ref(0);
-const workspacePath = computed(() => workspaceStore.workspacePath || '');
+const workspacePath = computed(() => workspaceStore.path || '');
 
 onMounted(async () => {
   try { userName.value = await invoke('get_username') as string; } catch { /* ignore */ }

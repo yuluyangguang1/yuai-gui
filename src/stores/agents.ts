@@ -1,6 +1,9 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { invoke } from "@tauri-apps/api/core";
+import { ManifestManager } from "../utils/manifest";
+import { Manager as AgentManager } from "../utils/manager-privileges";
+import { parseAgentFile } from "../utils/agent-file-format";
 
 export type AgentStatus = 'idle' | 'running' | 'error' | 'disabled';
 
