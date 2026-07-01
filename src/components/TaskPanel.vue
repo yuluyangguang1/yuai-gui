@@ -71,7 +71,7 @@ onMounted(() => {
       const saved = JSON.parse(raw);
       for (const t of saved) {
         // Use internal set to preserve IDs
-        (taskManager as any).tasks.set(t.id, { ...t, updated_at: t.updated_at || t.created_at });
+        (taskManager as unknown as { tasks: Map<string, unknown> }).tasks.set(t.id, { ...t, updated_at: t.updated_at || t.created_at });
       }
     }
   } catch { /* ignore */ }

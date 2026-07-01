@@ -68,6 +68,7 @@ export function resolveSessionModel(
  * 跟踪每个会话的模型绑定
  */
 export class SessionModelManager {
+  private maxSessions = 100
   private sessionModels = new Map<string, string>() // sessionId → modelId
 
   /** 绑定会话到模型 */

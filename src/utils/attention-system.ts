@@ -38,6 +38,7 @@ export interface WakeDecision {
 // ══════════════════════════════════════════════
 
 export class AttentionManager {
+  private maxAgents = 20
   private agents = new Map<string, AttentionState>()
   private droppedMessages: Array<{
     agent_id: string

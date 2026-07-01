@@ -204,7 +204,7 @@ async function spawnTerminal() {
   fitAddon.fit();
 
   // Register file path link provider
-  (terminal as any).registerLinkProvider?.({
+  (terminal as unknown as { registerLinkProvider?: (provider: unknown) => void }).registerLinkProvider?.({
     provideLinks(bufferLineNumber: number, callback: (links: any[] | undefined) => void) {
       const line = terminal!.buffer.active.getLine(bufferLineNumber - 1);
       if (!line) { callback(undefined); return; }

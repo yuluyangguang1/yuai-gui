@@ -97,6 +97,7 @@ export const PRIVILEGE_MATRIX: Record<PrivilegeLevel, {
 
 export class Manager {
   private config: ManagerConfig
+  private maxProcesses = 50
   private processes = new Map<string, AgentProcess>()
   private leaseHolder: string | null = null
   private leaseExpiry = 0

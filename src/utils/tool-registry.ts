@@ -36,6 +36,7 @@ export type ToolExecutor = (params: Record<string, unknown>) => Promise<ToolResu
  * 管理所有可用工具，提供统一的调用接口
  */
 export class ToolRegistry {
+  private maxTools = 100
   private tools: Map<string, ToolDefinition> = new Map()
   private executors: Map<string, ToolExecutor> = new Map()
 

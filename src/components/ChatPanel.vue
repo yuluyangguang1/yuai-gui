@@ -576,9 +576,9 @@ onUnmounted(() => {
 async function handleSend() {
   if (mentionDropdown.visible) return;
   if (commandSuggestRef.value) {
-    const active = (commandSuggestRef.value as any).commandState?.visible
-      || (commandSuggestRef.value as any).flagState?.visible
-      || (commandSuggestRef.value as any).subState?.visible;
+    const active = (commandSuggestRef.value as unknown as { commandState?: { visible: boolean } })?.commandState?.visible
+      || (commandSuggestRef.value as unknown as { flagState?: { visible: boolean } })?.flagState?.visible
+      || (commandSuggestRef.value as unknown as { subState?: { visible: boolean } })?.subState?.visible;
     if (active) return;
   }
 
@@ -1015,7 +1015,7 @@ watch(
   background: var(--bg-surface);
   border: 1px solid var(--border-light);
   border-radius: 12px;
-  box-shadow: 0 -4px 20px var(--shadow-1, rgba(0,0,0,0.3));
+  box-shadow: 0 -4px 20px var(--shadow-1, var(--shadow-1, rgba(0,0,0,0.3)));
   overflow: hidden;
   display: flex;
   flex-direction: column;

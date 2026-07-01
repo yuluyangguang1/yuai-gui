@@ -130,6 +130,7 @@ export const TASK_PRIORITY_LABELS: Record<TaskPriority, string> = {
 // ══════════════════════════════════════════════
 
 export class TaskManager {
+  private maxTasks = 500
   private tasks = new Map<string, Task>()
   private listeners: Array<(task: Task, oldState: TaskState) => void> = []
 

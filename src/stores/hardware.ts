@@ -56,7 +56,7 @@ export const useHardwareStore = defineStore("hardware", () => {
 
       // RAM (approximate, Chromium only)
       if (typeof navigator !== "undefined" && "deviceMemory" in navigator) {
-        ramGB.value = (navigator as any).deviceMemory || 0;
+        ramGB.value = (navigator as Navigator & { deviceMemory?: number }).deviceMemory || 0;
       }
 
       detected.value = true;

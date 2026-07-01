@@ -149,6 +149,7 @@ export class AgentStateMachine {
  * 管理多个 Agent 的状态机实例
  */
 export class MultiAgentStateManager {
+  private maxMachines = 20
   private machines: Map<string, AgentStateMachine> = new Map()
 
   /** 获取或创建 Agent 状态机 */

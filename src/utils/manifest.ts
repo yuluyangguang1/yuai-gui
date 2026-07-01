@@ -66,6 +66,7 @@ export interface ManifestSettings {
 // ══════════════════════════════════════════════
 
 export class ManifestManager {
+  private maxManifests = 10
   private manifests = new Map<string, Manifest>()
 
   /** 解析 Manifest YAML (简化版) */

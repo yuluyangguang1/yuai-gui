@@ -32,6 +32,7 @@ interface Subscription {
  * 支持发布/订阅、点对点、请求/响应模式
  */
 export class MessageQueue {
+  private maxQueue = 200
   private queue: Message[] = []
   private subscriptions: Subscription[] = []
   private history: Message[] = []

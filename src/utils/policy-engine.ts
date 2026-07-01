@@ -29,6 +29,7 @@ export interface Policy {
  * 管理和执行策略规则
  */
 export class PolicyEngine {
+  private maxPolicies = 50
   private policies: Map<string, Policy> = new Map()
 
   /** 注册策略 */

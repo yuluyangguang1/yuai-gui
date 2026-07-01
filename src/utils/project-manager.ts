@@ -42,6 +42,7 @@ export const DEFAULT_PROJECT_CONFIG: ProjectConfig = {
 // ══════════════════════════════════════════════
 
 export class ProjectManager {
+  private maxProjects = 20
   private projects = new Map<string, Project>()
   private activeProjectId: string | null = null
   private mountedProjectIds = new Set<string>() // 已挂载 UI 的项目

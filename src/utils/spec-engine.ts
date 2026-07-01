@@ -102,6 +102,7 @@ export interface SpecTask {
 // ══════════════════════════════════════════════
 
 export class SpecEngine {
+  private maxProjects = 10
   private projects = new Map<string, SpecProject>()
 
   /** 创建规格项目 */
