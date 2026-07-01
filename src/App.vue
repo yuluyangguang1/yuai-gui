@@ -84,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineAsyncComponent, onMounted } from "vue";
+import { ref, computed, defineAsyncComponent, onMounted } from "vue";
 import { TIcon } from "./utils/icons";
 import AppTitlebar from "./components/layout/AppTitlebar.vue";
 import AppRail from "./components/layout/AppRail.vue";
