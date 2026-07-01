@@ -1,22 +1,10 @@
 <template>
-  <div class="settings-panel" role="region" aria-label="设置">
-    <h2 class="settings-title">设置</h2>
-
-    <!-- Account Section -->
-    <div class="settings-section">
-      <h3 class="section-title"><TIcon name="user" :size="16" /> 账户</h3>
-      <LoginPanel />
-    </div>
-
-    <!-- Activation Section -->
-    <div class="settings-section">
-      <h3 class="section-title"><TIcon name="key" :size="16" /> 激活</h3>
-      <ActivationPanel />
-    </div>
+  <div class="settings-panel" role="region" aria-label="模型配置">
+    <h2 class="settings-title">模型配置</h2>
 
     <!-- API Config Section -->
     <div class="settings-section">
-      <h3 class="section-title"><TIcon name="settings" :size="16" /> API 配置</h3>
+      <h3 class="section-title"><span class="section-icon"><TIcon name="settings" :size="16" /></span><span class="section-label">API 配置</span></h3>
       <p class="settings-desc">每个 Agent 可独立配置，也可共用同一个中转站 Key</p>
 
       <!-- Agent tabs with active provider indicator -->
@@ -106,10 +94,11 @@ import { ref, reactive, onMounted, computed } from 'vue';
 import { TIcon } from "../utils/icons";
 import { invoke } from '@tauri-apps/api/core';
 import { useProviderStore } from '../stores/provider';
+import { useAgentsStore } from '../stores/agents';
 import LoginPanel from './LoginPanel.vue';
-import ActivationPanel from './ActivationPanel.vue';
 
 const providerStore = useProviderStore();
+const agentsStore = useAgentsStore();
 
 // ─── State ───
 const selectedType = ref('claude');
@@ -290,7 +279,24 @@ onMounted(() => {
   font-size: .82rem;
   color: var(--bone-dim);
   margin-bottom: 12px;
+  display: inline-flex; align-items: center; gap: 6px;
 }
+.section-icon { display: inline-flex; align-items: center; line-height: 1; }
+.section-label { line-height: 1; }
+
+/* Account info */
+.account-info {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 12px; border-radius: 8px;
+  background: var(--bg-surface); border: 1px solid var(--border-light);
+}
+.account-row {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: .68rem;
+}
+.account-label { color: var(--silver); font-family: var(--font-body); }
+.account-value { color: var(--bone); font-family: var(--font-body); }
+.account-mono { font-family: var(--font-mono); font-size: .62rem; opacity: .8; }
 
 .settings-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
 .settings-tab {

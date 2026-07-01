@@ -61,6 +61,7 @@
           <DevicesPanel v-else-if="previewMode === 'lan'" />
           <OrganizePanel v-else-if="previewMode === 'organize'" />
           <SettingsPanel v-else-if="previewMode === 'settings'" />
+          <AccountPanel v-else-if="previewMode === 'account'" />
           <SkillsPanel v-else-if="previewMode === 'skills'" />
           <WriteGatePanel v-else-if="previewMode === 'write-gate'" />
           <KanbanBoard v-else-if="previewMode === 'kanban'" />
@@ -90,6 +91,7 @@ import PreviewView from "./views/PreviewView.vue";
 import ChatPanel from "./components/ChatPanel.vue";
 import DiffViewer from "./components/DiffViewer.vue";
 import SettingsPanel from "./components/SettingsPanel.vue";
+import AccountPanel from "./components/AccountPanel.vue";
 import OrganizePanel from "./components/OrganizePanel.vue";
 import SkillsPanel from "./components/SkillsPanel.vue";
 import DevicesPanel from "./components/DevicesPanel.vue";
@@ -154,7 +156,8 @@ const previewTabs: { id: PreviewMode; label: string; icon: string }[] = [
   { id: 'mcp', label: 'MCP', icon: 'plug' },
   { id: 'workflow', label: '工作流', icon: 'schema' },
   { id: 'hardware', label: '硬件', icon: 'cpu' },
-  { id: 'settings', label: '配置', icon: 'settings' },
+  { id: 'account', label: '账户', icon: 'user' },
+  { id: 'settings', label: '模型', icon: 'settings' },
 ];
 
 const enabledAgents = () => agentsStore.agents.filter(a => a.enabled);
