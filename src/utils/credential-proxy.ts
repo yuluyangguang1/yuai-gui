@@ -31,6 +31,7 @@ export interface CredentialResponse {
  */
 export class CredentialProxyManager {
   private credentials: Map<string, Credential> = new Map()
+  private maxAccessLog = 500
   private accessLog: Array<{ credentialId: string; timestamp: number; purpose?: string }> = []
 
   /** 存储凭证 */

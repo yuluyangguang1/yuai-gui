@@ -30,8 +30,8 @@ export interface UnifiedRequest {
   temperature?: number
   max_tokens?: number
   stream?: boolean
-  tools?: any[]
-  tool_choice?: any
+  tools?: Array<{ type: string; function: { name: string; description: string; parameters: Record<string, unknown> } }>
+  tool_choice?: string | { type: string; function: { name: string } }
   stop?: string[]
   top_p?: number
 }
@@ -43,7 +43,7 @@ export interface UnifiedResponse {
   finish_reason: string | null
   tool_calls?: ToolCall[]
   usage?: { input_tokens: number; output_tokens: number }
-  raw: any // 原始响应
+  raw: Record<string, unknown> // 原始响应
 }
 
 export interface StreamChunk {
@@ -69,7 +69,7 @@ export interface Transport {
   formatRequest(req: UnifiedRequest): any
 
   /** 将供应商原生响应转为统一格式 */
-  parseResponse(raw: any): UnifiedResponse
+  parseResponse(raw: Record<string, unknown>): UnifiedResponse
 
   /** 解析 SSE 流式 chunk */
   parseStreamChunk(line: string): StreamChunk | null
@@ -113,7 +113,7 @@ export class OpenAIChatTransport implements Transport {
     }
   }
 
-  parseResponse(raw: any): UnifiedResponse {
+  parseResponse(raw: Record<string, unknown>): UnifiedResponse {
     const choice = raw.choices?.[0]
     return {
       id: raw.id ?? '',
@@ -202,7 +202,7 @@ export class AnthropicMessagesTransport implements Transport {
     return body
   }
 
-  parseResponse(raw: any): UnifiedResponse {
+  parseResponse(raw: Record<string, unknown>): UnifiedResponse {
     const textBlock = raw.content?.find((b: any) => b.type === 'text')
     const toolBlocks = raw.content?.filter((b: any) => b.type === 'tool_use') ?? []
 
@@ -278,7 +278,7 @@ export class CodexResponsesTransport implements Transport {
     }
   }
 
-  parseResponse(raw: any): UnifiedResponse {
+  parseResponse(raw: Record<string, unknown>): UnifiedResponse {
     // Responses API 的 output 格式
     const textItem = raw.output?.find((o: any) => o.type === 'message')
     const content = textItem?.content?.find((c: any) => c.type === 'output_text')

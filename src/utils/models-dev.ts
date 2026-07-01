@@ -158,10 +158,10 @@ export async function fetchModelsDev(forceRefresh = false): Promise<Record<strin
     // 解析为 ProviderMeta 格式
     const providers: Record<string, ProviderMeta> = {}
     for (const [pid, pdata] of Object.entries(raw)) {
-      const p = pdata as any
+      const p = pdata as Record<string, unknown>
       const models: Record<string, ModelMeta> = {}
       for (const [mid, mdata] of Object.entries(p.models ?? {})) {
-        const m = mdata as any
+        const m = mdata as Record<string, unknown>
         models[mid] = {
           id: mid,
           name: m.name ?? mid,

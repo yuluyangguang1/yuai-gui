@@ -45,10 +45,10 @@
     <RoomManager v-if="showRoomManager" />
 
     <!-- Messages -->
-    <div class="chat-messages" ref="messagesRef">
+    <div class="chat-messages" role="log" aria-live="polite" ref="messagesRef">
       <!-- Load more button for virtual scrolling -->
       <div v-if="hasMoreMessages" class="chat-load-more">
-        <button class="load-more-btn" @click="loadMoreMessages">
+        <button class="load-more-btn" aria-label="加载更多消息" @click="loadMoreMessages">
           加载更多消息 ({{ hiddenMessageCount }} 条隐藏)
         </button>
       </div>
@@ -122,7 +122,7 @@
 
     <!-- Abort button during discussion -->
     <div v-if="chatStore.phase !== 'idle' && chatStore.round > 0" class="abort-bar">
-      <button class="abort-btn" @click="chatStore.abortDiscussion">中断讨论</button>
+      <button class="abort-btn" aria-label="停止生成" @click="chatStore.abortDiscussion">中断讨论</button>
     </div>
 
     <!-- Decision panel after discussion -->
@@ -183,7 +183,7 @@
           ref="inputRef"
           class="chat-input"
           v-model="chatStore.inputText"
-          placeholder="输入消息... (输入 @ 提及代理)" aria-label="消息输入" aria-describedby="input-hint"
+          aria-label="消息输入" placeholder="输入消息... (输入 @ 提及代理)"
           rows="1"
           @keydown="handleKeydown"
           @input="handleInput"

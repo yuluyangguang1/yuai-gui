@@ -34,8 +34,8 @@
               v-if="activeTerminalAgent"
               :agentId="activeTerminalAgent"
               :agentName="agentsStore.agents.find(a => a.id === activeTerminalAgent)?.name || ''"
-              :agentGlyph="agentsStore.agents.find(a => a.id === activeTerminalAgent)?.glyph || ''"
-              :agentColor="agentsStore.agents.find(a => a.id === activeTerminalAgent)?.color || '#5ccfb8'"
+              :agentGlyph="activeTerminalAgentData?.glyph || ''"
+              :agentColor="activeTerminalAgentData?.color || '#5ccfb8'"
               :cwd="workspaceStore.path || undefined"
               @close="activeTerminalAgent = null"
             />
@@ -146,6 +146,8 @@ type PreviewMode =
   | 'account'
   | 'task'
   | 'spec';
+
+const activeTerminalAgentData = computed(() => agentsStore.agents.find(a => a.id === activeTerminalAgent.value));
 
 const previewMode = ref<PreviewMode>('code');
 const activeTerminalAgent = ref<string | null>(null);
