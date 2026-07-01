@@ -174,8 +174,8 @@ const STORAGE_KEY = 'yuai-constitutions'
 
 export function saveConstitutions(manager: ConstitutionManager): void {
   try {
-    // 简单序列化
-    localStorage.setItem(STORAGE_KEY, 'saved')
+    const all = manager.getAllProjects().map(pid => manager.get(pid)).filter(Boolean)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(all))
   } catch { /* ignore */ }
 }
 

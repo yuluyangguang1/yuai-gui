@@ -79,11 +79,11 @@ export const EFFORT_LABELS: Record<EffortLevel, string> = {
 }
 
 export const EFFORT_ICONS: Record<EffortLevel, string> = {
-  low: '⚡',
-  medium: '💡',
-  high: '🧠',
-  xhigh: '🔬',
-  max: '🌟',
+  low: 'bolt',
+  medium: 'bulb',
+  high: 'brain',
+  xhigh: 'microscope',
+  max: 'star',
 }
 
 // ══════════════════════════════════════════════

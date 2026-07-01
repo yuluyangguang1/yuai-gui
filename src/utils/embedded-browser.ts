@@ -110,6 +110,8 @@ export class EmbeddedBrowserManager {
     if (!this.tabs.has(tabId)) return false
 
     this.tabs.delete(tabId)
+    this.history.delete(tabId)
+    this.historyIndex.delete(tabId)
 
     if (this.activeTabId === tabId) {
       const remaining = Array.from(this.tabs.keys())
@@ -161,9 +163,9 @@ export class EmbeddedBrowserManager {
   }
 
   /** 刷新 */
-  refresh(tabId: string): boolean {
+  refresh(tabId: string): Promise<boolean> {
     const tab = this.tabs.get(tabId)
-    if (!tab) return false
+    if (!tab) return Promise.resolve(false)
 
     return this.navigate(tabId, tab.url)
   }

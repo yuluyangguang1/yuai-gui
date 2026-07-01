@@ -284,8 +284,10 @@ export const globalQueueGuard = new QueueGuard()
  * 安装 Queue Guard — 替换 globalThis.fetch
  */
 export function installQueueGuard(config: Partial<QueueConfig> = {}): void {
-  const guard = new QueueGuard(config)
+  if (Object.keys(config).length > 0) {
+    globalQueueGuard.updateConfig(config)
+  }
   const originalFetch = globalThis.fetch
-  globalThis.fetch = createQueuedFetch(guard, originalFetch) as typeof fetch
+  globalThis.fetch = createQueuedFetch(globalQueueGuard, originalFetch) as typeof fetch
   console.log(`[QueueGuard] 已安装 | 最大并发: ${config.max_concurrent ?? 3} | 最大等待: ${config.max_wait_ms ?? 120000}ms`)
 }
