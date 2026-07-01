@@ -17,14 +17,24 @@
             v-for="tab in previewTabs"
             :key="tab.id"
             class="preview-mode-tab"
-            :class="{ active: previewMode === tab.id }"
+            :class="{ active: previewMode === tab.id || expandedGroup === tab.id }"
             role="tab"
             :aria-selected="previewMode === tab.id"
             :tabindex="previewMode === tab.id ? 0 : -1"
-            @click="previewMode = tab.id"
-            @keydown.enter="previewMode = tab.id"
-            @keydown.space.prevent="previewMode = tab.id"
+            @click="handleTabClick(tab)"
+            @keydown.enter="handleTabClick(tab)"
+            @keydown.space.prevent="handleTabClick(tab)"
           ><span class="preview-tab-icon"><TIcon :name="tab.icon" :size="12" /></span><span class="preview-tab-label">{{ tab.label }}</span></span>
+        </div>
+        <!-- Sub-panel bar -->
+        <div v-if="expandedGroup && subPanels[expandedGroup]?.length > 1" class="sub-panel-bar">
+          <span
+            v-for="sub in subPanels[expandedGroup]"
+            :key="sub.id"
+            class="sub-panel-tab"
+            :class="{ active: previewMode === sub.id }"
+            @click="previewMode = sub.id"
+          ><TIcon :name="sub.icon" :size="10" /> {{ sub.label }}</span>
         </div>
         <div class="preview-body" role="tabpanel">
           <PreviewView v-if="previewMode === 'code'" />
@@ -151,26 +161,63 @@ const activeTerminalAgentData = computed(() => agentsStore.agents.find(a => a.id
 
 const previewMode = ref<PreviewMode>('code');
 const activeTerminalAgent = ref<string | null>(null);
+
+// 合并分组: 18个 → 8个
 const previewTabs: { id: PreviewMode; label: string; icon: string }[] = [
   { id: 'code', label: '代码', icon: 'code' },
   { id: 'diff', label: '变更', icon: 'gitBranch' },
   { id: 'terminal', label: '终端', icon: 'terminal' },
-  { id: 'lan', label: '设备', icon: 'deviceDesktop' },
-  { id: 'replay', label: '回放', icon: 'playerPlay' },
-  { id: 'disk', label: '磁盘', icon: 'database' },
-  { id: 'wechat', label: '微信', icon: 'messageCircle' },
-  { id: 'organize', label: '整理', icon: 'sparkles' },
+  { id: 'kanban', label: '项目', icon: 'layoutKanban' },
+  { id: 'wechat', label: '协作', icon: 'messageCircle' },
   { id: 'skills', label: '技能', icon: 'wand' },
-  { id: 'write-gate', label: '写入', icon: 'shield' },
-  { id: 'kanban', label: '看板', icon: 'layoutKanban' },
-  { id: 'task', label: '任务', icon: 'listCheck' },
-  { id: 'spec', label: '规格', icon: 'fileCode' },
-  { id: 'mcp', label: 'MCP', icon: 'plug' },
-  { id: 'workflow', label: '工作流', icon: 'schema' },
-  { id: 'hardware', label: '硬件', icon: 'cpu' },
   { id: 'account', label: '账户', icon: 'user' },
   { id: 'settings', label: '模型', icon: 'settings' },
 ];
+
+// 子面板: 点击主tab展开/切换子面板
+const expandedGroup = ref<string | null>(null);
+const subPanels: Record<string, { id: PreviewMode; label: string; icon: string }[]> = {
+  'code': [
+    { id: 'code', label: '代码', icon: 'code' },
+    { id: 'diff', label: '变更', icon: 'gitBranch' },
+    { id: 'terminal', label: '终端', icon: 'terminal' },
+    { id: 'replay', label: '回放', icon: 'playerPlay' },
+  ],
+  'kanban': [
+    { id: 'kanban', label: '看板', icon: 'layoutKanban' },
+    { id: 'task', label: '任务', icon: 'listCheck' },
+    { id: 'spec', label: '规格', icon: 'fileCode' },
+    { id: 'workflow', label: '工作流', icon: 'schema' },
+  ],
+  'wechat': [
+    { id: 'wechat', label: '微信', icon: 'messageCircle' },
+    { id: 'lan', label: '设备', icon: 'deviceDesktop' },
+    { id: 'organize', label: '整理', icon: 'sparkles' },
+    { id: 'write-gate', label: '写入', icon: 'shield' },
+    { id: 'mcp', label: 'MCP', icon: 'plug' },
+  ],
+  'skills': [
+    { id: 'skills', label: '技能', icon: 'wand' },
+  ],
+  'account': [
+    { id: 'account', label: '账户', icon: 'user' },
+    { id: 'disk', label: '磁盘', icon: 'database' },
+    { id: 'hardware', label: '硬件', icon: 'cpu' },
+  ],
+  'settings': [
+    { id: 'settings', label: '模型', icon: 'settings' },
+  ],
+};
+
+function handleTabClick(tab: { id: PreviewMode }) {
+  previewMode.value = tab.id;
+  // 展开子面板
+  if (subPanels[tab.id]) {
+    expandedGroup.value = expandedGroup.value === tab.id ? null : tab.id;
+  } else {
+    expandedGroup.value = null;
+  }
+}
 
 const enabledAgents = () => agentsStore.agents.filter(a => a.enabled);
 
