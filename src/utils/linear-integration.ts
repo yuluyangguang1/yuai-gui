@@ -197,11 +197,18 @@ export class LinearIntegrationManager {
       headers['Authorization'] = `Bearer ${this.config.token}`
     }
 
-    return fetch(this.baseUrl, {
+    const response = await fetch(this.baseUrl, {
       method: 'POST',
       headers,
       body: JSON.stringify({ query, variables }),
     })
+
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => '')
+      throw new Error(`Linear API ${response.status}: ${errorBody}`)
+    }
+
+    return response
   }
 
   /** 映射 Issue */

@@ -155,10 +155,17 @@ export class GitHubIntegrationManager {
       headers['Authorization'] = `Bearer ${this.config.token}`
     }
 
-    return fetch(url, {
+    const response = await fetch(url, {
       ...options,
       headers: { ...headers, ...options.headers },
     })
+
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => '')
+      throw new Error(`GitHub API ${response.status}: ${errorBody}`)
+    }
+
+    return response
   }
 
   /** 检查连接 */

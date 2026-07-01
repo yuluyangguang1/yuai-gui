@@ -24,6 +24,7 @@ export class SSEClient {
   private reconnectAttempts = 0
   private maxReconnectAttempts = 5
   private reconnectDelay = 1000
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null
 
   constructor(url: string) {
     this.url = url
@@ -70,6 +71,10 @@ export class SSEClient {
 
   /** 断开连接 */
   disconnect(): void {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer)
+      this.reconnectTimer = null
+    }
     if (this.eventSource) {
       this.eventSource.close()
       this.eventSource = null
@@ -119,7 +124,8 @@ export class SSEClient {
 
     console.log(`[SSE] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`)
 
-    setTimeout(() => {
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null
       this.connect()
     }, delay)
   }

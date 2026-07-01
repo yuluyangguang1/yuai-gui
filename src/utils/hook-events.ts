@@ -69,9 +69,9 @@ export class HookManager {
   async emit(event: HookEvent, data: Record<string, unknown> = {}): Promise<void> {
     const payload: HookPayload = {
       event,
-      task_id: (data.task_id as string) ?? null,
-      agent_id: (data.agent_id as string) ?? null,
-      session_id: (data.session_id as string) ?? null,
+      task_id: typeof data.task_id === 'string' ? data.task_id : null,
+      agent_id: typeof data.agent_id === 'string' ? data.agent_id : null,
+      session_id: typeof data.session_id === 'string' ? data.session_id : null,
       data,
       timestamp: Date.now(),
     }

@@ -129,7 +129,7 @@ function parseSection(body: string, sectionTitle: string): string[] {
 function extractField(section: string[], fieldName: string): string {
   for (const line of section) {
     if (line.includes(fieldName + ':')) {
-      return line.split(':')[1]?.trim() || ''
+      return line.split(':').slice(1).join(':').trim() || ''
     }
   }
   return ''

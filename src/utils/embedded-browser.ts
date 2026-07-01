@@ -35,6 +35,7 @@ export class EmbeddedBrowserManager {
   private activeTabId: string | null = null
   private eventHandlers: Map<string, ((event: BrowserEvent) => void)[]> = new Map()
   private config: BrowserConfig
+  private loadingTimer: Map<string, ReturnType<typeof setTimeout>> = new Map()
   private history: Map<string, string[]> = new Map() // tabId → url history stack
   private historyIndex: Map<string, number> = new Map() // tabId → current position
 
