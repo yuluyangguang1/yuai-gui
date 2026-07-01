@@ -37,7 +37,6 @@ import { TIcon } from "../utils/icons";
 import { useAgentsStore } from "../stores/agents";
 import { useWorkspaceStore } from "../stores/workspace";
 import { useSettingsStore } from "../stores/settings";
-import { ICONS } from "../utils/icons";
 
 interface CommandItem {
   id: string;
