@@ -294,18 +294,20 @@ onMounted(() => {
 
 .settings-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
 .settings-tab {
-  display: flex; align-items: center; gap: 4px;
+  display: inline-flex; align-items: center; gap: 4px;
   padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-light);
   background: transparent; color: var(--bone-dim); cursor: pointer; transition: all .2s;
   font-family: var(--font-body); font-size: .68rem;
-  position: relative;
+  position: relative; vertical-align: middle;
 }
 .settings-tab:hover { border-color: var(--hairline-warm); color: var(--bone); }
 .settings-tab.active { border-color: var(--tab-color, var(--jade)); color: var(--tab-color, var(--jade)); }
-.tab-glyph { font-family: var(--font-brush); font-size: 1.1rem; }
+.tab-glyph { font-family: var(--font-brush); font-size: 1.1rem; line-height: 1; display: inline-flex; align-items: center; }
+.tab-label { line-height: 1; display: inline-flex; align-items: center; }
 .tab-indicator {
   font-size: .4rem; margin-left: 2px; opacity: .7;
   color: var(--jade);
+  display: inline-flex; align-items: center;
 }
 
 .active-provider-badge {
