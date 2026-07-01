@@ -4,7 +4,7 @@
 
 use serde::{Deserialize, Serialize};
 
-const GITHUB_REPO: &str = "nousresearch/yuai-gui";
+const GITHUB_REPO: &str = "nousresearch/yuai";
 
 /// Update info returned to the frontend.
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -50,7 +50,7 @@ pub fn check_update() -> Result<UpdateInfo, String> {
 
     // Use blocking reqwest
     let client = reqwest::blocking::Client::builder()
-        .user_agent("yuai-gui-updater")
+        .user_agent("yuai-updater")
         .timeout(std::time::Duration::from_secs(10))
         .build()
         .map_err(|e| format!("http client: {}", e))?;

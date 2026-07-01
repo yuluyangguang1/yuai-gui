@@ -1,6 +1,6 @@
 /**
  * Rich SVG file icons — generates inline SVG strings per file type.
- * Uses a consistent color palette matching the yuai-gui design system.
+ * Uses a consistent color palette matching the yuai design system.
  */
 
 /** Color palette from design system */

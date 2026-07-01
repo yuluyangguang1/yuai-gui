@@ -34,7 +34,7 @@ const cache = new Map<
 
 /**
  * Munge a directory path the way Claude Code does:
- * /Users/ylyg/Desktop/yuai-gui → -Users-ylyg-Desktop-yuai-gui
+ * /Users/ylyg/Desktop/yuai → -Users-ylyg-Desktop-yuai
  */
 function mungePath(dir: string): string {
   return dir.replace(/[\/\\]/g, "-");

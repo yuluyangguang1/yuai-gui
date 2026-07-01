@@ -43,7 +43,7 @@ fn recordings_dir() -> PathBuf {
     let base = dirs::data_dir()
         .or_else(dirs::home_dir)
         .unwrap_or_else(|| PathBuf::from("."));
-    base.join("yuai-gui").join("recordings")
+    base.join("yuai").join("recordings")
 }
 
 /// Prune oldest recordings if count exceeds MAX_RECORDINGS.

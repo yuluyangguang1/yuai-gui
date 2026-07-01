@@ -1,5 +1,5 @@
 [package]
-name = "yuai-gui"
+name = "yuai"
 version = "0.1.0"
 description = "yu.ai · 与 AI · 同在 — Unified launcher"
 authors = ["ylyg"]
@@ -7,7 +7,7 @@ edition = "2021"
 rust-version = "1.77"
 
 [lib]
-name = "yuai_gui_lib"
+name = "yuai_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

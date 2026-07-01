@@ -287,5 +287,5 @@ pub fn run() {
             lan_discovery::lan_pair_device,
         ])
         .run(tauri::generate_context!())
-        .expect("error while running yuai-gui");
+        .expect("error while running yuai");
 }
