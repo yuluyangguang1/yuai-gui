@@ -87,7 +87,7 @@ onMounted(() => {
 .dot-todo { background: var(--silver); }
 .dot-pending { background: var(--gold); }
 .dot-running { background: var(--accent); }
-.dot-done { background: #5ccfb8; }
+.dot-done { background: var(--accent); }
 .dot-failed { background: var(--error); }
 .stat-count { font-family: var(--font-mono); }
 
