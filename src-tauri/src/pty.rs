@@ -128,7 +128,9 @@ pub fn pty_spawn(
                 }
                 Ok(n) => {
                     let data = String::from_utf8_lossy(&buf[..n]).to_string();
-                    let _ = on_data.send(data);
+                    // Filter DA1/DA2 device attribute responses
+                    let filtered = data.replace("\x1b[?62c", "").replace("\x1b[?1;2c", "").replace("\x1b[0q", "").replace("\x1b[>0q", "");
+                    let _ = on_data.send(filtered);
                 }
                 Err(e) => {
                     let _ = on_data.send(format!("\r\n[error: {}]\r\n", e));
@@ -308,7 +310,9 @@ pub fn spawn_agent(
                 }
                 Ok(n) => {
                     let data = String::from_utf8_lossy(&buf[..n]).to_string();
-                    let _ = on_data.send(data);
+                    // Filter DA1/DA2 device attribute responses
+                    let filtered = data.replace("\x1b[?62c", "").replace("\x1b[?1;2c", "").replace("\x1b[0q", "").replace("\x1b[>0q", "");
+                    let _ = on_data.send(filtered);
                 }
                 Err(e) => {
                     let _ = on_data.send(format!("\r\n[error: {}]\r\n", e));
