@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, watch, ref } from 'vue';
+import { TIcon } from "../utils/icons";
 import { invoke } from '@tauri-apps/api/core';
 import { useWorkspaceStore } from '../stores/workspace';
 

@@ -20,6 +20,7 @@
 
 <script setup lang="ts">
 import { useToast } from '../composables/useToast'
+import { TIcon } from "../utils/icons";
 import type { ToastType } from '../composables/useToast'
 
 const { toasts, dismiss } = useToast()

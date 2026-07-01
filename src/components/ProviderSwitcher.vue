@@ -57,7 +57,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { TIcon } from "../utils/icons";
-import { useProviderStore } from '../stores/provider";
+import { useProviderStore } from '../stores/provider';
 
 const providerStore = useProviderStore();
 

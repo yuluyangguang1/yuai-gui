@@ -63,6 +63,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
+import { TIcon } from "../utils/icons";
 import { useOrganizeStore } from "../stores/organize";
 import { useWorkspaceStore } from "../stores/workspace";
 import { useChatStore } from "../stores/chat";

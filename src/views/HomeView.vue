@@ -203,6 +203,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from "vue";
+import { TIcon } from "../utils/icons";
 import { invoke } from "@tauri-apps/api/core";
 import { useWorkspaceStore } from "../stores/workspace";
 import type { FileNode } from "../stores/workspace";

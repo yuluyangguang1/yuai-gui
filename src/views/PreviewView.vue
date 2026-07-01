@@ -141,6 +141,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
+import { TIcon } from "../utils/icons";
 import { useWorkspaceStore } from "../stores/workspace";
 import MonacoEditor from "../components/MonacoEditor.vue";
 import { invoke } from "@tauri-apps/api/core";

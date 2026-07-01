@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { TIcon } from "../../utils/icons";
 import { Handle, Position } from '@vue-flow/core';
 
 export interface WorkflowNodeData {

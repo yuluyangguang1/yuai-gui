@@ -70,6 +70,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch } from "vue";
+import { TIcon } from "../utils/icons";
 import { Terminal } from "@xterm/xterm";
 import { useRecordingStore, type RecordingInfo } from "../stores/recording";
 
