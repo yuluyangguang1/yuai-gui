@@ -100,11 +100,19 @@
       </button>
       <button
         class="rail-nav-btn"
-        title="配置 — API 密钥、Agent 设置" aria-label="配置"
+        title="模型 — API 密钥、供应商配置" aria-label="模型"
         @click="emit('open-settings')"
       >
         <TIcon name="settings" :size="22" />
-        <span class="rail-label">配置</span>
+        <span class="rail-label">模型</span>
+      </button>
+      <button
+        class="rail-nav-btn"
+        title="账户 — 设备信息、系统状态" aria-label="账户"
+        @click="emit('open-account')"
+      >
+        <TIcon name="user" :size="22" />
+        <span class="rail-label">账户</span>
       </button>
     </div>
   </nav>
@@ -121,6 +129,7 @@ import type { AgentDef } from "../../stores/agents";
 
 const emit = defineEmits<{
   "open-settings": [];
+  "open-account": [];
   "open-skills": [];
   "open-lan": [];
 }>();

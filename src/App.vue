@@ -5,6 +5,7 @@
     <div class="app-main">
       <AppRail
         @open-settings="previewMode = 'settings'"
+        @open-account="previewMode = 'account'"
         @open-skills="previewMode = 'skills'"
         @open-lan="previewMode = 'lan'"
       />
