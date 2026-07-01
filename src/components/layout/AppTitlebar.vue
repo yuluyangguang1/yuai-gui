@@ -1,6 +1,6 @@
 <template>
   <header class="app-titlebar" role="banner">
-    <span class="titlebar-brand">語AI</span>
+    <span class="titlebar-brand">羽AI</span>
 
     <span class="titlebar-spacer" />
 
