@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
 use std::thread;
+use std::time::Duration;
 use std::process::Command as StdCommand;
 
 use portable_pty::{native_pty_system, CommandBuilder, PtySize, MasterPty};
