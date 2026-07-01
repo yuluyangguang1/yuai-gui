@@ -67,7 +67,7 @@
         class="rail-nav-btn"
         :class="{ active: skillsPanelOpen }"
         title="技能管理 — 查看、搜索、启停 Agent 技能" aria-label="技能管理"
-        @click="openSkills"
+        @click="emit('open-skills')"
       >
         <TIcon name="sparkles" :size="22" />
         <span class="rail-label">技能</span>

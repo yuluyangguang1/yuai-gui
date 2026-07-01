@@ -1160,9 +1160,3 @@ watch(
   color: var(--vermilion-glow);
 }
 </style>
-import { AttentionManager, type AttentionMode } from "../utils/attention-system";
-import { CompactionEngine, createToolOutputTrimHook } from "../utils/compaction";
-import { TokenBudgetManager, loadBudgets } from "../utils/token-budget";
-import { HookManager, createLoggingHook, createNotificationHook } from "../utils/hook-events";
-import { OrientationGenerator } from "../utils/orientation-card";
-import { getToolsForRole } from "../utils/tool-surface";

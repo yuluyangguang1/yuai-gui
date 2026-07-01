@@ -117,6 +117,31 @@ const convergeResult = computed(() => {
 });
 
 function nextPhase() {
+  // Save current phase content to engine
+  const project = specEngine.getAllProjects()[0];
+  if (project) {
+    if (currentPhase.value === 'specify' && specContent.value) {
+      specEngine.setSpec(project.id, {
+        title: 'User Spec',
+        user_stories: [],
+        functional_requirements: [],
+        key_entities: [],
+        success_criteria: [],
+        assumptions: [],
+        clarifications: [],
+      });
+    }
+    if (currentPhase.value === 'plan' && planContent.value) {
+      specEngine.setPlan(project.id, {
+        tech_stack: planContent.value,
+        architecture: '',
+        data_model: '',
+        api_contracts: '',
+        research_notes: '',
+        complexity_tracking: [],
+      });
+    }
+  }
   const idx = phaseIndex.value;
   if (idx < phases.length - 1) {
     currentPhase.value = phases[idx + 1].id as SpecPhase;

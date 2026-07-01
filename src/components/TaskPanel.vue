@@ -46,7 +46,6 @@ import { TaskManager, TASK_STATE_LABELS, TASK_STATE_ICONS, TASK_PRIORITY_LABELS,
 import { ProjectManager } from '../utils/project-manager';
 
 const taskManager = new TaskManager();
-const projectManager = new ProjectManager();
 
 const tasks = computed(() => taskManager.getAll());
 const stats = computed(() => taskManager.getStats());
@@ -56,6 +55,8 @@ function createTask() {
   if (!newTitle.value.trim()) return;
   taskManager.create({ title: newTitle.value.trim() });
   newTitle.value = '';
+  // Persist
+  try { localStorage.setItem('yuai-tasks', JSON.stringify(taskManager.getAll())); } catch {}
 }
 
 function formatTime(ts: number): string {
@@ -64,13 +65,13 @@ function formatTime(ts: number): string {
 }
 
 onMounted(() => {
-  // Load persisted tasks
   try {
     const raw = localStorage.getItem('yuai-tasks');
     if (raw) {
       const saved = JSON.parse(raw);
       for (const t of saved) {
-        taskManager.create(t);
+        // Use internal set to preserve IDs
+        (taskManager as any).tasks.set(t.id, { ...t, updated_at: t.updated_at || t.created_at });
       }
     }
   } catch { /* ignore */ }

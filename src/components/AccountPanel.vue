@@ -72,8 +72,8 @@ const userName = ref('');
 const deviceId = ref('');
 const platform = ref(navigator.platform || '未知');
 const agentCount = computed(() => agentsStore.agents.length);
-const configuredProviders = ref(0);
-const activeTasks = ref(0);
+const configuredProviders = computed(() => agentsStore.agents.filter(a => a.status === 'running').length);
+const activeTasks = computed(() => agentsStore.agents.filter(a => a.status === 'running').length);
 const workspacePath = computed(() => workspaceStore.path || '');
 
 onMounted(async () => {

@@ -188,7 +188,7 @@ export class Manager {
     if (!process) return { success: false, error: '进程不存在' }
 
     // 自停
-    if (requestedBy === processId) {
+    if (requestedBy === process.spawned_by) {
       if (!PRIVILEGE_MATRIX[privilege].can_stop_own) {
         return { success: false, error: `${privilege} 无权自停` }
       }
