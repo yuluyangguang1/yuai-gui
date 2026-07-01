@@ -12,6 +12,8 @@ export interface StreamingMessage {
   agentId: string;
 }
 
+const sessionModelManager = new SessionModelManager();
+
 // ══════════════════════════════════════════════
 // Thread Grouping (inspired by Codex Tracker)
 // ══════════════════════════════════════════════

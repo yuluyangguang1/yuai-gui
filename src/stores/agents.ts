@@ -73,6 +73,9 @@ function saveEnabledStates(states: Record<string, boolean>) {
   } catch { /* ignore */ }
 }
 
+const manifestManager = new ManifestManager();
+const agentManager = new AgentManager();
+
 export const useAgentsStore = defineStore("agents", () => {
   const agents = ref<AgentDef[]>([...BUILTIN_AGENTS]);
   const activeAgentId = ref<string>("hermes");

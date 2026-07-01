@@ -10,6 +10,7 @@ import { fetchModelsDev, getProviderMeta, getModelMeta, lookupContextLength, typ
 import { resolveModelAlias, getAllAliases } from '../utils/model-aliases-resolve'
 import { getEffortConfig, getEffectiveEffort, type EffortLevel } from '../utils/effort-levels'
 import { CircuitBreaker } from '../utils/circuit-breaker'
+import { ContextWindowManager } from '../utils/context-window'
 import { getTransport, getTransportForProvider, unifiedChat, unifiedChatStream } from '../utils/transport'
 import { QueueGuard, globalQueueGuard, installQueueGuard } from '../utils/queue-guard'
 import { EFFORT_PRESETS, formatEffort } from '../utils/effort-levels'
@@ -269,6 +270,7 @@ export const useProviderStore = defineStore('provider', () => {
 
   // ─── Circuit Breaker (provider failure isolation) ───
   const circuitBreaker = new CircuitBreaker()
+  const contextWindowManager = new ContextWindowManager()
 
   // ─── Queue Guard (install global rate-limiting fetch) ───
   installQueueGuard({ enabled: true, max_concurrent: 3, max_wait_ms: 120_000 })
