@@ -36,7 +36,7 @@
           <button
             v-for="p in providerList"
             :key="p.id"
-            class="provider-chip"
+            class="provider-chip" role="radio"
             :class="{ active: selectedProviderId === p.id, connected: p.status === 'connected' }"
             @click="selectProvider(p.id)"
             :title="p.base_url"
@@ -56,7 +56,7 @@
             <button
               v-for="m in filteredModels.slice(0, 12)"
               :key="m.id"
-              class="model-chip"
+              class="model-chip" role="radio"
               :class="{ active: model === m.id }"
               @click="selectModel(m.id)"
               :title="`${m.id}${m.context_length ? ' · ' + (m.context_length/1000) + 'K' : ''}${m.supports_vision ? ' · 视觉' : ''}`"

@@ -37,6 +37,7 @@ export interface EnhancedStateMachineOptions {
  * 支持 DAG 任务图 + 心跳检测 + 决策门
  */
 export class EnhancedStateMachine {
+  private maxTasks = 500
   private tasks: Map<string, TaskNode> = new Map()
   private decisionGates: Map<string, DecisionGate> = new Map()
   private options: EnhancedStateMachineOptions

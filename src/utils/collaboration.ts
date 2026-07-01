@@ -35,6 +35,7 @@ export interface CollaborationEvent {
  * 管理多人协作会话
  */
 export class CollaborationManager {
+  private maxSessions = 100
   private sessions: Map<string, CollaborationSession> = new Map()
   private currentSessionId: string | null = null
   private eventHandlers: Map<string, ((event: CollaborationEvent) => void)[]> = new Map()

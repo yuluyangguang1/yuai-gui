@@ -66,7 +66,7 @@ export interface Transport {
   buildHeaders(provider: ProviderDef): Record<string, string>
 
   /** 将统一格式转为供应商原生请求体 */
-  formatRequest(req: UnifiedRequest): any
+  formatRequest(req: UnifiedRequest): Record<string, unknown>
 
   /** 将供应商原生响应转为统一格式 */
   parseResponse(raw: Record<string, unknown>): UnifiedResponse
@@ -99,7 +99,7 @@ export class OpenAIChatTransport implements Transport {
     return headers
   }
 
-  formatRequest(req: UnifiedRequest): any {
+  formatRequest(req: UnifiedRequest): Record<string, unknown> {
     return {
       model: req.model,
       messages: req.messages,
@@ -168,12 +168,12 @@ export class AnthropicMessagesTransport implements Transport {
     return headers
   }
 
-  formatRequest(req: UnifiedRequest): any {
+  formatRequest(req: UnifiedRequest): Record<string, unknown> {
     // Anthropic 分离 system 和 messages
     const systemMsgs = req.messages.filter(m => m.role === 'system')
     const nonSystemMsgs = req.messages.filter(m => m.role !== 'system')
 
-    const body: any = {
+    const body: Record<string, unknown> = {
       model: req.model,
       messages: nonSystemMsgs.map(m => ({
         role: m.role === 'tool' ? 'user' : m.role,
@@ -203,15 +203,15 @@ export class AnthropicMessagesTransport implements Transport {
   }
 
   parseResponse(raw: Record<string, unknown>): UnifiedResponse {
-    const textBlock = raw.content?.find((b: any) => b.type === 'text')
-    const toolBlocks = raw.content?.filter((b: any) => b.type === 'tool_use') ?? []
+    const textBlock = raw.content?.find((b: Record<string, unknown>) => b.type === 'text')
+    const toolBlocks = raw.content?.filter((b: Record<string, unknown>) => b.type === 'tool_use') ?? []
 
     return {
       id: raw.id ?? '',
       model: raw.model ?? '',
       content: textBlock?.text ?? null,
       finish_reason: raw.stop_reason ?? null,
-      tool_calls: toolBlocks.map((b: any) => ({
+      tool_calls: toolBlocks.map((b: Record<string, unknown>) => ({
         id: b.id,
         type: 'function' as const,
         function: { name: b.name, arguments: JSON.stringify(b.input) },
@@ -262,7 +262,7 @@ export class CodexResponsesTransport implements Transport {
     return headers
   }
 
-  formatRequest(req: UnifiedRequest): any {
+  formatRequest(req: UnifiedRequest): Record<string, unknown> {
     // Codex Responses API 使用 input 而非 messages
     const input = req.messages.map(m => ({
       role: m.role,
@@ -280,8 +280,8 @@ export class CodexResponsesTransport implements Transport {
 
   parseResponse(raw: Record<string, unknown>): UnifiedResponse {
     // Responses API 的 output 格式
-    const textItem = raw.output?.find((o: any) => o.type === 'message')
-    const content = textItem?.content?.find((c: any) => c.type === 'output_text')
+    const textItem = raw.output?.find((o: Record<string, unknown>) => o.type === 'message')
+    const content = textItem?.content?.find((c: Record<string, unknown>) => c.type === 'output_text')
 
     return {
       id: raw.id ?? '',

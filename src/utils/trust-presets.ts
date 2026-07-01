@@ -39,6 +39,7 @@ export interface AgentTrustConfig {
  * 管理 Agent 的权限和信任级别
  */
 export class TrustPresetManager {
+  private maxPresets = 50
   private presets: Map<string, TrustPreset> = new Map()
   private agentConfigs: Map<string, AgentTrustConfig> = new Map()
 

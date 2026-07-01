@@ -43,6 +43,7 @@ export interface SandboxResult {
  * 管理隔离环境的创建和执行
  */
 export class SandboxManager {
+  private maxInstances = 50
   private instances: Map<string, SandboxInstance> = new Map()
   private config: SandboxConfig
 

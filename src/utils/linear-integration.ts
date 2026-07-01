@@ -212,7 +212,7 @@ export class LinearIntegrationManager {
   }
 
   /** 映射 Issue */
-  private mapIssue(raw: any): LinearIssue {
+  private mapIssue(raw: Record<string, unknown>): LinearIssue {
     return {
       id: raw.id,
       identifier: raw.identifier,
@@ -220,15 +220,15 @@ export class LinearIntegrationManager {
       description: raw.description || '',
       state: raw.state?.name?.toLowerCase() || 'backlog',
       priority: raw.priority?.toLowerCase() || 'none',
-      assignees: raw.assignees?.nodes?.map((a: any) => a.name) || [],
-      labels: raw.labels?.nodes?.map((l: any) => l.name) || [],
+      assignees: raw.assignees?.nodes?.map((a: Record<string, unknown>) => a.name as string) || [],
+      labels: raw.labels?.nodes?.map((l: Record<string, unknown>) => l.name as string) || [],
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,
     }
   }
 
   /** 映射 Project */
-  private mapProject(raw: any): LinearProject {
+  private mapProject(raw: Record<string, unknown>): LinearProject {
     return {
       id: raw.id,
       name: raw.name,

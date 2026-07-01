@@ -65,6 +65,7 @@ export const DEFAULT_ROLES: Role[] = [
  * 基于 RBAC 模型的权限控制
  */
 export class PermissionManager {
+  private maxRoles = 50
   private roles: Map<string, Role> = new Map()
   private userPermissions: Map<string, UserPermission[]> = new Map()
 

@@ -133,7 +133,7 @@ export class CompactionEngine {
         duration_ms: Date.now() - startTime,
         window_id: windowId,
         reason: preResult.reason,
-      } as CompactionResult & { reason: string }
+      reason: preResult.reason } as CompactionResult
     }
 
     const effectiveMessages = preResult.modified_messages ?? messages

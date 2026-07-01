@@ -40,6 +40,7 @@ export interface ShareLink {
  * 管理会话的导入/导出和分享
  */
 export class SessionSharingManager {
+  private maxSessions = 200
   private sharedSessions: Map<string, SharedSession> = new Map()
   private shareLinks: Map<string, ShareLink> = new Map()
 

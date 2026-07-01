@@ -58,7 +58,7 @@ export class SSEClient {
     // 注册自定义事件监听
     for (const [eventName] of this.handlers) {
       if (eventName !== 'message') {
-        this.eventSource.addEventListener(eventName, (event: any) => {
+        this.eventSource.addEventListener(eventName, (event: MessageEvent) => {
           this.dispatchEvent(eventName, {
             data: event.data,
             id: event.lastEventId,
