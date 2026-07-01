@@ -249,7 +249,9 @@ pub fn spawn_agent(
                 let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
                 let codex_dir = home.join(".codex");
                 let _ = std::fs::create_dir_all(&codex_dir);
-                let auth = serde_json::json!({"OPENAI_API_KEY": p.api_key});
+                // Decrypt key if encrypted (cc-switch stores encrypted keys)
+                let plain_key = crate::secure::unseal(&p.api_key).unwrap_or_else(|_| p.api_key.clone());
+                let auth = serde_json::json!({"OPENAI_API_KEY": plain_key});
                 let _ = std::fs::write(codex_dir.join("auth.json"), auth.to_string());
                 if !p.base_url.is_empty() {
                     let model = if p.model.is_empty() { "gpt-5.4" } else { &p.model };
