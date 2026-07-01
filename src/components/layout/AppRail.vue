@@ -126,6 +126,7 @@ import { useWorkspaceStore } from "../../stores/workspace";
 import { TIcon } from "../../utils/tabler-icons";
 import { Plum, Orchid, Bamboo, Chrysanthemum } from "../../utils/agent-icons";
 import type { AgentDef } from "../../stores/agents";
+import { AttentionManager, type AttentionMode } from "../../utils/attention-system";
 
 const emit = defineEmits<{
   "open-settings": [];
@@ -137,6 +138,7 @@ const emit = defineEmits<{
 const agentsStore = useAgentsStore();
 const chatStore = useChatStore();
 const workspace = useWorkspaceStore();
+const attentionManager = new AttentionManager();
 const skillsPanelOpen = ref(false);
 const lanPanelOpen = ref(false);
 

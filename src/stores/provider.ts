@@ -7,6 +7,12 @@ import { defineStore } from 'pinia'
 import { ref, computed, reactive } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { fetchModelsDev, getProviderMeta, getModelMeta, lookupContextLength, type ModelMeta, PROVIDER_TO_MODELS_DEV } from '../utils/models-dev'
+import { resolveModelAlias, getAllAliases } from '../utils/model-aliases-resolve'
+import { getEffortConfig, getEffectiveEffort, type EffortLevel } from '../utils/effort-levels'
+import { CircuitBreaker } from '../utils/circuit-breaker'
+import { getTransport, getTransportForProvider, unifiedChat, unifiedChatStream } from '../utils/transport'
+import { QueueGuard, globalQueueGuard, installQueueGuard } from '../utils/queue-guard'
+import { EFFORT_PRESETS, formatEffort } from '../utils/effort-levels'
 
 // ══════════════════════════════════════════════
 // Types
@@ -258,6 +264,15 @@ export const useProviderStore = defineStore('provider', () => {
   const credentialPools = reactive<Map<string, CredentialEntry[]>>(new Map())
   const fallbackChain = ref<FallbackEntry[]>([])
   const EXHAUSTED_TTL = 3600_000 // 1h 冷却 (参考 Hermes)
+  // ─── Effort Level ───
+  const currentEffort = ref<EffortLevel>(getEffectiveEffort())
+
+  // ─── Circuit Breaker (provider failure isolation) ───
+  const circuitBreaker = new CircuitBreaker()
+
+  // ─── Queue Guard (install global rate-limiting fetch) ───
+  installQueueGuard({ enabled: true, max_concurrent: 3, max_wait_ms: 120_000 })
+
 
   // 当前激活的供应商和模型
   const activeProviderId = ref<string>('openai')
@@ -435,13 +450,20 @@ export const useProviderStore = defineStore('provider', () => {
         apiKey: provider.api_key ?? '',
         appType: providerId,
       })
-      provider.status = result.includes('成功') || result.includes('connected') ? 'connected' : 'error'
+      const success = result.includes('成功') || result.includes('connected')
+      provider.status = success ? 'connected' : 'error'
+      if (success) {
+        circuitBreaker.recordSuccess(providerId)
+      } else {
+        circuitBreaker.recordFailure(providerId, result)
+      }
       provider.error_message = provider.status === 'error' ? result : undefined
       provider.last_tested = Date.now()
       return provider.status === 'connected'
     } catch (e) {
       provider.status = 'error'
       provider.error_message = String(e)
+      circuitBreaker.recordFailure(providerId, String(e))
       return false
     }
   }
@@ -581,6 +603,68 @@ export const useProviderStore = defineStore('provider', () => {
   // 初始化
   loadFromStorage()
 
+  // Effort level management
+  function setEffort(level: EffortLevel) { currentEffort.value = level }
+  function getEffort() { return getEffortConfig(currentEffort.value) }
+  function cycleEffort() {
+    const levels: EffortLevel[] = ['low', 'medium', 'high', 'xhigh', 'max']
+    const idx = levels.indexOf(currentEffort.value)
+    currentEffort.value = levels[(idx + 1) % levels.length]
+  }
+
+  // ─── Transport-aware send (uses transport + circuit breaker) ───
+  async function sendChat(
+    request: import('../utils/transport').UnifiedRequest,
+  ): Promise<import('../utils/transport').UnifiedResponse> {
+    const provider = activeProvider.value
+    if (!provider) throw new Error('No active provider')
+
+    // Circuit breaker check
+    if (!circuitBreaker.canExecute(provider.id)) {
+      const remaining = circuitBreaker.getRemainingCooldown(provider.id)
+      throw new Error(`Circuit breaker open for ${provider.id}, cooldown ${Math.ceil(remaining / 1000)}s`)
+    }
+
+    // Resolve alias if request model looks like an alias
+    const aliasResult = resolveAliasEnhanced(request.model)
+    if (aliasResult) {
+      request = { ...request, model: aliasResult.model_id }
+    }
+
+    try {
+      const resp = await unifiedChat(provider, request)
+      circuitBreaker.recordSuccess(provider.id)
+      return resp
+    } catch (e) {
+      circuitBreaker.recordFailure(provider.id, String(e))
+      throw e
+    }
+  }
+
+  /** Get transport for a given provider */
+  function getProviderTransport(providerId: string) {
+    const provider = allProviders.value.find(p => p.id === providerId)
+    return provider ? getTransportForProvider(provider) : null
+  }
+
+  /** Get circuit breaker states for UI display */
+  function getCircuitBreakerStates() {
+    return circuitBreaker.getAllStates()
+  }
+
+  /** Format current effort for display */
+  function formatCurrentEffort(): string {
+    return formatEffort(currentEffort.value)
+  }
+
+  // Enhanced alias resolution (uses model-aliases-resolve)
+  function resolveAliasEnhanced(input: string): { provider_id: string; model_id: string } | null {
+    const allModels = models.value.map(m => ({ id: m.id, provider_id: m.provider_id }))
+    const result = resolveModelAlias(input, allModels)
+    if (result) return { provider_id: result.provider_id, model_id: result.resolved_model_id }
+    return null
+  }
+
   return {
     // State
     providers,
@@ -614,7 +698,20 @@ export const useProviderStore = defineStore('provider', () => {
     switchByAlias,
     discoverModels,
     syncModelsDev,
+    currentEffort,
+    setEffort,
+    getEffort,
+    cycleEffort,
+    resolveAliasEnhanced,
+    circuitBreaker,
     saveToStorage,
     loadFromStorage,
+    sendChat,
+    getProviderTransport,
+    getCircuitBreakerStates,
+    formatCurrentEffort,
+    globalQueueGuard,
+    unifiedChat,
+    unifiedChatStream,
   }
 })

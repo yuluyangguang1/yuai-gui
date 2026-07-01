@@ -45,6 +45,7 @@ import { invoke, Channel } from "@tauri-apps/api/core";
 import { useSettingsStore } from "../stores/settings";
 import { useWorkspaceStore } from "../stores/workspace";
 import { extractPaths } from "../composables/usePathResolver";
+import { TerminalBufferManager, FrameBudgetDrainer } from "../utils/terminal-buffer";
 
 const props = defineProps<{
   agentId: string;
@@ -61,6 +62,10 @@ const emit = defineEmits<{
 const settings = useSettingsStore();
 const workspace = useWorkspaceStore();
 const terminalEl = ref<HTMLElement | null>(null);
+const bufferManager = new TerminalBufferManager();
+const drainer = new FrameBudgetDrainer((taskId, data) => {
+  if (terminal) terminal.write(data);
+});
 const isDragOver = ref(false);
 const currentCwd = ref<string>(props.cwd ?? "");
 

@@ -228,8 +228,14 @@ import AgentBrowser from "./AgentBrowser.vue";
 import type { AgentDef } from "../stores/agents";
 import type { SlashCommand } from "../utils/slash-commands";
 import { analyzePrompt, autoEnhancePrompt, type PromptSuggestion } from "../utils/prompt-enhancer";
+import { AttentionManager } from "../utils/attention-system";
+import { HookManager, createLoggingHook, createNotificationHook } from "../utils/hook-events";
 
 const chatStore = useChatStore();
+const attentionManager = new AttentionManager();
+const hookManager = new HookManager();
+hookManager.register(createLoggingHook());
+hookManager.register(createNotificationHook());
 const agentsStore = useAgentsStore();
 const providerStore = useProviderStore();
 const promptStore = usePromptStore();
@@ -1119,3 +1125,7 @@ watch(
   color: var(--vermilion-glow);
 }
 </style>
+import { AttentionManager, type AttentionMode } from "../utils/attention-system";
+import { CompactionEngine, createToolOutputTrimHook } from "../utils/compaction";
+import { TokenBudgetManager, loadBudgets } from "../utils/token-budget";
+import { HookManager, createLoggingHook, createNotificationHook } from "../utils/hook-events";
