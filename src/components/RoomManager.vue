@@ -6,8 +6,7 @@
     </div>
     <div class="room-agents">
       <div
-        v-for="agent in groupAgents"
-        :key="agent.id"
+        v-for="agent in groupAgents" :key="agent.id"
         class="room-agent"
       >
         <span class="room-agent-dot" :style="{ background: agent.color }" />
@@ -164,7 +163,7 @@ async function kickAgent(agentId: string) {
 }
 
 .room-agent-status.busy {
-  color: #e0b0ff;
+  color: var(--gold);
   background: rgba(224, 176, 255, 0.15);
   animation: pulse 1.5s ease-in-out infinite;
 }
@@ -214,7 +213,7 @@ async function kickAgent(agentId: string) {
 
 .room-add-btn {
   background: rgba(224, 176, 255, 0.15);
-  color: var(--gold, #e0b0ff);
+  color: var(--gold, var(--gold));
   border: 1px solid rgba(224, 176, 255, 0.2);
   border-radius: 4px;
   padding: 4px 10px;

@@ -31,8 +31,7 @@
     <!-- File List -->
     <div class="mad-file-list">
       <div
-        v-for="file in fileConflicts"
-        :key="file.filePath"
+        v-for="file in fileConflicts" :key="file.path"
         class="mad-file-item"
         :class="{ 'has-conflict': file.hasConflict, 'is-selected': selectedFile === file.filePath }"
         @click="selectedFile = file.filePath"

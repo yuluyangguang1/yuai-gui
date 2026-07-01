@@ -211,9 +211,9 @@ onMounted(() => store.fetchPending());
 }
 .wg-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.wg-btn-approve { border-color: rgba(34, 197, 94, 0.4); color: #22c55e; }
+.wg-btn-approve { border-color: rgba(92, 207, 184, 0.3); color: var(--accent); }
 .wg-btn-approve:hover:not(:disabled) { background: rgba(34, 197, 94, 0.15); }
 
-.wg-btn-reject { border-color: rgba(239, 68, 68, 0.4); color: #ef4444; }
+.wg-btn-reject { border-color: rgba(239, 68, 68, 0.3); color: var(--error); }
 .wg-btn-reject:hover:not(:disabled) { background: rgba(239, 68, 68, 0.15); }
 </style>

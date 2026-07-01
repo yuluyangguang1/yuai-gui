@@ -250,11 +250,11 @@ onConnect((edge: Connection) => {
 }
 .workflow-toolbar button.danger {
   background: rgba(255, 70, 70, 0.1);
-  color: #ff6b6b;
+  color: var(--error);
 }
 .workflow-toolbar button.primary {
   background: var(--accent-primary, #5ccfb8);
-  color: #0a0912;
+  color: var(--text-inverse);
   font-weight: 700;
 }
 .badge {
@@ -262,7 +262,7 @@ onConnect((edge: Connection) => {
   align-self: center;
   font-size: 11px;
   color: var(--text-secondary, #8b8d98);
-  background: var(--bg-canvas, #0a0912);
+  background: var(--bg-canvas, var(--text-inverse));
   border: 1px solid var(--accent-border, #1f212a);
   border-radius: 999px;
   padding: 4px 10px;
@@ -276,7 +276,7 @@ onConnect((edge: Connection) => {
   gap: 12px;
 }
 .error-text {
-  color: #ff6b6b;
+  color: var(--error);
 }
 .custom-node {
   background: var(--bg-panel-elevated, #13141a);
@@ -299,7 +299,7 @@ select,
 textarea,
 input {
   width: 100%;
-  background: var(--bg-input, #0a0912);
+  background: var(--bg-input, var(--text-inverse));
   color: var(--text-primary, #e6e8ef);
   border: 1px solid var(--accent-border, #1f212a);
   border-radius: 6px;
@@ -347,9 +347,9 @@ input {
 }
 .ctx-item:hover {
   background: var(--accent-primary, #5ccfb8);
-  color: #0a0912;
+  color: var(--text-inverse);
 }
 .ctx-item.danger:hover {
-  background: #ff6b6b;
+  background: var(--error);
 }
 </style>

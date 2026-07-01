@@ -3,8 +3,7 @@
     <div class="toast-container" role="status" aria-live="polite" aria-label="通知">
       <TransitionGroup name="toast-slide">
         <div
-          v-for="toast in toasts"
-          :key="toast.id"
+          v-for="toast in toasts" :key="toast.id"
           class="toast-item"
           :class="'toast-' + toast.type"
           @click="dismiss(toast.id)"
@@ -83,7 +82,7 @@ const icons: Record<ToastType, string> = {
 
 .toast-success .toast-icon {
   background: rgba(92, 207, 184, 0.2);
-  color: #5ccfb8;
+  color: var(--accent);
 }
 
 .toast-error .toast-icon {
@@ -102,7 +101,7 @@ const icons: Record<ToastType, string> = {
 }
 
 .toast-success {
-  border-left: 3px solid #5ccfb8;
+  border-left: 3px solid var(--accent);
 }
 
 .toast-error {

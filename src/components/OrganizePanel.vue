@@ -12,8 +12,7 @@
       </div>
       <div v-if="organizeStore.preferences.length" class="organize-prefs">
         <div
-          v-for="(pref, i) in organizeStore.preferences"
-          :key="i"
+          v-for="(pref, i) in organizeStore.preferences" :key="i"
           class="organize-pref-tag"
         >
           <span>{{ pref }}</span>
@@ -40,8 +39,7 @@
       </div>
       <div v-if="organizeStore.history.length" class="organize-history">
         <div
-          v-for="(entry, i) in organizeStore.history"
-          :key="i"
+          v-for="(entry, i) in organizeStore.history" :key="i"
           class="organize-history-item"
         >
           <span class="organize-history-time">{{ formatTime(entry.timestamp) }}</span>

@@ -14,8 +14,7 @@
         </div>
         <div class="suggest-list" ref="commandListRef">
           <div
-            v-for="(item, index) in commandState.items"
-            :key="item.name"
+            v-for="(item, index) in commandState.items" :key="index"
             class="suggest-item"
             :class="{ active: index === commandState.selectedIndex }"
             @click="selectCommand(item)"
@@ -51,8 +50,7 @@
         </div>
         <div class="suggest-list">
           <div
-            v-for="(item, index) in flagState.items"
-            :key="item.name"
+            v-for="(item, index) in flagState.items" :key="index"
             class="suggest-item"
             :class="{ active: index === flagState.selectedIndex }"
             @click="selectFlag(item)"
@@ -81,8 +79,7 @@
         </div>
         <div class="suggest-list">
           <div
-            v-for="(sub, index) in subState.items"
-            :key="sub"
+            v-for="(sub, index) in subState.items" :key="index"
             class="suggest-item"
             :class="{ active: index === subState.selectedIndex }"
             @click="selectSubcommand(sub)"
