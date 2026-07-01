@@ -181,7 +181,7 @@ onUnmounted(() => { document.removeEventListener('click', handleClickOutside); }
 }
 
 .switcher-trigger:hover {
-  border-color: var(--accent, #50c878);
+  border-color: var(--accent, var(--accent));
   background: var(--bg-hover, #252525);
 }
 
@@ -200,8 +200,8 @@ onUnmounted(() => { document.removeEventListener('click', handleClickOutside); }
   border-radius: 50%;
 }
 
-.trigger-status.connected { background: #50c878; }
-.trigger-status.error { background: #ff6464; }
+.trigger-status.connected { background: var(--accent); }
+.trigger-status.error { background: var(--error); }
 .trigger-status.unknown { background: #888; }
 
 .trigger-arrow {
@@ -249,7 +249,7 @@ onUnmounted(() => { document.removeEventListener('click', handleClickOutside); }
   background: rgba(80, 200, 120, 0.1);
   border: 1px solid rgba(80, 200, 120, 0.3);
   border-radius: 4px;
-  color: #50c878;
+  color: var(--accent);
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -278,7 +278,7 @@ onUnmounted(() => { document.removeEventListener('click', handleClickOutside); }
 
 .provider-item.active {
   background: rgba(80, 200, 120, 0.08);
-  border-left: 3px solid var(--accent, #50c878);
+  border-left: 3px solid var(--accent, var(--accent));
 }
 
 .provider-icon {
@@ -315,8 +315,8 @@ onUnmounted(() => { document.removeEventListener('click', handleClickOutside); }
   border-radius: 50%;
 }
 
-.status-dot.connected { background: #50c878; }
-.status-dot.error { background: #ff6464; }
+.status-dot.connected { background: var(--accent); }
+.status-dot.error { background: var(--error); }
 .status-dot.unknown { background: #666; }
 
 .test-single-btn {

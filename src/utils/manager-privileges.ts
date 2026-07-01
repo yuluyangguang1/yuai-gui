@@ -169,10 +169,10 @@ export class Manager {
     }
     this.spawnLedger.get(spawnedBy)!.push(process.id)
 
-    // 模拟启动完成
+    // 模拟启动完成 (检查是否已被停止)
     setTimeout(() => {
       const p = this.processes.get(process.id)
-      if (p) p.status = 'running'
+      if (p && p.status === 'starting') p.status = 'running'
     }, 100)
 
     return { success: true, process }

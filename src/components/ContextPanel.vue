@@ -138,7 +138,7 @@ async function handleCompress() {
 }
 
 .context-progress-fill.warning {
-  background: #c9a85c;
+  background: var(--gold);
 }
 
 .context-progress-fill.danger {

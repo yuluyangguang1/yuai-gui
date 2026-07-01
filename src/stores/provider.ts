@@ -389,7 +389,7 @@ export const useProviderStore = defineStore('provider', () => {
 
     // 选择租借数最少的
     const chosen = available.reduce((min, c) => {
-      const minLeases = activeLeases.get(c.api_key) ?? 0
+      const minLeases = activeLeases.get(min.api_key) ?? 0
       const curLeases = activeLeases.get(c.api_key) ?? 0
       return curLeases < minLeases ? c : min
     }, available[0])
@@ -415,7 +415,7 @@ export const useProviderStore = defineStore('provider', () => {
 
   function addToFallback(providerId: string, modelId?: string) {
     if (!fallbackChain.value.find(f => f.provider_id === providerId)) {
-      fallbackChain.value.push({ provider_id: provider_id, model_id: modelId })
+      fallbackChain.value.push({ provider_id: providerId, model_id: modelId })
     }
   }
 

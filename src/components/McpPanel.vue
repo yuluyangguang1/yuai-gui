@@ -177,11 +177,11 @@ async function addServer() {
   height: 6px;
   border-radius: 50%;
 }
-.mcp-dot-connected { background: #22c55e; }
-.mcp-dot-disconnected { background: #ef4444; }
+.mcp-dot-connected { background: var(--accent); }
+.mcp-dot-disconnected { background: var(--error); }
 
 .mcp-error {
-  color: #ef4444;
+  color: var(--error);
   font-size: 0.72rem;
   background: rgba(239, 68, 68, 0.1);
   padding: 6px 10px;
@@ -223,8 +223,8 @@ async function addServer() {
   border-radius: 50%;
   flex-shrink: 0;
 }
-.mcp-status-dot.connected { background: #22c55e; }
-.mcp-status-dot.disconnected { background: #ef4444; }
+.mcp-status-dot.connected { background: var(--accent); }
+.mcp-status-dot.disconnected { background: var(--error); }
 .mcp-status-dot.disabled { background: var(--text-muted); }
 
 .mcp-srv-name {
@@ -257,13 +257,13 @@ async function addServer() {
   margin-top: 2px;
   padding-left: 15px;
 }
-.mcp-status-connected { color: #22c55e; }
-.mcp-status-disconnected { color: #ef4444; }
+.mcp-status-connected { color: var(--accent); }
+.mcp-status-disconnected { color: var(--error); }
 .mcp-status-disabled { color: var(--text-muted); }
 
 .mcp-srv-error {
   font-size: 0.65rem;
-  color: #ef4444;
+  color: var(--error);
   padding-left: 15px;
   margin-top: 2px;
 }
@@ -330,7 +330,7 @@ async function addServer() {
 .mcp-btn:hover { border-color: var(--accent); }
 .mcp-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.mcp-btn-remove { color: #ef4444; border-color: rgba(239, 68, 68, 0.3); }
+.mcp-btn-remove { color: var(--error); border-color: rgba(239, 68, 68, 0.3); }
 .mcp-btn-remove:hover { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.5); }
 
 .mcp-add-section {

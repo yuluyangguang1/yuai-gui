@@ -32,8 +32,8 @@ const props = defineProps<{
 const STATUS_COLORS: Record<string, string> = {
   idle: '',
   running: 'var(--accent)',
-  done: '#9ece6a',
-  failed: '#f7768e',
+  done: 'var(--accent)',
+  failed: 'var(--error)',
 };
 
 const kindGlyphs: Record<string, string> = {
@@ -181,8 +181,8 @@ const cssClass = computed(
   background: var(--accent);
   animation: pulse 1s ease-in-out infinite;
 }
-.node-status-dot.done { background: #9ece6a; }
-.node-status-dot.failed { background: #f7768e; }
+.node-status-dot.done { background: var(--accent); }
+.node-status-dot.failed { background: var(--error); }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
@@ -236,8 +236,8 @@ const cssClass = computed(
   font-size: 10px;
   margin-top: 2px;
 }
-.cond-true { color: #9ece6a; }
-.cond-false { color: #f7768e; }
+.cond-true { color: var(--accent); }
+.cond-false { color: var(--error); }
 
 .output-placeholder {
   font-size: 11px;

@@ -123,18 +123,18 @@ export class ManifestManager {
       })
     }
 
-    // 从频道反转
-    for (const [, channelDef] of Object.entries(manifest.channels)) {
+    // 从频道反转 (频道名 → 每 Agent 权限)
+    for (const [channelName, channelDef] of Object.entries(manifest.channels)) {
       for (const agentName of channelDef.subscribe) {
         const agent = result.get(agentName)
-        if (agent && !agent.subscribes.includes(channelDef.subscribe[0])) {
-          agent.subscribes.push(...channelDef.subscribe.filter(s => !agent.subscribes.includes(s)))
+        if (agent && !agent.subscribes.includes(channelName)) {
+          agent.subscribes.push(channelName)
         }
       }
       for (const agentName of channelDef.allowPublish) {
         const agent = result.get(agentName)
-        if (agent && !agent.canPublish.includes(agentName)) {
-          agent.canPublish.push(...channelDef.allowPublish.filter(p => !agent.canPublish.includes(p)))
+        if (agent && !agent.canPublish.includes(channelName)) {
+          agent.canPublish.push(channelName)
         }
       }
     }
