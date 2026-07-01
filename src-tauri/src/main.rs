@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    yuai_gui_lib::run()
+    yuai_lib::run()
 }
