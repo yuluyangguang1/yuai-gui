@@ -50,7 +50,7 @@
           <input
             v-model="modelSearch"
             class="model-search"
-            placeholder="搜索模型... (支持别名如 sonnet, gpt5, mimo)"
+            aria-label="搜索模型" placeholder="搜索模型... (支持别名如 sonnet, gpt5, mimo)"
           />
           <div class="model-chips">
             <button
@@ -75,7 +75,7 @@
         <label><TIcon name="key" :size="14" /> 密钥</label>
         <input v-model="apiKey" type="password" placeholder="sk-..." />
         <label><TIcon name="cpu" :size="14" /> 模型</label>
-        <input v-model="model" type="text" placeholder="模型名称 (支持别名: sonnet, gpt5, mimo)" @input="onModelInput" />
+        <input v-model="model" type="text" aria-label="模型名称" placeholder="模型名称 (支持别名: sonnet, gpt5, mimo)" @input="onModelInput" />
         <div class="settings-actions">
           <button class="save-btn" @click="save"><TIcon name="check" :size="14" /> 保存</button>
           <button class="test-btn" @click="testConn" :disabled="testing">

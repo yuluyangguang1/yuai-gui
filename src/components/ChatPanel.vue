@@ -654,9 +654,9 @@ watch(
 
 .load-more-btn {
   padding: 4px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-light);
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-surface);
   color: var(--text-muted, #565f89);
   font-size: 11px;
   cursor: pointer;
@@ -664,7 +664,7 @@ watch(
 }
 
 .load-more-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg-active);
   color: var(--silver, #a9b1d6);
 }
 
@@ -696,32 +696,32 @@ watch(
 
 .chat-agent-status.status-idle {
   background: rgba(136,136,136,0.15);
-  color: #888;
+  color: var(--silver);
 }
 
 .chat-agent-status.status-running {
-  background: rgba(76,175,80,0.15);
-  color: #4caf50;
+  background: rgba(92,207,184,0.15);
+  color: var(--accent);
 }
 
 .chat-agent-status.status-error {
-  background: rgba(244,67,54,0.15);
-  color: #f44336;
+  background: rgba(239,68,68,0.15);
+  color: var(--error);
 }
 
 .chat-agent-status.status-disabled {
-  background: rgba(136,136,136,0.1);
-  color: #666;
+  background: var(--bg-active);
+  color: var(--silver);
 }
 
 .chat-agent-status.status-group {
-  background: rgba(224,176,255,0.1);
+  background: rgba(201,168,92,0.1);
   color: var(--gold, #e0b0ff);
 }
 
 .chat-phase {
   font-size: 11px;
-  color: var(--text-muted, #888);
+  color: var(--text-muted, var(--silver));
   margin-left: auto;
   display: flex;
   align-items: center;
@@ -740,10 +740,10 @@ watch(
 }
 
 .room-toggle-btn {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-active);
   border: 1px solid var(--border);
   border-radius: 4px;
-  color: var(--text-muted, #888);
+  color: var(--text-muted, var(--silver));
   font-size: 11px;
   padding: 2px 8px;
   cursor: pointer;
@@ -808,7 +808,7 @@ watch(
 
 .chat-msg-meta {
   font-size: 11px;
-  color: var(--text-muted, #888);
+  color: var(--text-muted, var(--silver));
 }
 
 .chat-msg-bubble {
@@ -827,20 +827,20 @@ watch(
 }
 
 .chat-message.assistant .chat-msg-bubble {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-active);
 }
 
 .chat-message.system .chat-msg-bubble {
-  background: rgba(255, 165, 0, 0.08);
-  color: var(--text-muted, #888);
+  background: rgba(201,168,92,0.08);
+  color: var(--text-muted, var(--silver));
   font-size: 12px;
   text-align: center;
 }
 
 /* Streaming message styles */
 .streaming-bubble {
-  border: 1px solid rgba(224, 176, 255, 0.2);
-  background: rgba(224, 176, 255, 0.06);
+  border: 1px solid rgba(201,168,92,0.2);
+  background: rgba(201,168,92,0.06);
 }
 
 .typing-indicator {
@@ -872,7 +872,7 @@ watch(
   align-items: center;
   justify-content: center;
   gap: 8px;
-  color: var(--text-muted, #888);
+  color: var(--text-muted, var(--silver));
 }
 
 .chat-empty-glyph {
@@ -907,7 +907,7 @@ watch(
 
 .mention-item:hover,
 .mention-item.active {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--bg-active);
 }
 
 .mention-glyph {
@@ -919,7 +919,7 @@ watch(
 }
 
 .mention-chinese {
-  color: var(--text-muted, #888);
+  color: var(--text-muted, var(--silver));
   font-size: 12px;
 }
 
@@ -938,7 +938,7 @@ watch(
 
 .chat-input {
   flex: 1;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-active);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 12px;
@@ -1015,7 +1015,7 @@ watch(
   background: var(--bg-surface);
   border: 1px solid var(--border-light);
   border-radius: 12px;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 -4px 20px var(--shadow-1, rgba(0,0,0,0.3));
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -1073,9 +1073,9 @@ watch(
 }
 
 .abort-btn {
-  background: rgba(255, 80, 80, 0.15);
+  background: rgba(239,68,68,0.15);
   color: var(--vermilion-glow);
-  border: 1px solid rgba(255, 80, 80, 0.3);
+  border: 1px solid rgba(239,68,68,0.3);
   border-radius: 6px;
   padding: 6px 20px;
   font-size: 12px;
@@ -1084,7 +1084,7 @@ watch(
 }
 
 .abort-btn:hover {
-  background: rgba(255, 80, 80, 0.25);
+  background: rgba(239,68,68,0.25);
 }
 
 /* Decision panel */
@@ -1126,13 +1126,13 @@ watch(
 }
 
 .decision-btn.reject {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text-muted, #888);
+  background: var(--bg-active);
+  color: var(--text-muted, var(--silver));
   border: 1px solid var(--border);
 }
 
 .decision-btn.reject:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--border-light);
 }
 
 .decision-content {
@@ -1146,7 +1146,7 @@ watch(
 .exec-spinner {
   width: 20px;
   height: 20px;
-  border: 2px solid rgba(224, 176, 255, 0.2);
+  border: 2px solid rgba(201,168,92,0.2);
   border-top-color: var(--gold, #e0b0ff);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;

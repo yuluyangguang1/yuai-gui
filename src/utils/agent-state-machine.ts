@@ -33,6 +33,7 @@ const VALID_TRANSITIONS: Record<AgentState, AgentState[]> = {
 export class AgentStateMachine {
   private state: AgentState = 'idle'
   private history: AgentStateTransition[] = []
+  private maxHistory = 500
   private agentId: string
   private onStateChange?: (transition: AgentStateTransition) => void
   private onError?: (error: Error) => void

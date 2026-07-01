@@ -21,7 +21,7 @@
       >
         <TIcon name="eye" :size="14" /> {{ isFollowing ? '跟踪中' : '跟踪' }}
       </button>
-      <button class="terminal-close-btn" title="关闭终端" @click="handleClose"><TIcon name="close" :size="14" /></button>
+      <button class="terminal-close-btn" title="关闭终端" aria-label="关闭终端" @click="handleClose"><TIcon name="close" :size="14" /></button>
     </div>
     <div
       ref="terminalEl"
@@ -354,7 +354,7 @@ onBeforeUnmount(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
   padding: 1px 6px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--bg-active);
   border-radius: 3px;
 }
 </style>

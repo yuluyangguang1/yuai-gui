@@ -80,6 +80,7 @@ export class CompactionEngine {
   private config: CompactionConfig
   private hooks: CompactionHook[] = []
   private history: CompactionResult[] = []
+  private maxHistory = 100
   private window_counter = 0
 
   constructor(config: Partial<CompactionConfig> = {}) {

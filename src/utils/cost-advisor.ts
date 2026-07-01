@@ -34,6 +34,7 @@ export interface BudgetConfig {
  */
 export class CostAdvisor {
   private records: CostRecord[] = []
+  private maxRecords = 1000
   private pricing: Map<string, ModelPricing> = new Map()
   private budget: BudgetConfig
 

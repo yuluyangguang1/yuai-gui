@@ -270,10 +270,10 @@ function handleAgentClick(agent: AgentDef) {
 
 @keyframes pulse-green {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4);
+    box-shadow: 0 0 0 0 rgba(92,207,184,0.4);
   }
   50% {
-    box-shadow: 0 0 4px 2px rgba(76, 175, 80, 0.2);
+    box-shadow: 0 0 4px 2px rgba(92,207,184,0.2);
   }
 }
 
@@ -310,7 +310,7 @@ function handleAgentClick(agent: AgentDef) {
   right: 2px;
   font-size: 9px;
   background: var(--vermilion-glow, #ff5050);
-  color: #fff;
+  color: var(--text-primary);
   border-radius: 50%;
   min-width: 14px;
   height: 14px;
