@@ -59,7 +59,7 @@ impl LanDiscoveryService {
     }
 
     pub fn devices(&self) -> Vec<LanDevice> {
-        let guard = self.state.lock().unwrap();
+        let guard = self.state.lock().unwrap_or_else(|e| e.into_inner());
         let Some(state) = guard.as_ref() else { return Vec::new() };
         let now = Instant::now();
         let mut out: Vec<LanDevice> = state.devices.iter().map(|(_, (dev, seen))| {
@@ -73,13 +73,13 @@ impl LanDiscoveryService {
     }
 
     pub fn start_scan(&self) {
-        let mut guard = self.state.lock().unwrap();
+        let mut guard = self.state.lock().unwrap_or_else(|e| e.into_inner());
         let state = guard.get_or_insert_with(LanDiscoveryState::default);
         state.scanning = true;
     }
 
     pub fn stop_scan(&self) {
-        let mut guard = self.state.lock().unwrap();
+        let mut guard = self.state.lock().unwrap_or_else(|e| e.into_inner());
         if let Some(state) = guard.as_mut() {
             state.scanning = false;
             state.devices.clear();
@@ -89,7 +89,7 @@ impl LanDiscoveryService {
 
     #[allow(dead_code)]
     pub fn upsert_device(&self, device: LanDevice) {
-        let mut guard = self.state.lock().unwrap();
+        let mut guard = self.state.lock().unwrap_or_else(|e| e.into_inner());
         let state = guard.get_or_insert_with(LanDiscoveryState::default);
         state.devices.entry(device.device_id.clone()).and_modify(|(d, t)| {
             *d = device.clone();
@@ -119,7 +119,7 @@ impl LanDiscoveryService {
         }
 
         {
-            let mut guard = self.state.lock().unwrap();
+            let mut guard = self.state.lock().unwrap_or_else(|e| e.into_inner());
             if let Some(state) = guard.as_mut() {
                 if let Some((d, _)) = state.devices.get_mut(&req.device_id) {
                     d.paired = true;

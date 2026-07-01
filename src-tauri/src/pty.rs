@@ -112,7 +112,7 @@ pub fn pty_spawn(
     let session = Arc::new(PtySession { writer, killer, master, pid });
     // Clone Arc BEFORE inserting — avoids TOCTOU race (H4)
     // M6: try_clone_reader before inserting so failure doesn't orphan session
-    let mut reader = session.master.lock().unwrap().try_clone_reader().map_err(|e| e.to_string())?;
+    let mut reader = session.master.lock().unwrap_or_else(|e| e.into_inner()).try_clone_reader().map_err(|e| e.to_string())?;
     state.sessions.write().unwrap().insert(id, session.clone());
 
     // Clone sessions Arc for cleanup in reader thread
@@ -151,7 +151,7 @@ pub fn pty_spawn(
 pub fn pty_write(state: tauri::State<AppState>, id: u32, data: String) -> Result<(), String> {
     let sessions = state.sessions.read().unwrap();
     let session = sessions.get(&id).ok_or("session not found")?;
-    let mut writer = session.writer.lock().unwrap();
+    let mut writer = session.writer.lock().unwrap_or_else(|e| e.into_inner());
     writer
         .write_all(data.as_bytes())
         .map_err(|e| e.to_string())?;
@@ -164,7 +164,7 @@ pub fn pty_write(state: tauri::State<AppState>, id: u32, data: String) -> Result
 pub fn pty_resize(state: tauri::State<AppState>, id: u32, cols: u16, rows: u16) -> Result<(), String> {
     let sessions = state.sessions.read().unwrap();
     let session = sessions.get(&id).ok_or("session not found")?;
-    let master = session.master.lock().unwrap();
+    let master = session.master.lock().unwrap_or_else(|e| e.into_inner());
     master.resize(PtySize { rows, cols, pixel_width: 0, pixel_height: 0 })
         .map_err(|e| format!("resize failed: {}", e))?;
     Ok(())
@@ -282,7 +282,7 @@ pub fn spawn_agent(
     let session = Arc::new(PtySession { writer, killer, master, pid });
     // Clone Arc BEFORE inserting — avoids TOCTOU race (H4)
     // H4+M6: Clone reader BEFORE inserting, clone Arc for insert
-    let mut reader = session.master.lock().unwrap().try_clone_reader().map_err(|e| e.to_string())?;
+    let mut reader = session.master.lock().unwrap_or_else(|e| e.into_inner()).try_clone_reader().map_err(|e| e.to_string())?;
     state.sessions.write().unwrap().insert(id, session.clone());
 
     // Clone sessions Arc for cleanup in reader thread

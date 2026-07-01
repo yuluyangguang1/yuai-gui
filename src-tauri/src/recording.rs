@@ -124,7 +124,7 @@ pub fn start_recording(state: &RecordingState, session_id: u32, width: u16, heig
 
 /// Stop recording for a session — flushes and closes the file.
 pub fn stop_recording(state: &RecordingState, session_id: u32) {
-    if let Some(rec) = state.active.lock().unwrap().remove(&session_id) {
+    if let Some(rec) = state.active.lock().unwrap_or_else(|e| e.into_inner()).remove(&session_id) {
         if let Ok(mut r) = rec.lock() {
             let _ = r.file.flush();
         }

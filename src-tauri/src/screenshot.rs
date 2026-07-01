@@ -194,7 +194,7 @@ pub fn start_screenshot_watcher(app: AppHandle) {
 
                         // Deduplicate
                         {
-                            let mut recent = recent_inner.lock().unwrap();
+                            let mut recent = recent_inner.lock().unwrap_or_else(|e| e.into_inner());
                             let now = Instant::now();
                             recent.retain(|(_, t)| now.duration_since(*t) < Duration::from_secs(3));
                             if recent.iter().any(|(p, _)| *p == path_str) {
