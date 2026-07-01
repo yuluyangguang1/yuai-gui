@@ -63,6 +63,8 @@
           <OrganizePanel v-else-if="previewMode === 'organize'" />
           <SettingsPanel v-else-if="previewMode === 'settings'" />
           <AccountPanel v-else-if="previewMode === 'account'" />
+          <TaskPanel v-else-if="previewMode === 'task'" />
+          <SpecPanel v-else-if="previewMode === 'spec'" />
           <SkillsPanel v-else-if="previewMode === 'skills'" />
           <WriteGatePanel v-else-if="previewMode === 'write-gate'" />
           <KanbanBoard v-else-if="previewMode === 'kanban'" />
@@ -93,6 +95,8 @@ import ChatPanel from "./components/ChatPanel.vue";
 import DiffViewer from "./components/DiffViewer.vue";
 import SettingsPanel from "./components/SettingsPanel.vue";
 import AccountPanel from "./components/AccountPanel.vue";
+import TaskPanel from "./components/TaskPanel.vue";
+import SpecPanel from "./components/SpecPanel.vue";
 import OrganizePanel from "./components/OrganizePanel.vue";
 import SkillsPanel from "./components/SkillsPanel.vue";
 import DevicesPanel from "./components/DevicesPanel.vue";
@@ -154,6 +158,8 @@ const previewTabs: { id: PreviewMode; label: string; icon: string }[] = [
   { id: 'skills', label: '技能', icon: 'wand' },
   { id: 'write-gate', label: '写入', icon: 'shield' },
   { id: 'kanban', label: '看板', icon: 'layoutKanban' },
+  { id: 'task', label: '任务', icon: 'listCheck' },
+  { id: 'spec', label: '规格', icon: 'fileCode' },
   { id: 'mcp', label: 'MCP', icon: 'plug' },
   { id: 'workflow', label: '工作流', icon: 'schema' },
   { id: 'hardware', label: '硬件', icon: 'cpu' },
