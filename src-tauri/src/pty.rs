@@ -282,11 +282,11 @@ pub fn spawn_agent(
     let master = Mutex::new(pair.master);
     let session = Arc::new(PtySession { writer, killer, master, pid });
 
-    // Auto-accept trust prompt for Claude Code agents
-    if agent.config_type == "anthropic_env" {
+    // Auto-accept trust prompt for CLI agents (Claude Code, Codex, etc.)
+    {
         let w = session.writer.clone();
         thread::spawn(move || {
-            thread::sleep(Duration::from_millis(2000));
+            thread::sleep(Duration::from_millis(2500));
             let mut lock = w.lock().unwrap_or_else(|e| e.into_inner());
             let _ = lock.write_all(b"1\n");
         });
