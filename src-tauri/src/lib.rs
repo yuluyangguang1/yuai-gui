@@ -11,6 +11,7 @@ mod disk;
 mod files;
 mod git;
 mod pty;
+mod stream;
 mod recording;
 mod secure;
 mod screenshot;
@@ -192,6 +193,7 @@ pub fn run() {
             pty::spawn_agent,
             pty::pty_cwd,
             pty::pty_list,
+            stream::stream_fetch,
             list_agents,
             get_bundle_root,
             get_providers,

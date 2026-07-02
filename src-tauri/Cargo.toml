@@ -28,7 +28,7 @@ tokio = { version = "1", features = ["rt", "sync"] }
 log = "0.4"
 dirs = "5"
 notify = "7.0"
-reqwest = { version = "0.12", features = ["blocking", "json"] }
+reqwest = { version = "0.12", features = ["blocking", "json", "stream"] }
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "gif", "webp", "bmp"] }
 md-5 = "0.10"
 base64 = "0.22"
