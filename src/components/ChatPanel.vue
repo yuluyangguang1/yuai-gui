@@ -234,6 +234,7 @@ import { TokenBudgetManager, loadBudgets } from "../utils/token-budget";
 import { HookManager, createLoggingHook, createNotificationHook } from "../utils/hook-events";
 import { globalAgentHooks } from "../utils/agent-hooks";
 import { globalSessionRecovery } from "../utils/session-recovery";
+import { DirectAgent } from "../utils/direct-agent";
 import { globalFileChangeTracker } from "../utils/file-change-tracker";
 import { globalSessionReplay } from "../utils/session-replay-manager";
 import { globalBriefMode } from "../utils/brief-mode";
