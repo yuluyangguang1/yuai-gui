@@ -289,7 +289,7 @@ pub fn spawn_agent(
     // Auto-accept trust prompt for CLI agents (Claude Code, Codex, etc.)
     // First: write trust files (Orca pattern — more reliable than sending "1\n")
     if let Some(ref dir) = cwd {
-        let trust_path = std::path::Path::new(dir);
+        let _trust_path = std::path::Path::new(dir);
         // Codex: add trust entry to ~/.codex/config.toml
         if agent.config_type == "codex_toml" {
             let home = dirs::home_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
