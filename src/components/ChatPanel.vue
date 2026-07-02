@@ -234,6 +234,11 @@ import { TokenBudgetManager, loadBudgets } from "../utils/token-budget";
 import { HookManager, createLoggingHook, createNotificationHook } from "../utils/hook-events";
 import { globalAgentHooks } from "../utils/agent-hooks";
 import { globalSessionRecovery } from "../utils/session-recovery";
+import { globalFileChangeTracker } from "../utils/file-change-tracker";
+import { globalSessionReplay } from "../utils/session-replay-manager";
+import { globalBriefMode } from "../utils/brief-mode";
+import { globalSecretResolver } from "../utils/secret-ref";
+import { globalConfigHotReload } from "../utils/config-hot-reload";
 import { OrientationGenerator } from "../utils/orientation-card";
 import { getToolsForRole } from "../utils/tool-surface";
 
