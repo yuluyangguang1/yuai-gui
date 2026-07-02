@@ -30,6 +30,10 @@
       <span class="chat-spacer" />
       <!-- Model Selector (参考 Hermes Studio ModelSelector.vue) -->
       <ModelSelector />
+      <!-- Direct/PTY mode toggle -->
+      <button class="chat-mode-btn" :class="{ active: directMode }" @click="directMode = !directMode" :title="directMode ? '直连模式 (无终端)' : 'PTY 模式 (终端)'">
+        <TIcon :name="directMode ? 'plug' : 'terminal'" :size="16" />
+      </button>
       <!-- Beam mode toggle -->
       <button class="chat-mode-btn" :class="{ active: chatStore.chatMode === 'beam' }" @click="chatStore.setChatMode(chatStore.chatMode === 'beam' ? 'single' : 'beam')" title="并行提问模式">
         <TIcon name="bolt" :size="16" />
@@ -620,7 +624,14 @@ async function handleSend() {
   }
 
   try {
-    await chatStore.sendMessage();
+    // Direct mode: use DirectAgent instead of PTY
+    if (directMode.value) {
+      const text = chatStore.inputText.trim();
+      chatStore.inputText = '';
+      await sendDirectMessage(text);
+    } else {
+      await chatStore.sendMessage();
+    }
     // Record token usage after send
     tokenBudgetManager.recordUsage('chat', chatStore.messages.length * 100);
   } catch (e) {
