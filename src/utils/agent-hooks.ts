@@ -163,10 +163,10 @@ export class AgentHookManager {
   /** Clear states for agents not seen in the last N ms */
   pruneStale(maxAgeMs: number = 300000): void {
     const now = Date.now();
-    for (const [id, state] of this.states) {
-      if (state === 'idle' || state === 'done' || state === 'error') {
-        // Keep terminal states for a while
-        continue;
+    for (const [id, activity] of this.activities) {
+      if (now - activity.timestamp > maxAgeMs) {
+        this.states.delete(id);
+        this.activities.delete(id);
       }
     }
   }

@@ -38,8 +38,6 @@ export type StreamCallback = (chunk: StreamChunk) => void;
 // Direct Agent
 // ══════════════════════════════════════════════
 
-import { unifiedFetch, parseSSEStream } from './tauri-stream';
-
 export class DirectAgent {
   private config: DirectAgentConfig;
   private messages: ChatMessage[] = [];

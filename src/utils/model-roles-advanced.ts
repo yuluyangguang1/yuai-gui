@@ -51,7 +51,7 @@ export interface ModelRoleAssignment {
 // Model Role Manager
 // ══════════════════════════════════════════════
 
-const STORAGE_KEY = 'yuai-model-roles';
+const STORAGE_KEY = 'yuai-model-roles-v2';  // v2 to avoid conflict with model-roles.ts
 
 export class ModelRoleManager {
   private assignments = new Map<ModelRole, ModelRoleAssignment>();
