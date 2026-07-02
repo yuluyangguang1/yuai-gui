@@ -202,7 +202,7 @@ export async function fetchModelsDev(forceRefresh = false): Promise<Record<strin
     memoryCache = providers
     memoryCacheTime = now
     saveLocalStorageCache(providers)
-    console.log(`[ModelsDev] Fetched ${Object.keys(providers).length} providers, ${Object.values(providers).reduce((s, p) => s + p.model_count, 0)} models`)
+    console.debug(`[ModelsDev] Fetched ${Object.keys(providers).length} providers, ${Object.values(providers).reduce((s, p) => s + p.model_count, 0)} models`)
     return providers
   } catch (e) {
     console.warn('[ModelsDev] Network fetch failed, falling back to cache:', e)

@@ -289,5 +289,5 @@ export function installQueueGuard(config: Partial<QueueConfig> = {}): void {
   }
   const originalFetch = globalThis.fetch
   globalThis.fetch = createQueuedFetch(globalQueueGuard, originalFetch) as typeof fetch
-  console.log(`[QueueGuard] 已安装 | 最大并发: ${config.max_concurrent ?? 3} | 最大等待: ${config.max_wait_ms ?? 120000}ms`)
+  console.debug(`[QueueGuard] 已安装 | 最大并发: ${config.max_concurrent ?? 3} | 最大等待: ${config.max_wait_ms ?? 120000}ms`)
 }

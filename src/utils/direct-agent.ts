@@ -17,22 +17,8 @@ export interface DirectAgentConfig {
   temperature?: number;
 }
 
-export interface ChatMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
-
-export interface StreamChunk {
-  content: string;
-  done: boolean;
-  usage?: {
-    promptTokens: number;
-    completionTokens: number;
-    totalTokens: number;
-  };
-}
-
-export type StreamCallback = (chunk: StreamChunk) => void;
+import type { ChatMessage, StreamChunk, StreamCallback } from './shared-types';
+export type { ChatMessage, StreamChunk, StreamCallback };
 
 // ══════════════════════════════════════════════
 // Direct Agent

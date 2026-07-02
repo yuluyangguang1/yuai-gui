@@ -39,7 +39,7 @@ export class SSEClient {
     this.eventSource = new EventSource(this.url)
 
     this.eventSource.onopen = () => {
-      console.log('[SSE] Connected')
+      console.debug('[SSE] Connected')
       this.reconnectAttempts = 0
     }
 
@@ -122,7 +122,7 @@ export class SSEClient {
     this.reconnectAttempts++
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1)
 
-    console.log(`[SSE] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`)
+    console.debug(`[SSE] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`)
 
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null

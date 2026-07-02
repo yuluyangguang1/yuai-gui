@@ -35,7 +35,7 @@ export class AgentAwakeService {
       this.checkAndPreventSleep()
     }, this.config.checkInterval)
 
-    console.log('[AgentAwake] Service started')
+    console.debug('[AgentAwake] Service started')
   }
 
   /** 停止服务 */
@@ -49,7 +49,7 @@ export class AgentAwakeService {
     }
 
     this.allowSleep()
-    console.log('[AgentAwake] Service stopped')
+    console.debug('[AgentAwake] Service stopped')
   }
 
   /** 标记 Agent 开始工作 */
@@ -86,12 +86,12 @@ export class AgentAwakeService {
   private preventSleep(): void {
     // 在 Tauri 中，可以通过命令调用系统 API
     // 这里先记录日志，实际实现需要调用 Rust 命令
-    console.log(`[AgentAwake] Preventing sleep (${this.activeAgents.size} active agents)`)
+    console.debug(`[AgentAwake] Preventing sleep (${this.activeAgents.size} active agents)`)
   }
 
   /** 允许休眠 */
   private allowSleep(): void {
-    console.log('[AgentAwake] Allowing sleep')
+    console.debug('[AgentAwake] Allowing sleep')
   }
 }
 

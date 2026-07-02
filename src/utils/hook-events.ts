@@ -121,7 +121,7 @@ export function createLoggingHook(): HookHandler {
     event: '*',
     priority: 1000,
     handler: (payload) => {
-      console.log(`[Hook] ${payload.event} | task:${payload.task_id} | agent:${payload.agent_id}`)
+      console.debug(`[Hook] ${payload.event} | task:${payload.task_id} | agent:${payload.agent_id}`)
     },
   }
 }

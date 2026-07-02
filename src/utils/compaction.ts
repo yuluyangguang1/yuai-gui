@@ -344,7 +344,7 @@ export function createWorldStateHook(getWorldState: () => string): CompactionHoo
     handler: async () => {
       const state = getWorldState()
       if (state) {
-        console.log(`[Compaction] WorldState 重注入: ${state.slice(0, 100)}...`)
+        console.debug(`[Compaction] WorldState 重注入: ${state.slice(0, 100)}...`)
       }
       return { proceed: true }
     },
@@ -358,7 +358,7 @@ export function createLoggingHook(): CompactionHook {
     phase: 'pre',
     priority: 50,
     handler: async (context) => {
-      console.log(`[Compaction] ${context.tier} | ${context.tokens_used} tokens | ${context.messages.length} messages | window: ${context.window_id}`)
+      console.debug(`[Compaction] ${context.tier} | ${context.tokens_used} tokens | ${context.messages.length} messages | window: ${context.window_id}`)
       return { proceed: true }
     },
   }

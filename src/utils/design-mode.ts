@@ -41,7 +41,7 @@ export class DesignModeManager {
     this.capturedElements = []
     document.body.style.cursor = 'crosshair'
     document.addEventListener('click', this.handleClick, true)
-    console.log('[DesignMode] Activated')
+    console.debug('[DesignMode] Activated')
   }
 
   /** 停用设计模式 */
@@ -49,7 +49,7 @@ export class DesignModeManager {
     this.isActive = false
     document.body.style.cursor = ''
     document.removeEventListener('click', this.handleClick, true)
-    console.log('[DesignMode] Deactivated')
+    console.debug('[DesignMode] Deactivated')
   }
 
   /** 处理点击 */

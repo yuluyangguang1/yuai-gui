@@ -166,31 +166,31 @@ export class SandboxManager {
   /** 创建本地沙箱 */
   private async createLocalSandbox(instance: SandboxInstance): Promise<void> {
     // 本地沙箱：使用临时目录
-    console.log(`[Sandbox] Creating local sandbox ${instance.id}`)
+    console.debug(`[Sandbox] Creating local sandbox ${instance.id}`)
   }
 
   /** 创建 Docker 沙箱 */
   private async createDockerSandbox(instance: SandboxInstance): Promise<void> {
     // Docker 沙箱：使用 Docker API
-    console.log(`[Sandbox] Creating Docker sandbox ${instance.id}`)
+    console.debug(`[Sandbox] Creating Docker sandbox ${instance.id}`)
   }
 
   /** 创建 Modal 沙箱 */
   private async createModalSandbox(instance: SandboxInstance): Promise<void> {
     // Modal 沙箱：使用 Modal API
-    console.log(`[Sandbox] Creating Modal sandbox ${instance.id}`)
+    console.debug(`[Sandbox] Creating Modal sandbox ${instance.id}`)
   }
 
   /** 创建 E2B 沙箱 */
   private async createE2BSandbox(instance: SandboxInstance): Promise<void> {
     // E2B 沙箱：使用 E2B API
-    console.log(`[Sandbox] Creating E2B sandbox ${instance.id}`)
+    console.debug(`[Sandbox] Creating E2B sandbox ${instance.id}`)
   }
 
   /** 创建 Daytona 沙箱 */
   private async createDaytonaSandbox(instance: SandboxInstance): Promise<void> {
     // Daytona 沙箱：使用 Daytona API
-    console.log(`[Sandbox] Creating Daytona sandbox ${instance.id}`)
+    console.debug(`[Sandbox] Creating Daytona sandbox ${instance.id}`)
   }
 
   /** 执行本地命令 */
@@ -207,12 +207,12 @@ export class SandboxManager {
 
   /** 停止本地沙箱 */
   private async stopLocalSandbox(instance: SandboxInstance): Promise<void> {
-    console.log(`[Sandbox] Stopping local sandbox ${instance.id}`)
+    console.debug(`[Sandbox] Stopping local sandbox ${instance.id}`)
   }
 
   /** 停止 Docker 沙箱 */
   private async stopDockerSandbox(instance: SandboxInstance): Promise<void> {
-    console.log(`[Sandbox] Stopping Docker sandbox ${instance.id}`)
+    console.debug(`[Sandbox] Stopping Docker sandbox ${instance.id}`)
   }
 }
 

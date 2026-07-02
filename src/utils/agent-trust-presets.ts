@@ -127,7 +127,7 @@ export async function ensureAgentTrust(agentType: AgentTrustType, workspacePath:
 
   try {
     await preset.markTrusted(workspacePath);
-    console.log(`[AgentTrust] Marked ${workspacePath} as trusted for ${agentType}`);
+    console.debug(`[AgentTrust] Marked ${workspacePath} as trusted for ${agentType}`);
     return true;
   } catch (e) {
     console.warn(`[AgentTrust] Failed to mark trusted for ${agentType}:`, e);
