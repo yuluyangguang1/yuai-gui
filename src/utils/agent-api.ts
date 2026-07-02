@@ -87,10 +87,15 @@ export class AgentApiClient {
 
           try {
             const parsed = JSON.parse(data);
-            const delta = parsed.choices?.[0]?.delta?.content
-              ?? parsed.content?.[0]?.text
-              ?? parsed.delta?.text
-              ?? '';
+            // OpenAI format
+            let delta = parsed.choices?.[0]?.delta?.content ?? '';
+            // Anthropic format
+            if (!delta && parsed.type === 'content_block_delta') {
+              delta = parsed.delta?.text ?? '';
+            }
+            if (!delta && parsed.content?.[0]?.text) {
+              delta = parsed.content[0].text;
+            }
             if (delta) {
               fullContent += delta;
               onChunk({ content: delta, done: false });

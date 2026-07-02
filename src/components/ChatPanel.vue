@@ -274,6 +274,48 @@ const workspaceStore = useWorkspaceStore();
 const showRoomManager = ref(false);
 const commandSuggestRef = ref<InstanceType<typeof CommandSuggest> | null>(null);
 
+// ── 直连/API 模式 ──
+const directMode = ref(false);
+let agentApiClient: AgentApiClient | null = null;
+
+function initAgentApi() {
+  const providerStore = useProviderStore();
+  const activeProvider = providerStore.activeProvider;
+  const activeModel = providerStore.activeModel;
+  if (!activeProvider || !activeModel) return;
+  agentApiClient = new AgentApiClient({
+    agentId: currentAgent.value.id,
+    baseUrl: activeProvider.baseUrl || 'https://api.openai.com',
+    apiKey: activeProvider.apiKey || '',
+    model: activeModel.id,
+  });
+}
+
+async function sendDirectMessage(text: string) {
+  if (!agentApiClient) initAgentApi();
+  if (!agentApiClient) { addMessage('system', '未配置模型'); return; }
+
+  addMessage('user', text);
+  phase.value = 'generating';
+  streamingMessage.value = { id: crypto.randomUUID(), content: '', agentId: 'direct' };
+
+  try {
+    await agentApiClient.sendMessage(text, (chunk) => {
+      if (streamingMessage.value) {
+        streamingMessage.value.content += chunk.content;
+      }
+    });
+    if (streamingMessage.value) {
+      addMessage('assistant', streamingMessage.value.content, 'direct');
+      streamingMessage.value = null;
+    }
+  } catch (e) {
+    addMessage('system', `直连错误: ${String(e).slice(0, 200)}`);
+  } finally {
+    phase.value = 'idle';
+  }
+}
+
 // ── Slash Command 状态 ──
 const slashMenuVisible = ref(false);
 const slashMenuPosition = ref({ top: 0, left: 0 });
