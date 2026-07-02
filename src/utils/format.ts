@@ -55,8 +55,9 @@ export function cleanAnsi(s: string): string {
   let cleaned = s.replace(/\x1b\[[0-9;?]*[A-Za-z]|\x1b[()][AB0]|\r/g, '').replace(/\x1b\][^\x07]*\x07/g, '');
   // Remove DA1/DA2 device attribute responses
   cleaned = cleaned.replace(/\x1b\[\?62c/g, '').replace(/\x1b\[\?1;2c/g, '');
-  // Remove bracketed paste mode markers
+  // Remove bracketed paste mode markers (with and without ESC prefix)
   cleaned = cleaned.replace(/\x1b\[>0q/g, '').replace(/\x1b\[2 q/g, '');
+  cleaned = cleaned.replace(/\[>0q/g, '').replace(/\[2 q/g, '').replace(/\[0 q/g, '');
   // Remove cursor position reports
   cleaned = cleaned.replace(/\x1b\[\d+;\d+[RH]/g, '');
   // Remove "1" trust prompt echo at start
@@ -79,6 +80,10 @@ export function cleanAnsi(s: string): string {
   cleaned = cleaned.replace(/.*msg=interrupt.*$/gm, '');
   // Remove mimo-v2.5-pro status lines
   cleaned = cleaned.replace(/.*mimo-v2\.5-pro.*$/gm, '');
+  // Remove progress counter lines (just numbers)
+  cleaned = cleaned.replace(/^\d+\s*$/gm, '');
+  // Remove (⊙_⊙)...(•_•)...(´･_･`) thinking indicators
+  cleaned = cleaned.replace(/[⊙◉•_´･ʖ⌐■▣▢◻▷►◆◇●○◐◑★☆♦♢]+[^\n]*$/gm, '');
   // Clean up excessive whitespace
   cleaned = cleaned.replace(/\n{3,}/g, '\n\n').trim();
   return cleaned;
