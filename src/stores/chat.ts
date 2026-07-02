@@ -335,6 +335,8 @@ export const useChatStore = defineStore("chat", () => {
   async function sendMessage(content?: string) {
     const text = content ?? inputText.value.trim();
     if (!text) return;
+    // Prevent duplicate sends while processing
+    if (phase.value !== 'idle') return;
 
     addMessage("user", text);
     inputText.value = "";

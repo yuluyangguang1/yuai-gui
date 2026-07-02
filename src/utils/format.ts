@@ -52,5 +52,34 @@ export function formatDuration(ms: number): string {
 /** Strip ANSI escape sequences from a string */
 export function cleanAnsi(s: string): string {
   // eslint-disable-next-line no-control-regex
-  return s.replace(/\x1b\[[0-9;?]*[A-Za-z]|\x1b[()][AB0]|\r/g, '').replace(/\x1b\][^\x07]*\x07/g, '');
+  let cleaned = s.replace(/\x1b\[[0-9;?]*[A-Za-z]|\x1b[()][AB0]|\r/g, '').replace(/\x1b\][^\x07]*\x07/g, '');
+  // Remove DA1/DA2 device attribute responses
+  cleaned = cleaned.replace(/\x1b\[\?62c/g, '').replace(/\x1b\[\?1;2c/g, '');
+  // Remove bracketed paste mode markers
+  cleaned = cleaned.replace(/\x1b\[>0q/g, '').replace(/\x1b\[2 q/g, '');
+  // Remove cursor position reports
+  cleaned = cleaned.replace(/\x1b\[\d+;\d+[RH]/g, '');
+  // Remove "1" trust prompt echo at start
+  cleaned = cleaned.replace(/^1\n/, '');
+  // Remove Codex ASCII art (large blocks of |*_/\ characters)
+  cleaned = cleaned.replace(/[_.=+*|/\\^~`'";:,!?<>{}()\[\]#@&%$#\-=\+]{50,}/g, '');
+  // Remove "Welcome to Codex" banner
+  cleaned = cleaned.replace(/.*Welcome\s+to\s+Codex.*$/gm, '');
+  // Remove "Do you trust" prompt
+  cleaned = cleaned.replace(/.*Do you trust.*$/gm, '');
+  // Remove "Press enter to continue"
+  cleaned = cleaned.replace(/.*Press enter to continue.*$/gm, '');
+  // Remove Update available banners
+  cleaned = cleaned.replace(/╭─+╮[\s\S]*?╰─+╯/g, '');
+  // Remove Hermes/Codex status lines (╭─╮/╰─╯ boxes)
+  cleaned = cleaned.replace(/╭[─┬╮]+/g, '').replace(/╰[─┴╯]+/g, '').replace(/│[^│]*│/g, '');
+  // Remove progress indicators like ◉_◉ processing...
+  cleaned = cleaned.replace(/◉_◉.*$/gm, '');
+  // Remove msg=interrupt / /queue / /bg / /steer status lines
+  cleaned = cleaned.replace(/.*msg=interrupt.*$/gm, '');
+  // Remove mimo-v2.5-pro status lines
+  cleaned = cleaned.replace(/.*mimo-v2\.5-pro.*$/gm, '');
+  // Clean up excessive whitespace
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n').trim();
+  return cleaned;
 }
