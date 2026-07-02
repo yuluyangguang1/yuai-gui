@@ -253,17 +253,25 @@ export const useChatStore = defineStore("chat", () => {
       onData: on_data,
     });
     agentSessions.value.set(agentId, ptyId);
-    // Wait for agent ready signal: poll buffer every 500ms up to 5s for
-    // first non-empty output, then clear init noise.
+    // Wait for agent ready signal: poll buffer for prompt-like pattern
+    // Hermes/Claude show '❯' or '>' prompt when ready
     const READY_POLL_MS = 500;
-    const READY_MAX_MS = 5000;
+    const READY_MAX_MS = 15000; // 15s for slow agents like Hermes
     let waited = 0;
     while (waited < READY_MAX_MS) {
-      if (agentBuffers[agentId] && agentBuffers[agentId].length > 0) break;
+      const buf = agentBuffers[agentId] || '';
+      // Detect ready signals: prompt characters, "Ready", "Welcome"
+      if (buf.length > 50 && (
+        buf.includes('❯') ||
+        buf.includes('Ready') ||
+        buf.includes('Welcome') ||
+        buf.includes('Type your message') ||
+        buf.includes('/help')
+      )) break;
       await new Promise((r) => setTimeout(r, READY_POLL_MS));
       waited += READY_POLL_MS;
     }
-    agentBuffers[agentId] = ""; // clear init output
+    agentBuffers[agentId] = ''; // clear init output
     return ptyId;
   }
 
