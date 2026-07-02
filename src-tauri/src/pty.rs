@@ -309,7 +309,7 @@ pub fn spawn_agent(
             let trust_dir = home.join(".claude").join("projects").join(&slug);
             let _ = std::fs::create_dir_all(&trust_dir);
             let _ = std::fs::write(trust_dir.join(".trust"), serde_json::json!({
-                "trustedAt": chrono::Utc::now().timestamp_millis(),
+                "trustedAt": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_millis(),
                 "workspacePath": dir,
             }).to_string());
         }

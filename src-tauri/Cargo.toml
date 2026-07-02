@@ -36,6 +36,7 @@ aes-gcm = "0.10"
 rand = "0.9"
 zeroize = "1"
 thiserror = "2"
+chrono = "0.4.45"
 
 [features]
 default = ["custom-protocol"]
